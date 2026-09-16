@@ -167,8 +167,17 @@ function RegisterForm({ onDone }) {
         // placeholder (localhost), więc kliknięcie na telefonie/innym
         // komputerze kończyło się błędem. Strona niżej istnieje niezależnie
         // od tego, czy apka jest akurat zainstalowana czy nie (GitHub
-        // Pages, ten sam mechanizm co docs/testerzy.html).
+        // Pages, ten sam mechanizm co docs/testerzy.html). UWAGA: ten
+        // dokładny adres musi być wpisany w Supabase → Authentication →
+        // URL Configuration → Redirect URLs, inaczej Supabase odrzuci
+        // przekierowanie własnym, technicznym komunikatem błędu zanim
+        // użytkownik w ogóle zobaczy tę stronę.
         emailRedirectTo: "https://pmesznik.github.io/Tennis-Together/potwierdz-email.html",
+        // Imię trafia do metadanych konta w Supabase Auth (nie tylko do
+        // naszej tabeli `accounts`), żeby szablon maila potwierdzającego
+        // mógł się zwrócić po imieniu przez {{ .Data.full_name }} — patrz
+        // docs/szablon-maila-potwierdzenie.html.
+        data: { full_name: fullName.trim() },
       },
     });
     setBusy(false);

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>E-mail potwierdzony — Tennis Together</title>
+<title>Potwierdzenie e-maila — Tennis Together</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@400;500&display=swap');
   :root {
@@ -49,16 +49,74 @@
     border-top: 1px solid var(--card-border);
     font-size: 13px;
   }
+  .hint p { margin: 0; }
 </style>
 </head>
 <body>
-  <div class="card">
+  <div class="card" id="card">
+    <!-- Wypełniane przez skrypt niżej na podstawie tego, co Supabase dopisze
+         do adresu po powrocie z weryfikacji (#access_token=... przy
+         sukcesie, #error=...&error_code=...&error_description=... przy
+         błędzie — np. wygasły lub już wykorzystany link). Bez JS-a (np.
+         wyłączony w przeglądarce) pokazuje się neutralny stan domyślny
+         poniżej. -->
     <div class="icon">🎾✅</div>
-    <h1>E-mail potwierdzony!</h1>
+    <h1>Super, że do nas dołączyłeś!</h1>
     <p>Twoje konto w Tennis Together jest aktywne. Możesz wrócić do aplikacji i się zalogować.</p>
     <div class="hint">
-      <p style="margin:0;">Ten ekran możesz teraz zamknąć — logowanie odbywa się w samej aplikacji na telefonie, nie tutaj.</p>
+      <p>Ten ekran możesz teraz zamknąć — logowanie odbywa się w samej aplikacji na telefonie, nie tutaj.</p>
     </div>
   </div>
+
+  <script>
+    // Supabase po weryfikacji linku z maila dopisuje wynik do fragmentu
+    // adresu (#...), nie do samej treści strony — trzeba go odczytać w JS.
+    // Rozróżniamy sukces / błąd / brak parametrów (np. ktoś wszedł na tę
+    // stronę wprost, bez klikania linku z maila), zamiast zawsze pokazywać
+    // to samo "potwierdzone", niezależnie co faktycznie się stało.
+    (function () {
+      var params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      var card = document.getElementById("card");
+      var error = params.get("error_description") || params.get("error");
+      var hasToken = params.get("access_token");
+
+      function render(icon, title, text, hintText) {
+        card.innerHTML =
+          '<div class="icon">' + icon + '</div>' +
+          "<h1>" + title + "</h1>" +
+          "<p>" + text + "</p>" +
+          '<div class="hint"><p>' + hintText + "</p></div>";
+      }
+
+      if (error) {
+        var code = params.get("error_code") || "";
+        var friendly =
+          code.indexOf("expired") !== -1
+            ? "Ten link wygasł — linki potwierdzające są ważne tylko przez jakiś czas."
+            : code.indexOf("already") !== -1
+            ? "Ten e-mail został już wcześniej potwierdzony."
+            : "Ten link jest nieprawidłowy — mógł już zostać użyty, albo wygasł.";
+        render(
+          "🎾",
+          "Ups, coś poszło nie tak",
+          friendly,
+          "Wróć do aplikacji i spróbuj się zalogować — jeśli to nie zadziała, załóż konto jeszcze raz, żeby dostać nowy link."
+        );
+      } else if (hasToken) {
+        // Domyślna treść w HTML wyżej już pokazuje wariant sukcesu —
+        // nic nie trzeba zmieniać, zostawiamy jak jest.
+      } else {
+        // Strona otwarta bez żadnych parametrów w adresie — nie wiadomo,
+        // czy potwierdzenie faktycznie się powiodło (np. ktoś wkleił sam
+        // adres bez reszty linku).
+        render(
+          "🎾",
+          "Tennis Together",
+          "Ta strona pojawia się po kliknięciu linku potwierdzającego z maila.",
+          "Jeśli szukasz potwierdzenia e-maila, sprawdź skrzynkę i kliknij link z wiadomości od nas."
+        );
+      }
+    })();
+  </script>
 </body>
 </html>

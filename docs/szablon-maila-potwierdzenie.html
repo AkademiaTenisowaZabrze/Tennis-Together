@@ -1,6 +1,17 @@
 <!--
   Szablon maila "Confirm signup" dla Supabase — wklej całość do:
-  Dashboard → Authentication → Email Templates → Confirm signup
+  Dashboard → Authentication → Email Templates → Confirm signup → Message body
+
+  Osobno w tym samym miejscu ustaw pole "Subject heading" (temat maila —
+  to NIE jest częścią tego pliku, Supabase ma na to osobne pole) na:
+
+    🎾 Potwierdź e-mail — Tennis Together
+
+  Domyślny temat Supabase to generyczne "Confirm Your Signup" — nieoczywiste
+  na pierwszy rzut oka w skrzynce, łatwe do pomylenia ze spamem. Temat
+  wyżej + emoji + nazwa apki w treści od razu widać w liście maili, zanim
+  ktokolwiek otworzy wiadomość — to jest to "od pierwszego wejrzenia
+  wiadomo o co chodzi", o które chodziło Pawłowi.
 
   Tabelowy layout + inline style'e celowo (nie zewnętrzny CSS) — klienci
   pocztowi (Outlook, Gmail) w większości ignorują/obcinają <style> w
@@ -9,11 +20,21 @@
   motyw apki) z tego samego powodu — dark mode w mailach bywa
   nieprzewidywalny i potrafi odwrócić kolory w dziwny sposób.
 
-  {{ .ConfirmationURL }} to zmienna Supabase — podstawia się sama.
+  Zmienne Supabase użyte niżej:
+  {{ .ConfirmationURL }} — link potwierdzający, podstawia się sam.
+  {{ .Data.full_name }} — imię i nazwisko z options.data przy signUp()
+    (patrz src/pages/AuthPage.jsx) — jeśli z jakiegoś powodu puste,
+    warunek {{if}} niżej po prostu pomija powitanie po imieniu.
 -->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6fb; padding:32px 16px;">
   <tr>
     <td align="center">
+      <!-- Preheader — niewidoczny w treści maila, ale wyświetlany przez
+           klienty pocztowe jako podgląd pod tematem na liście wiadomości.
+           Dodatkowe "od pierwszego wejrzenia wiadomo o co chodzi". -->
+      <div style="display:none; max-height:0; overflow:hidden; font-size:1px; line-height:1px; color:#f4f6fb;">
+        Jeszcze jeden krok i Twoje konto w Tennis Together jest gotowe.
+      </div>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px; background-color:#ffffff; border-radius:20px; overflow:hidden; border:1px solid #e3e7f0;">
         <tr>
           <td style="padding:36px 32px 8px; text-align:center;">
@@ -26,6 +47,8 @@
         <tr>
           <td style="padding:8px 32px 0; text-align:center;">
             <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:15px; line-height:1.6; color:#586174;">
+              {{ if .Data.full_name }}Cześć, {{ .Data.full_name }}! {{ end }}Dziękujemy za założenie konta w Tennis Together — aplikacji, która pomaga rodzinom tenisistów wspólnie organizować przejazdy i noclegi na turnieje.
+              <br /><br />
               Jeszcze jeden krok — potwierdź swój adres e-mail, żeby dokończyć zakładanie konta.
             </p>
           </td>
