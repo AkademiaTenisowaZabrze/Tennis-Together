@@ -24,3 +24,6 @@ android/app/google-services.json
 # Stan lokalny Supabase CLI (supabase link/functions deploy) — nic do
 # śledzenia w repo, standardowy wpis zalecany przez samo Supabase CLI.
 supabase/.temp/
+
+# Wygenerowane przez scripts/build_setup_sql.py
+supabase/setup/

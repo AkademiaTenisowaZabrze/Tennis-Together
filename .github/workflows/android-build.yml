@@ -47,10 +47,18 @@ jobs:
       - name: Instalacja zależności
         run: npm ci
 
+      - name: Ustal adres strony (działa po przeniesieniu repo na inne konto)
+        run: |
+          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
+          REPO="${GITHUB_REPOSITORY#*/}"
+          echo "SITE_URL=https://${OWNER}.github.io/${REPO}" >> "$GITHUB_ENV"
+          echo "PAGES_BASE=/${REPO}/app/" >> "$GITHUB_ENV"
+
       - name: Build web (Vite)
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SITE_URL: ${{ env.SITE_URL }}
           # Ten sam numer co -PappVersionName niżej (Android), żeby wersja
           # widoczna w apce zgadzała się z tym, co Android pokazuje w
           # Ustawieniach przy aplikacji.

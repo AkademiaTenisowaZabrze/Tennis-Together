@@ -1,4 +1,5 @@
 <title>Testerzy Tennis Together</title>
+<script src="config.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
 
@@ -393,7 +394,7 @@
         <p class="label">Android · plik testowy (debug)</p>
         <p class="file">tennis-together-debug-latest.apk</p>
       </div>
-      <a class="btn btn-primary" href="https://github.com/pmesznik/Tennis-Together/releases/download/debug-latest/tennis-together-debug-latest.apk">
+      <a data-tt-apk class="btn btn-primary" href="https://github.com/pmesznik/Tennis-Together/releases/download/debug-latest/tennis-together-debug-latest.apk">
         ⬇️ Pobierz najnowszy APK
       </a>
     </div>
@@ -507,8 +508,8 @@
   // otwarte na anon (patrz supabase/migrations/0015_bug_reports.sql) —
   // testerzy nie logują się przez Supabase Auth, formularz musi więc pisać
   // anonimowo.
-  const SUPABASE_URL = "https://jrabxtiranllayerhutm.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_8-yxyMhoEEq-kHx2opU0Pg_QylogBur";
+  const SUPABASE_URL = window.TT_CONFIG.supabaseUrl;
+  const SUPABASE_ANON_KEY = window.TT_CONFIG.supabaseAnonKey;
 
   const state = { type: "🐛 Błąd / crash", priority: "🟠 Poważny" };
 

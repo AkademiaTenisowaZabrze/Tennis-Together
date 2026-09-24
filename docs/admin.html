@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Panel administratora Tennis Together</title>
+<script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
@@ -181,8 +182,8 @@
 </div>
 
 <script>
-  const SUPABASE_URL = "https://jrabxtiranllayerhutm.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_8-yxyMhoEEq-kHx2opU0Pg_QylogBur";
+  const SUPABASE_URL = window.TT_CONFIG.supabaseUrl;
+  const SUPABASE_ANON_KEY = window.TT_CONFIG.supabaseAnonKey;
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const loginScreen = document.getElementById("loginScreen");

@@ -32,6 +32,6 @@ jobs:
 
       - name: Import turniejów Tennis Europe
         env:
-          SUPABASE_URL: https://jrabxtiranllayerhutm.supabase.co
+          SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://jrabxtiranllayerhutm.supabase.co' }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: python scripts/import_tennis_europe.py

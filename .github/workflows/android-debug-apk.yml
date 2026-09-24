@@ -82,14 +82,22 @@ jobs:
       - name: Instalacja zależności
         run: npm ci
 
+      - name: Ustal adres strony (działa po przeniesieniu repo na inne konto)
+        run: |
+          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
+          REPO="${GITHUB_REPOSITORY#*/}"
+          echo "SITE_URL=https://${OWNER}.github.io/${REPO}" >> "$GITHUB_ENV"
+          echo "PAGES_BASE=/${REPO}/app/" >> "$GITHUB_ENV"
+
       - name: Build web (Vite)
         env:
           # Klucz "anon/publishable" jest z definicji publiczny (patrz
           # src/lib/supabase.js) — bezpiecznie trzymać go wprost tutaj,
           # bez sekretu, żeby uruchomienie nie wymagało dodatkowej
           # konfiguracji w repo.
-          VITE_SUPABASE_URL: https://jrabxtiranllayerhutm.supabase.co
-          VITE_SUPABASE_ANON_KEY: sb_publishable_8-yxyMhoEEq-kHx2opU0Pg_QylogBur
+          VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://jrabxtiranllayerhutm.supabase.co' }}
+          VITE_SITE_URL: ${{ env.SITE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY || 'sb_publishable_8-yxyMhoEEq-kHx2opU0Pg_QylogBur' }}
           # Ten sam numer co -PappVersionName niżej (Android), żeby wersja
           # widoczna w apce (ekran logowania, profil) zgadzała się z tym,
           # co Android pokazuje w Ustawieniach przy aplikacji.

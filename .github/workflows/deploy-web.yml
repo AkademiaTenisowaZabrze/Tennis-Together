@@ -1,6 +1,6 @@
 name: Deploy Web (GitHub Pages)
 
-# Wersja webowa na czas testów: https://pmesznik.github.io/Tennis-Together/app/
+# Wersja webowa na czas testów: https://<konto>.github.io/<repo>/app/
 # Strony pomocnicze z docs/ (testerzy, admin, potwierdz-email, dokumentacja)
 # zostają pod swoimi dotychczasowymi adresami w korzeniu. Wymaga w
 # Settings -> Pages ustawienia Source = "GitHub Actions".
@@ -34,12 +34,20 @@ jobs:
 
       - run: npm ci
 
-      - name: Build web (Vite, baza /Tennis-Together/app/)
+      - name: Ustal adres strony (działa po przeniesieniu repo na inne konto)
+        run: |
+          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
+          REPO="${GITHUB_REPOSITORY#*/}"
+          echo "SITE_URL=https://${OWNER}.github.io/${REPO}" >> "$GITHUB_ENV"
+          echo "PAGES_BASE=/${REPO}/app/" >> "$GITHUB_ENV"
+
+      - name: Build web (Vite, baza /<repo>/app/)
         env:
-          VITE_BASE: /Tennis-Together/app/
+          VITE_BASE: ${{ env.PAGES_BASE }}
+          VITE_SITE_URL: ${{ env.SITE_URL }}
           # Klucz publishable jest z definicji publiczny (jak w android-debug-apk.yml).
-          VITE_SUPABASE_URL: https://jrabxtiranllayerhutm.supabase.co
-          VITE_SUPABASE_ANON_KEY: sb_publishable_8-yxyMhoEEq-kHx2opU0Pg_QylogBur
+          VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://jrabxtiranllayerhutm.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY || 'sb_publishable_8-yxyMhoEEq-kHx2opU0Pg_QylogBur' }}
           VITE_APP_VERSION: 0.1.${{ github.run_number }}-web
         run: npm run build
 
