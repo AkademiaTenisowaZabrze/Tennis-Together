@@ -8,7 +8,7 @@ import "./index.css";
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <App />
       </BrowserRouter>
     </AuthProvider>
@@ -23,6 +23,6 @@ createRoot(document.getElementById("root")).render(
 // aktualizacji APK i serwował nieaktualne pliki.
 if ("serviceWorker" in navigator && !window.Capacitor?.isNativePlatform?.()) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js", { scope: "/" });
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL });
   });
 }

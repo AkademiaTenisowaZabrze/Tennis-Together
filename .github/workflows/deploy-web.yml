@@ -1,0 +1,60 @@
+name: Deploy Web (GitHub Pages)
+
+# Wersja webowa na czas testów: https://pmesznik.github.io/Tennis-Together/app/
+# Strony pomocnicze z docs/ (testerzy, admin, potwierdz-email, dokumentacja)
+# zostają pod swoimi dotychczasowymi adresami w korzeniu. Wymaga w
+# Settings -> Pages ustawienia Source = "GitHub Actions".
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      - name: Build web (Vite, baza /Tennis-Together/app/)
+        env:
+          VITE_BASE: /Tennis-Together/app/
+          # Klucz publishable jest z definicji publiczny (jak w android-debug-apk.yml).
+          VITE_SUPABASE_URL: https://jrabxtiranllayerhutm.supabase.co
+          VITE_SUPABASE_ANON_KEY: sb_publishable_8-yxyMhoEEq-kHx2opU0Pg_QylogBur
+          VITE_APP_VERSION: 0.1.${{ github.run_number }}-web
+        run: npm run build
+
+      - name: Złóż stronę (docs w korzeniu + aplikacja w /app)
+        run: |
+          mkdir -p _site/app
+          cp -r docs/. _site/
+          cp -r dist/. _site/app/
+          # GitHub Pages nie zna tras SPA - odświeżenie /app/xyz dałoby 404
+          cp dist/index.html _site/app/404.html
+          touch _site/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

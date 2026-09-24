@@ -6,7 +6,10 @@ import { VitePWA } from "vite-plugin-pwa";
 // PWA działa równolegle z Androidem od startu (patrz PLAN.md), dlatego
 // manifest i ikony są tu skonfigurowane już teraz — ikony-placeholder
 // trzeba podmienić, gdy będzie gotowa identyfikacja wizualna marki.
+// VITE_BASE ustawia workflow wersji webowej na GitHub Pages (podkatalog
+// /Tennis-Together/app/); APK i dev zostają na "/".
 export default defineConfig({
+  base: process.env.VITE_BASE || "/",
   plugins: [
     react(),
     VitePWA({
@@ -28,8 +31,8 @@ export default defineConfig({
         background_color: "#0d131e",
         display: "standalone",
         icons: [
-          { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
-          { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
+          { src: "icon-192.png", sizes: "192x192", type: "image/png" },
+          { src: "icon-512.png", sizes: "512x512", type: "image/png" },
         ],
       },
       workbox: {
