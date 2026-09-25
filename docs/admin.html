@@ -57,7 +57,7 @@
   .login-card h1 { font-size: 20px; margin-bottom: 4px; }
 
   label { font-size: 13px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px; }
-  input[type="email"], input[type="password"], input[type="text"] {
+  input[type="email"], input[type="password"], input[type="text"], input[type="number"], textarea {
     width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--card-border);
     background: var(--bg-elevated); color: var(--text); font-family: var(--font-body); font-size: 14px;
   }
@@ -106,6 +106,7 @@
     <a href="#konta">Konta</a>
     <a href="#zgloszenia">Zgłoszenia</a>
     <a href="#bledy">Błędy testerów</a>
+    <a href="#turnieje">Turnieje</a>
     <button id="btnLogout">Wyloguj</button>
   </nav>
 </div>
@@ -179,6 +180,39 @@
       </table>
     </div>
   </section>
+  <section id="turnieje">
+    <h2>Turnieje: import ITF</h2>
+    <p style="color:var(--text-muted); font-size:13px; margin:0 0 12px;">
+      Kalendarz ITF chroni system antybotowy, więc pobierasz go sam w swojej przeglądarce:
+      otwórz stronę kalendarza juniorów ITF, przejdź test, zaznacz całość (Ctrl+A), skopiuj (Ctrl+C)
+      i wklej poniżej. Panel pokaże podgląd, a zapisze dopiero po Twoim potwierdzeniu.
+      Możesz też wkleić własne wiersze w formacie: nazwa; miasto; kraj; 2026-09-14; 2026-09-20; kategoria.
+    </p>
+    <textarea id="itfPaste" rows="8" placeholder="Wklej tutaj skopiowany tekst ze strony ITF" style="width:100%;"></textarea>
+    <div class="toolbar" style="margin-top:8px;">
+      <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--text-muted); font-weight:400;">
+        Rok domyślny
+        <input type="number" id="itfYear" value="2026" style="width:90px;" />
+      </label>
+      <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--text-muted); font-weight:400;">
+        <input type="checkbox" id="itfOnlyPl" style="width:auto;" />
+        Tylko Polska
+      </label>
+      <button class="btn btn-primary" id="btnItfParse" type="button">Analizuj</button>
+    </div>
+    <p id="itfInfo" style="font-size:13px; color:var(--text-muted);"></p>
+    <div class="table-wrap" id="itfPreviewWrap" hidden>
+      <table>
+        <thead>
+          <tr><th></th><th>Nazwa</th><th>Miasto</th><th>Kraj</th><th>Od</th><th>Do</th><th>Kategoria</th></tr>
+        </thead>
+        <tbody id="itfBody"></tbody>
+      </table>
+    </div>
+    <div class="toolbar" id="itfSaveBar" hidden style="margin-top:8px;">
+      <button class="btn btn-primary" id="btnItfSave" type="button">Zapisz zaznaczone</button>
+    </div>
+  </section>
 </div>
 
 <script>
@@ -245,6 +279,140 @@
     loadReports();
     loadBugs();
   }
+
+
+  // ── Import turniejów ITF (wklejony tekst) ────────────────────────────────
+  const MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+    sty: 1, lut: 2, kwi: 4, maj: 5, cze: 6, lip: 7, sie: 8, wrz: 9, paz: 10, lis: 11, gru: 12 };
+  const CAT_RE = /\bJ(?:\d{2,3}|A|B\d?)\b/;
+  const RANGE_RE = /(\d{1,2})\s*([A-Za-z]{3,9})?\.?\s*(\d{4})?\s*(?:-|–|—|to|do)\s*(\d{1,2})\s*([A-Za-z]{3,9})\.?\s*(\d{4})?/i;
+  const NOISE_RE = /^(tournament|date|dates|location|category|surface|entry|deadline|status|calendar|filter|search|all|load more|show|results?|apply|reset|clear|\d+ results?)\b/i;
+  const PL_NAMES = /^(pol|poland|polska)$/i;
+
+  function monthNum(w) {
+    if (!w) return null;
+    return MONTHS[w.toLowerCase().replace("ó", "o").slice(0, 3)] ?? null;
+  }
+  function iso(y, m, d) {
+    return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+  function slug(s) {
+    return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+
+  function parseDates(line, defYear) {
+    const isoDates = line.match(/\d{4}-\d{2}-\d{2}/g);
+    if (isoDates && isoDates.length >= 2) return { from: isoDates[0], to: isoDates[1] };
+    const m = line.match(RANGE_RE);
+    if (!m) return null;
+    const d1 = +m[1], d2 = +m[4];
+    const m2 = monthNum(m[5]);
+    const m1 = monthNum(m[2]) ?? m2;
+    if (!m1 || !m2 || d1 < 1 || d1 > 31 || d2 < 1 || d2 > 31) return null;
+    const y2 = +(m[6] ?? m[3] ?? defYear);
+    const y1 = +(m[3] ?? (m1 > m2 ? y2 - 1 : y2));
+    return { from: iso(y1, m1, d1), to: iso(y2, m2, d2) };
+  }
+
+  function parseSemicolonLine(line) {
+    const parts = line.split(/;|\t/).map((x) => x.trim());
+    if (parts.length < 5) return null;
+    const dates = parts.filter((p) => /^\d{4}-\d{2}-\d{2}$/.test(p));
+    if (dates.length < 2) return null;
+    return { name: parts[0], city: parts[1] || null, country: parts[2] || "Polska", from: dates[0], to: dates[1], category: parts[5] || null };
+  }
+
+  function isSkippable(c, defYear) {
+    return parseDates(c, defYear) || NOISE_RE.test(c) || (CAT_RE.test(c) && c.length <= 6);
+  }
+
+  function parseItf(text, defYear) {
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const out = [];
+    const seen = new Set();
+    lines.forEach((line, i) => {
+      const semi = parseSemicolonLine(line);
+      if (semi) { out.push(semi); return; }
+      const dates = parseDates(line, defYear);
+      if (!dates) return;
+      let name = null;
+      for (let k = i - 1; k >= Math.max(0, i - 4) && !name; k--) {
+        if (!isSkippable(lines[k], defYear)) name = lines[k];
+      }
+      for (let k = i + 1; k <= Math.min(lines.length - 1, i + 3) && !name; k++) {
+        if (!isSkippable(lines[k], defYear)) name = lines[k];
+      }
+      if (!name) return;
+      const around = lines.slice(Math.max(0, i - 4), i + 6);
+      const cat = around.map((l) => l.match(CAT_RE)?.[0]).find(Boolean) ?? null;
+      let country = null, city = null;
+      for (const l of lines.slice(i + 1, i + 6)) {
+        if (parseDates(l, defYear) || (CAT_RE.test(l) && l.length <= 6)) continue;
+        const loc = l.match(/^([^,()]+?)\s*[,(]\s*([A-Za-z]{3}|[A-Za-zÀ-ž ]{4,})\)?$/);
+        if (loc) { city = loc[1].trim(); country = loc[2].trim(); break; }
+        if (/^[A-Z]{3}$/.test(l)) { country = l; break; }
+      }
+      const key = name + dates.from;
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push({ name, city, country: country ?? "", from: dates.from, to: dates.to, category: cat });
+    });
+    return out;
+  }
+
+  let itfRows = [];
+
+  document.getElementById("btnItfParse").addEventListener("click", () => {
+    const text = document.getElementById("itfPaste").value;
+    const defYear = +document.getElementById("itfYear").value || new Date().getFullYear();
+    const onlyPl = document.getElementById("itfOnlyPl").checked;
+    let rows = parseItf(text, defYear);
+    if (onlyPl) rows = rows.filter((r) => PL_NAMES.test((r.country || "").trim()));
+    itfRows = rows;
+    const info = document.getElementById("itfInfo");
+    const wrap = document.getElementById("itfPreviewWrap");
+    const bar = document.getElementById("itfSaveBar");
+    if (rows.length === 0) {
+      info.textContent = "Nie rozpoznano żadnych turniejów. Wklej krótki fragment skopiowanego tekstu do rozmowy z asystentem, a dostosuje analizator.";
+      wrap.hidden = true;
+      bar.hidden = true;
+      return;
+    }
+    info.textContent = `Rozpoznano turniejów: ${rows.length}. Odznacz te, których nie chcesz zapisać.`;
+    document.getElementById("itfBody").innerHTML = rows
+      .map(
+        (r, i) => `<tr>
+          <td><input type="checkbox" class="itf-check" data-i="${i}" checked style="width:auto;" /></td>
+          <td>${esc(r.name)}</td><td>${esc(r.city ?? "")}</td><td>${esc(r.country ?? "")}</td>
+          <td>${esc(r.from)}</td><td>${esc(r.to)}</td><td>${esc(r.category ?? "")}</td></tr>`
+      )
+      .join("");
+    wrap.hidden = false;
+    bar.hidden = false;
+  });
+
+  document.getElementById("btnItfSave").addEventListener("click", async () => {
+    const btn = document.getElementById("btnItfSave");
+    const info = document.getElementById("itfInfo");
+    const chosen = [...document.querySelectorAll(".itf-check")].filter((c) => c.checked).map((c) => itfRows[+c.dataset.i]);
+    if (chosen.length === 0) { info.textContent = "Nic nie zaznaczono."; return; }
+    btn.disabled = true;
+    btn.textContent = "Zapisuję…";
+    const payload = chosen.map((r) => ({
+      source: "itf",
+      external_id: `${slug(r.name)}_${r.from}`,
+      name: r.name,
+      city: r.city || null,
+      country: r.country || "Polska",
+      category: r.category || null,
+      starts_on: r.from,
+      ends_on: r.to,
+    }));
+    const { error } = await db.from("tournaments").upsert(payload, { onConflict: "source,external_id" });
+    btn.disabled = false;
+    btn.textContent = "Zapisz zaznaczone";
+    info.textContent = error ? `Błąd zapisu: ${error.message}` : `Zapisano turniejów: ${payload.length}. Widać je w zakładce Turnieje w aplikacji.`;
+  });
 
   // ── Dashboard ────────────────────────────────────────────────────────────
   function renderStats(s) {
