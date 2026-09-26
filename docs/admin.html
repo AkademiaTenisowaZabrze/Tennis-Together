@@ -211,6 +211,7 @@
     </div>
     <div class="toolbar" id="itfSaveBar" hidden style="margin-top:8px;">
       <button class="btn btn-primary" id="btnItfSave" type="button">Zapisz zaznaczone</button>
+      <span id="itfSaveInfo" style="font-size:14px; font-weight:600;"></span>
     </div>
   </section>
 </div>
@@ -388,7 +389,7 @@ let itfRows = [];
     const btn = document.getElementById("btnItfSave");
     const info = document.getElementById("itfInfo");
     const chosen = [...document.querySelectorAll(".itf-check")].filter((c) => c.checked).map((c) => itfRows[+c.dataset.i]);
-    if (chosen.length === 0) { info.textContent = "Nic nie zaznaczono."; return; }
+    if (chosen.length === 0) { info.textContent = "Nic nie zaznaczono."; document.getElementById("itfSaveInfo").textContent = "Nic nie zaznaczono."; return; }
     btn.disabled = true;
     btn.textContent = "Zapisuję…";
     const payload = chosen.map((r) => ({
@@ -404,7 +405,11 @@ let itfRows = [];
     const { error } = await db.from("tournaments").upsert(payload, { onConflict: "source,external_id" });
     btn.disabled = false;
     btn.textContent = "Zapisz zaznaczone";
-    info.textContent = error ? `Błąd zapisu: ${error.message}` : `Zapisano turniejów: ${payload.length}. Widać je w zakładce Turnieje w aplikacji.`;
+    const msg = error ? `Błąd zapisu: ${error.message}` : `Zapisano turniejów: ${payload.length}. Widać je w zakładce Turnieje w aplikacji.`;
+    info.textContent = msg;
+    const saveInfo = document.getElementById("itfSaveInfo");
+    saveInfo.textContent = msg;
+    saveInfo.style.color = error ? "#ff6b6b" : "#7CFC9A";
   });
 
   // ── Dashboard ────────────────────────────────────────────────────────────
