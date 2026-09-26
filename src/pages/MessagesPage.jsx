@@ -65,14 +65,17 @@ function ChatView({ conversation, account, onBack }) {
   const { messages, loading, error, sendMessage } = useMessages(conversation.id, account?.id);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState(null);
 
   const handleSend = async (e) => {
     e.preventDefault();
     if (!draft.trim()) return;
     setSending(true);
+    setSendError(null);
     const { error } = await sendMessage(draft);
     setSending(false);
-    if (!error) setDraft("");
+    if (error) setSendError("Nie udało się wysłać wiadomości. Spróbuj ponownie.");
+    else setDraft("");
   };
 
   return (
@@ -108,6 +111,7 @@ function ChatView({ conversation, account, onBack }) {
         })}
       </div>
 
+      {sendError && <ErrorBox>{sendError}</ErrorBox>}
       <form onSubmit={handleSend} style={{ display: "flex", gap: 8, marginTop: 12 }}>
         <input
           value={draft}

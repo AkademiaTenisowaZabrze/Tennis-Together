@@ -288,7 +288,7 @@
   // Kategoria jako osobna linia (np. J30, J300, JGS dla US Open juniorów).
   const CAT_LINE_RE = /^(?:J\d{2,3}|JGS|JA|JB\d?)$/i;
   const CAT_IN_NAME_RE = /\bJ(?:\d{2,3}|GS|A|B\d?)\b/;
-  const RANGE_RE = /(\d{1,2})\s*(\p{L}{3,10})?\.?\s*(\d{4})?\s*(?:r\.)?\s*(?:-|–|—|to|do)\s*(\d{1,2})\s*(\p{L}{3,10})\.?\s*(\d{4})?/iu;
+  const RANGE_RE = /(\d{1,2})\s*(\p{L}{3,14})?\.?\s*(\d{4})?\s*(?:r\.)?\s*(?:-|–|—|to|do)\s*(\d{1,2})\s*(\p{L}{3,14})\.?\s*(\d{4})?/iu;
   const PL_NAMES = /^(pol|poland|polska)$/i;
 
   function monthNum(w) {

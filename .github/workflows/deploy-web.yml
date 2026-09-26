@@ -56,8 +56,8 @@ jobs:
           mkdir -p _site/app
           cp -r docs/. _site/
           cp -r dist/. _site/app/
-          # GitHub Pages nie zna tras SPA - odświeżenie /app/xyz dałoby 404
-          cp dist/index.html _site/app/404.html
+          # Adresy tras aplikacji (/app/turnieje) obsługuje docs/404.html z korzenia
+          # strony (GitHub Pages czyta tylko ten jeden plik 404) - patrz src/main.jsx.
           touch _site/.nojekyll
 
       - uses: actions/upload-pages-artifact@v3

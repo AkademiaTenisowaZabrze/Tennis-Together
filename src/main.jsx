@@ -5,6 +5,17 @@ import App from "./App.jsx";
 import { AuthProvider } from "./lib/AuthContext.jsx";
 import "./index.css";
 
+// Powrót ze strony docs/404.html: adres /app/turnieje trafia tu jako
+// /app/?/turnieje (GitHub Pages nie zna tras SPA). Przywracamy prawdziwy adres
+// zanim wystartuje router.
+(function restoreSpaPath() {
+  const q = window.location.search;
+  if (!q.startsWith("?/")) return;
+  const [path, ...rest] = q.slice(2).split("&").map((s) => s.replace(/~and~/g, "&"));
+  const search = rest.length ? "?" + rest.join("&") : "";
+  window.history.replaceState(null, "", import.meta.env.BASE_URL + path + search + window.location.hash);
+})();
+
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <AuthProvider>

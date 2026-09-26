@@ -34,6 +34,13 @@ export function usePushNotifications(accountId) {
             { onConflict: "account_id,token" }
           );
         if (error) console.error("[push] Nie udało się zapisać tokenu urządzenia:", error.message);
+        else {
+          try {
+            localStorage.setItem("tennis-together-push-token", token.value);
+          } catch {
+            // brak localStorage nie może psuć rejestracji push
+          }
+        }
       });
 
       errorListener = await PushNotifications.addListener("registrationError", (err) => {

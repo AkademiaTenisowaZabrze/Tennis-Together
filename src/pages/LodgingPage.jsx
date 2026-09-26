@@ -77,13 +77,17 @@ export default function LodgingPage() {
 function IncomingRequests({ joinRequests, account }) {
   const { incoming, respond } = joinRequests;
   const [busyId, setBusyId] = useState(null);
+  const [notice, setNotice] = useState(null);
 
   if (incoming.length === 0) return null;
 
   const handle = async (id, status) => {
     setBusyId(id);
-    await respond(id, status);
+    setNotice(null);
+    const { error, warning } = await respond(id, status);
     setBusyId(null);
+    if (error) setNotice(error.message || "Nie udało się zapisać odpowiedzi. Spróbuj ponownie.");
+    else if (warning) setNotice(warning);
   };
 
   return (
@@ -91,6 +95,7 @@ function IncomingRequests({ joinRequests, account }) {
       <p style={{ margin: "0 0 10px", fontWeight: 700 }}>
         Prośby o dołączenie do Twoich noclegów ({incoming.length})
       </p>
+      {notice && <ErrorBox>{notice}</ErrorBox>}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {incoming.map((r) => (
           <div key={r.id} className="list-item" style={{ flexDirection: "column", alignItems: "stretch", gap: 10 }}>

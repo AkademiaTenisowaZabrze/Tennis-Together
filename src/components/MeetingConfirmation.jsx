@@ -37,13 +37,25 @@ export default function MeetingConfirmation({ request, joinRequests }) {
     if (!enteredCode.trim()) return;
     setBusy(true);
     setError(null);
-    const { error, mismatch } = await joinRequests.verifyMeetingCode(request.id, enteredCode);
+    const { error, failure, attemptsLeft } = await joinRequests.verifyMeetingCode(request.id, enteredCode);
     setBusy(false);
-    if (mismatch) {
-      setError("Kod się nie zgadza — sprawdź i spróbuj ponownie.");
+    if (failure === "mismatch") {
+      setError(`Kod się nie zgadza. Sprawdź i spróbuj ponownie (pozostało prób: ${attemptsLeft ?? 0}).`);
       return;
     }
-    if (error) setError("Nie udało się potwierdzić.");
+    if (failure === "locked") {
+      setError("Zbyt wiele błędnych prób. Niech druga osoba wygeneruje nowy kod.");
+      return;
+    }
+    if (failure === "own_code") {
+      setError("To Twój własny kod. Wpisać go musi druga osoba.");
+      return;
+    }
+    if (failure === "no_code") {
+      setError("Druga osoba nie wygenerowała jeszcze kodu.");
+      return;
+    }
+    if (failure || error) setError("Nie udało się potwierdzić.");
   };
 
   if (!mode) {

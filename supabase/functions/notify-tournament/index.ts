@@ -101,6 +101,25 @@ Deno.serve(async (req) => {
 
   try {
     const { trip_id, offer_kind } = await req.json();
+    if (typeof trip_id !== "string" || (offer_kind !== "ride" && offer_kind !== "lodging")) {
+      return new Response(JSON.stringify({ error: "bad request" }), { status: 400 });
+    }
+
+    // Powiadamiamy tylko o ŚWIEŻEJ ofercie (dodanej w ostatnich 2 minutach).
+    // Funkcję da się wywołać publicznym kluczem, więc bez tego ktoś mógłby
+    // ją wołać w kółko i spamować użytkowników powiadomieniami (audyt
+    // 2026-09-16). Zwykłe wywołanie z triggera po INSERT zawsze to spełnia.
+    const offersTable = offer_kind === "lodging" ? "lodging_offers" : "ride_offers";
+    const since = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    const { data: fresh } = await supabase
+      .from(offersTable)
+      .select("id")
+      .eq("trip_id", trip_id)
+      .gte("created_at", since)
+      .limit(1);
+    if (!fresh || fresh.length === 0) {
+      return new Response(JSON.stringify({ skipped: "no fresh offer" }), { status: 200 });
+    }
 
     const { data: trip, error: tripError } = await supabase
       .from("trips")

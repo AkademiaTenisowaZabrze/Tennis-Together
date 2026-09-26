@@ -9,6 +9,7 @@ const AuthContext = createContext(null);
 // z maila, czyli w innej "wizycie" niż wypełnianie formularza). Bez tego
 // nie mielibyśmy skąd wziąć roli/imienia przy tworzeniu wiersza w `accounts`.
 const PENDING_PROFILE_KEY = "tennis-together-pending-profile";
+const PUSH_TOKEN_KEY = "tennis-together-push-token";
 
 export function AuthProvider({ children }) {
   // undefined = jeszcze nie wiadomo (trwa sprawdzanie), null = wylogowany
@@ -95,7 +96,22 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const signOut = () => supabase.auth.signOut();
+  // Przy wylogowaniu usuwamy token powiadomień TEGO urządzenia, żeby na
+  // wspólnym telefonie/komputerze powiadomienia poprzedniego konta nie
+  // trafiały do kolejnej osoby (audyt 2026-09-16). Token zapisuje
+  // usePushNotifications / useWebPush pod kluczem PUSH_TOKEN_KEY.
+  const signOut = async () => {
+    try {
+      const token = localStorage.getItem(PUSH_TOKEN_KEY);
+      if (token && session?.user?.id) {
+        await supabase.from("device_tokens").delete().eq("account_id", session.user.id).eq("token", token);
+        localStorage.removeItem(PUSH_TOKEN_KEY);
+      }
+    } catch {
+      // wylogowanie ma się udać nawet wtedy, gdy sprzątanie tokenu zawiedzie
+    }
+    return supabase.auth.signOut();
+  };
 
   const updateAccount = async (fields) => {
     if (!account) return { error: new Error("Brak zalogowanego konta.") };

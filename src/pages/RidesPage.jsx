@@ -94,7 +94,7 @@ export default function RidesPage() {
           {offersLoading && <p style={{ color: "var(--color-text-muted)" }}>Wczytywanie…</p>}
           {!offersLoading && !myCoords && offers.length > 0 && (
             <p style={{ margin: 0, fontSize: 12, color: "var(--color-text-muted)" }}>
-              Ustaw swoje miasto w <Link to="/profil">Profilu</Link>, żeby zobaczyć oferty najbliższe Tobie.
+              Ustaw swoje miasto w <Link to="/profil">Profilu</Link> (miasto musi być z listy polskich miast), żeby zobaczyć oferty najbliższe Tobie.
             </p>
           )}
           {!offersLoading &&
@@ -140,13 +140,17 @@ export default function RidesPage() {
 function IncomingRequests({ joinRequests, account }) {
   const { incoming, respond } = joinRequests;
   const [busyId, setBusyId] = useState(null);
+  const [notice, setNotice] = useState(null);
 
   if (incoming.length === 0) return null;
 
   const handle = async (id, status) => {
     setBusyId(id);
-    await respond(id, status);
+    setNotice(null);
+    const { error, warning } = await respond(id, status);
     setBusyId(null);
+    if (error) setNotice(error.message || "Nie udało się zapisać odpowiedzi. Spróbuj ponownie.");
+    else if (warning) setNotice(warning);
   };
 
   return (
@@ -154,6 +158,7 @@ function IncomingRequests({ joinRequests, account }) {
       <p style={{ margin: "0 0 10px", fontWeight: 700 }}>
         Prośby o dołączenie do Twoich przejazdów ({incoming.length})
       </p>
+      {notice && <ErrorBox>{notice}</ErrorBox>}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {incoming.map((r) => (
           <div key={r.id} className="list-item" style={{ flexDirection: "column", alignItems: "stretch", gap: 10 }}>

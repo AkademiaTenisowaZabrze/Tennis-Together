@@ -39,6 +39,11 @@ async function registerToken(accountId) {
     .from("device_tokens")
     .upsert({ account_id: accountId, token, platform: "web" }, { onConflict: "account_id,token" });
   if (error) throw error;
+  try {
+    localStorage.setItem("tennis-together-push-token", token);
+  } catch {
+    // localStorage może być niedostępny (tryb prywatny)
+  }
 }
 
 // Powiadomienia push w przeglądarce. Prośbę o zgodę pokazujemy dopiero po

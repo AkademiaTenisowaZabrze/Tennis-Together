@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tennis Together</title>
+<script>
+  // GitHub Pages uzywa tylko tego pliku 404.html z korzenia strony. Adresy
+  // aplikacji (np. /Tennis-Together/app/turnieje) nie istnieja jako pliki,
+  // wiec przekierowujemy je na index aplikacji, zachowujac sciezke w
+  // parametrze ?/..., ktory main.jsx odczytuje i zamienia z powrotem na
+  // adres. Kazda inna nieistniejaca strona pokazuje zwykly komunikat nizej.
+  (function () {
+    var l = window.location;
+    var m = l.pathname.match(/^(\/[^/]+\/app\/)(.+)$/);
+    if (!m) return;
+    var query = l.search ? "&" + l.search.slice(1).replace(/&/g, "~and~") : "";
+    l.replace(m[1] + "?/" + m[2].replace(/&/g, "~and~") + query + l.hash);
+  })();
+</script>
+<style>
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:#0d131e; color:#f4f6fb; font-family:system-ui,sans-serif; text-align:center; padding:24px; }
+  a { color:#d4ff00; }
+</style>
+</head>
+<body>
+  <div>
+    <h1>Nie znaleziono strony</h1>
+    <p>Tej strony nie ma. <a href="./">Wróć do początku</a>.</p>
+  </div>
+</body>
+</html>

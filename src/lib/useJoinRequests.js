@@ -85,6 +85,7 @@ export function useJoinRequests(kind, accountId) {
     // 0008_messages_rls.sql (jedyna droga do rozmowy to zaakceptowana
     // prośba). Best-effort: jeśli się nie uda, prośba i tak jest
     // zaakceptowana, tylko czat trzeba by dodać ręcznie później.
+    let warning = null;
     if (status === "accepted") {
       const requesterAccountId = data.requester_trip?.created_by_account_id;
       if (!requesterAccountId || !accountId) {
@@ -95,6 +96,7 @@ export function useJoinRequests(kind, accountId) {
           "[useJoinRequests] Brak requester_trip.created_by_account_id — rozmowa NIE powstała dla",
           requestId
         );
+        warning = "Zaakceptowano, ale nie udało się otworzyć czatu. Odśwież stronę i spróbuj ponownie.";
       } else {
         // UWAGA: id generujemy PO STRONIE KLIENTA i wstawiamy bez
         // .select() po insercie. Gdyby dociągnąć id z powrotem przez
@@ -112,6 +114,7 @@ export function useJoinRequests(kind, accountId) {
           .insert({ id: conversationId, kind, [cfg.offerFk]: data[cfg.offerFk] });
         if (convError) {
           console.error("[useJoinRequests] Nie udało się utworzyć rozmowy:", convError.message);
+          warning = "Zaakceptowano, ale nie udało się otworzyć czatu. Odśwież stronę i spróbuj ponownie.";
         } else {
           const { error: participantsError } = await supabase.from("conversation_participants").insert([
             { conversation_id: conversationId, account_id: accountId },
@@ -119,12 +122,13 @@ export function useJoinRequests(kind, accountId) {
           ]);
           if (participantsError) {
             console.error("[useJoinRequests] Nie udało się dodać uczestników rozmowy:", participantsError.message);
+            warning = "Zaakceptowano, ale nie udało się otworzyć czatu. Odśwież stronę i spróbuj ponownie.";
           }
         }
       }
     }
 
-    return { data };
+    return { data, warning };
   };
 
   // "Cofnij prośbę" — proszący rezygnuje, zanim właściciel oferty
@@ -162,16 +166,26 @@ export function useJoinRequests(kind, accountId) {
     return { data };
   };
 
+  // Kod sprawdza funkcja w bazie (confirm_meeting, patrz
+  // 0026_meeting_confirmation_server_side.sql), a nie przeglądarka: baza
+  // liczy błędne próby, nie pozwala potwierdzić własnym kodem i odrzuca
+  // każdą inną drogę ustawienia potwierdzenia.
   const verifyMeetingCode = async (requestId, enteredCode) => {
-    const { data, error } = await supabase
-      .from(cfg.table)
-      .update({ meeting_confirmed_at: new Date().toISOString(), meeting_confirmed_by: accountId })
-      .eq("id", requestId)
-      .eq("meeting_code", enteredCode.trim().toUpperCase())
-      .select(`*, requester_trip:trips(departure_city, created_by_account_id, players(first_name)), ${cfg.offerEmbed}`)
-      .maybeSingle();
+    const { data: res, error } = await supabase.rpc("confirm_meeting", {
+      p_request_id: requestId,
+      p_kind: kind,
+      p_code: enteredCode,
+    });
     if (error) return { error };
-    if (!data) return { mismatch: true };
+    if (res?.result !== "ok" && res?.result !== "already") {
+      return { failure: res?.result ?? "error", attemptsLeft: res?.attempts_left };
+    }
+    const { data, error: readError } = await supabase
+      .from(cfg.table)
+      .select(`*, requester_trip:trips(departure_city, created_by_account_id, players(first_name)), ${cfg.offerEmbed}`)
+      .eq("id", requestId)
+      .single();
+    if (readError) return { error: readError };
     setRows((prev) => prev.map((r) => (r.id === requestId ? data : r)));
     return { data };
   };
