@@ -7,6 +7,7 @@ import { supabase } from "../lib/supabase.js";
 import ErrorBox from "../components/ErrorBox.jsx";
 import { inputStyle, labelStyle } from "../components/formStyles.js";
 import { APP_VERSION } from "../lib/appVersion.js";
+import { useWebPush } from "../lib/useWebPush.js";
 
 const ROLE_LABELS = {
   parent: "Rodzic",
@@ -191,6 +192,8 @@ function ParentProfile() {
         <p style={{ margin: 0 }}>{mock.completedTrips} zakończone wyjazdy</p>
       </div>
 
+      <WebPushSection accountId={account?.id} />
+
       <div style={{ display: "flex", gap: 8 }}>
         <button className="btn-ghost" onClick={() => setEditing(true)}>
           Edytuj profil
@@ -199,6 +202,30 @@ function ParentProfile() {
           Wyloguj
         </button>
       </div>
+    </div>
+  );
+}
+
+function WebPushSection({ accountId }) {
+  const { permission, busy, error, enable, available } = useWebPush(accountId);
+  // W aplikacji na telefonie powiadomienia włączają się same, a w przeglądarce
+  // bez skonfigurowanego Firebase (firebaseWebConfig.js) ta sekcja się nie pokazuje.
+  if (!available) return null;
+  return (
+    <div>
+      <p style={{ margin: "0 0 6px", fontSize: 13, color: "var(--color-text-muted)" }}>Powiadomienia w przeglądarce</p>
+      {permission === "granted" ? (
+        <p style={{ margin: 0, fontSize: 13 }}>Włączone. Dostaniesz powiadomienie o nowych ofertach na Twoje turnieje.</p>
+      ) : permission === "denied" ? (
+        <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)" }}>
+          Zablokowane w ustawieniach przeglądarki. Odblokuj je przy ikonie kłódki obok adresu strony.
+        </p>
+      ) : (
+        <button className="btn-ghost" onClick={enable} disabled={busy}>
+          {busy ? "Włączam…" : "Włącz powiadomienia"}
+        </button>
+      )}
+      {error && <ErrorBox>{error}</ErrorBox>}
     </div>
   );
 }
