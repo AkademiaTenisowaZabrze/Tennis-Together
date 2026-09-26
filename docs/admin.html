@@ -284,14 +284,16 @@
   // ── Import turniejów ITF (wklejony tekst) ────────────────────────────────
   const MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
     sty: 1, lut: 2, kwi: 4, maj: 5, cze: 6, lip: 7, sie: 8, wrz: 9, paz: 10, lis: 11, gru: 12 };
-  const CAT_RE = /\bJ(?:\d{2,3}|A|B\d?)\b/;
-  const RANGE_RE = /(\d{1,2})\s*([A-Za-z]{3,9})?\.?\s*(\d{4})?\s*(?:-|–|—|to|do)\s*(\d{1,2})\s*([A-Za-z]{3,9})\.?\s*(\d{4})?/i;
-  const NOISE_RE = /^(tournament|date|dates|location|category|surface|entry|deadline|status|calendar|filter|search|all|load more|show|results?|apply|reset|clear|\d+ results?)\b/i;
+  // Kategoria jako osobna linia (np. J30, J300, JGS dla US Open juniorów).
+  const CAT_LINE_RE = /^(?:J\d{2,3}|JGS|JA|JB\d?)$/i;
+  const CAT_IN_NAME_RE = /\bJ(?:\d{2,3}|GS|A|B\d?)\b/;
+  const RANGE_RE = /(\d{1,2})\s*(\p{L}{3,10})?\.?\s*(\d{4})?\s*(?:r\.)?\s*(?:-|–|—|to|do)\s*(\d{1,2})\s*(\p{L}{3,10})\.?\s*(\d{4})?/iu;
   const PL_NAMES = /^(pol|poland|polska)$/i;
 
   function monthNum(w) {
     if (!w) return null;
-    return MONTHS[w.toLowerCase().replace("ó", "o").slice(0, 3)] ?? null;
+    const key = w.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace("ł", "l").slice(0, 3);
+    return MONTHS[key] ?? null;
   }
   function iso(y, m, d) {
     return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -322,10 +324,10 @@
     return { name: parts[0], city: parts[1] || null, country: parts[2] || "Polska", from: dates[0], to: dates[1], category: parts[5] || null };
   }
 
-  function isSkippable(c, defYear) {
-    return parseDates(c, defYear) || NOISE_RE.test(c) || (CAT_RE.test(c) && c.length <= 6);
-  }
-
+  // Układ kalendarza ITF (po skopiowaniu strony), jeden turniej to blok linii:
+  //   nazwa / daty / kraj / miasto / kategoria / hala-na zewnatrz / - / nawierzchnia
+  // Bloki rozpoznajemy po linii z datami, za którą w ciągu kilku linii jest
+  // linia z samą kategorią. To odsiewa m.in. nagłówek z zakresem "Od 1 do 30 września".
   function parseItf(text, defYear) {
     const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
     const out = [];
@@ -334,33 +336,24 @@
       const semi = parseSemicolonLine(line);
       if (semi) { out.push(semi); return; }
       const dates = parseDates(line, defYear);
-      if (!dates) return;
-      let name = null;
-      for (let k = i - 1; k >= Math.max(0, i - 4) && !name; k--) {
-        if (!isSkippable(lines[k], defYear)) name = lines[k];
+      if (!dates || i === 0) return;
+      let catIdx = -1;
+      for (let k = i + 1; k <= Math.min(lines.length - 1, i + 4); k++) {
+        if (CAT_LINE_RE.test(lines[k])) { catIdx = k; break; }
       }
-      for (let k = i + 1; k <= Math.min(lines.length - 1, i + 3) && !name; k++) {
-        if (!isSkippable(lines[k], defYear)) name = lines[k];
-      }
-      if (!name) return;
-      const around = lines.slice(Math.max(0, i - 4), i + 6);
-      const cat = around.map((l) => l.match(CAT_RE)?.[0]).find(Boolean) ?? null;
-      let country = null, city = null;
-      for (const l of lines.slice(i + 1, i + 6)) {
-        if (parseDates(l, defYear) || (CAT_RE.test(l) && l.length <= 6)) continue;
-        const loc = l.match(/^([^,()]+?)\s*[,(]\s*([A-Za-z]{3}|[A-Za-zÀ-ž ]{4,})\)?$/);
-        if (loc) { city = loc[1].trim(); country = loc[2].trim(); break; }
-        if (/^[A-Z]{3}$/.test(l)) { country = l; break; }
-      }
+      if (catIdx === -1) return;
+      const name = lines[i - 1];
+      const country = catIdx - i >= 3 ? lines[i + 1] : catIdx - i === 2 ? lines[i + 1] : "";
+      const city = catIdx - i >= 3 ? lines[i + 2] : null;
       const key = name + dates.from;
       if (seen.has(key)) return;
       seen.add(key);
-      out.push({ name, city, country: country ?? "", from: dates.from, to: dates.to, category: cat });
+      out.push({ name, city, country, from: dates.from, to: dates.to, category: lines[catIdx].toUpperCase() });
     });
     return out;
   }
 
-  let itfRows = [];
+let itfRows = [];
 
   document.getElementById("btnItfParse").addEventListener("click", () => {
     const text = document.getElementById("itfPaste").value;
