@@ -106,7 +106,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", width: "100%", maxWidth: 720, margin: "0 auto" }}>
       <header
         style={{
           display: "flex",
