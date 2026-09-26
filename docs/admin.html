@@ -70,6 +70,9 @@
   .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--card-border); }
   .btn-danger { background: var(--secondary); color: #fff; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .itf-reminder { border: 1px solid var(--card-border); border-radius: 14px; padding: 12px 14px; margin: 0 0 14px; background: var(--bg-elevated); }
+  .itf-reminder.warn { border-color: var(--secondary); }
+  .itf-reminder p { margin: 0 0 10px; font-size: 14px; }
 
   .error { color: var(--secondary); font-size: 13px; margin: 0; }
 
@@ -182,6 +185,14 @@
   </section>
   <section id="turnieje">
     <h2>Turnieje: import ITF</h2>
+    <div class="itf-reminder" id="itfReminder">
+      <p id="itfReminderText">Sprawdzam stan importu…</p>
+      <div class="toolbar">
+        <a class="btn btn-primary" id="itfLinkNow" href="#" target="_blank" rel="noopener noreferrer">Otwórz kalendarz ITF (ten miesiąc)</a>
+        <a class="btn btn-ghost" id="itfLinkNext" href="#" target="_blank" rel="noopener noreferrer">Następny miesiąc</a>
+        <button class="btn btn-ghost" id="btnItfChecked" type="button">Sprawdziłem, nic nowego</button>
+      </div>
+    </div>
     <p style="color:var(--text-muted); font-size:13px; margin:0 0 12px;">
       Kalendarz ITF chroni system antybotowy, więc pobierasz go sam w swojej przeglądarce:
       otwórz stronę kalendarza juniorów ITF, przejdź test, zaznacz całość (Ctrl+A), skopiuj (Ctrl+C)
@@ -204,7 +215,7 @@
     <div class="table-wrap" id="itfPreviewWrap" hidden>
       <table>
         <thead>
-          <tr><th></th><th>Nazwa</th><th>Miasto</th><th>Kraj</th><th>Od</th><th>Do</th><th>Kategoria</th></tr>
+          <tr><th></th><th>Status</th><th>Nazwa</th><th>Miasto</th><th>Kraj</th><th>Od</th><th>Do</th><th>Kategoria</th></tr>
         </thead>
         <tbody id="itfBody"></tbody>
       </table>
@@ -279,6 +290,7 @@
     loadAccounts();
     loadReports();
     loadBugs();
+    loadItfStatus();
   }
 
 
@@ -356,45 +368,142 @@
 
 let itfRows = [];
 
-  document.getElementById("btnItfParse").addEventListener("click", () => {
+  const ITF_URL = "https://www.itftennis.com/en/tournament-calendar/world-tennis-tour-juniors-calendar/";
+  const ITF_CHECK_KEY = "tt-itf-last-check";
+
+  function itfLink(monthOffset) {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + monthOffset);
+    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    return `${ITF_URL}?categories=All&startdate=${ym}`;
+  }
+
+  function daysSince(iso) {
+    return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  }
+
+  function markItfChecked() {
+    try { localStorage.setItem(ITF_CHECK_KEY, new Date().toISOString()); } catch (e) { /* tryb prywatny */ }
+    loadItfStatus();
+  }
+
+  // Przypomnienie o regularnym sprawdzaniu ITF: liczymy od ostatniego zapisu
+  // nowego turnieju albo od kliknięcia "Sprawdziłem, nic nowego" (to drugie
+  // pamiętane tylko w tej przeglądarce), zależnie co było później.
+  async function loadItfStatus() {
+    document.getElementById("itfLinkNow").href = itfLink(0);
+    document.getElementById("itfLinkNext").href = itfLink(1);
+    const box = document.getElementById("itfReminder");
+    const text = document.getElementById("itfReminderText");
+    const { data, error } = await db
+      .from("tournaments")
+      .select("created_at")
+      .eq("source", "itf")
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) {
+      text.textContent = "Nie udało się sprawdzić stanu importu ITF.";
+      return;
+    }
+    let last = data && data[0] ? data[0].created_at : null;
+    try {
+      const local = localStorage.getItem(ITF_CHECK_KEY);
+      if (local && (!last || new Date(local) > new Date(last))) last = local;
+    } catch (e) { /* tryb prywatny */ }
+    if (!last) {
+      box.classList.add("warn");
+      text.textContent = "Nie zaimportowano jeszcze żadnych turniejów ITF. Otwórz kalendarz, skopiuj listę i wklej ją poniżej.";
+      return;
+    }
+    const days = daysSince(last);
+    if (days >= 7) {
+      box.classList.add("warn");
+      text.textContent = `Minęło ${days} dni od ostatniego sprawdzenia ITF. Sprawdź, czy są nowe turnieje (najlepiej raz w tygodniu).`;
+    } else {
+      box.classList.remove("warn");
+      text.textContent = `Ostatnie sprawdzenie ITF: ${days === 0 ? "dzisiaj" : days + " dni temu"}. Kolejne za około tydzień.`;
+    }
+  }
+
+  document.getElementById("btnItfChecked").addEventListener("click", markItfChecked);
+
+  const normCity = (c) => slug(c || "");
+
+  document.getElementById("btnItfParse").addEventListener("click", async () => {
     const text = document.getElementById("itfPaste").value;
     const defYear = +document.getElementById("itfYear").value || new Date().getFullYear();
     const onlyPl = document.getElementById("itfOnlyPl").checked;
     let rows = parseItf(text, defYear);
     if (onlyPl) rows = rows.filter((r) => PL_NAMES.test((r.country || "").trim()));
-    itfRows = rows;
     const info = document.getElementById("itfInfo");
     const wrap = document.getElementById("itfPreviewWrap");
     const bar = document.getElementById("itfSaveBar");
     if (rows.length === 0) {
+      itfRows = [];
       info.textContent = "Nie rozpoznano żadnych turniejów. Wklej krótki fragment skopiowanego tekstu do rozmowy z asystentem, a dostosuje analizator.";
       wrap.hidden = true;
       bar.hidden = true;
       return;
     }
-    info.textContent = `Rozpoznano turniejów: ${rows.length}. Odznacz te, których nie chcesz zapisać.`;
+
+    // Ochrona przed dublami: ten sam turniej wklejony drugi raz (albo z lekko
+    // zmienioną nazwą) jest oznaczany jako "Już w bazie" i domyślnie odznaczony.
+    // W bazie dodatkowo pilnuje tego unikalny klucz (źródło + identyfikator).
+    const { data: existing, error: existingError } = await db
+      .from("tournaments")
+      .select("external_id, city, starts_on, category")
+      .eq("source", "itf")
+      .limit(5000);
+    const byId = new Set((existing || []).map((e) => e.external_id));
+    const byPlace = new Set((existing || []).map((e) => `${normCity(e.city)}|${e.starts_on}|${e.category || ""}`));
+    const seen = new Set();
+    rows = rows.filter((r) => {
+      r.key = `${slug(r.name)}_${r.from}`;
+      if (seen.has(r.key)) return false;
+      seen.add(r.key);
+      return true;
+    });
+    rows.forEach((r) => {
+      r.exists = byId.has(r.key) || byPlace.has(`${normCity(r.city)}|${r.from}|${r.category || ""}`);
+    });
+    itfRows = rows;
+
+    const already = rows.filter((r) => r.exists).length;
+    info.textContent = existingError
+      ? `Rozpoznano turniejów: ${rows.length}. Nie udało się sprawdzić, które już są w bazie (${existingError.message}), ale baza i tak nie dopuści dubli.`
+      : `Rozpoznano turniejów: ${rows.length}, z tego nowych: ${rows.length - already}, już w bazie: ${already} (odznaczone).`;
     document.getElementById("itfBody").innerHTML = rows
       .map(
         (r, i) => `<tr>
-          <td><input type="checkbox" class="itf-check" data-i="${i}" checked style="width:auto;" /></td>
+          <td><input type="checkbox" class="itf-check" data-i="${i}" ${r.exists ? "" : "checked"} style="width:auto;" /></td>
+          <td>${r.exists ? "Już w bazie" : "Nowy"}</td>
           <td>${esc(r.name)}</td><td>${esc(r.city ?? "")}</td><td>${esc(r.country ?? "")}</td>
           <td>${esc(r.from)}</td><td>${esc(r.to)}</td><td>${esc(r.category ?? "")}</td></tr>`
       )
       .join("");
     wrap.hidden = false;
     bar.hidden = false;
+    document.getElementById("itfSaveInfo").textContent = "";
+    if (rows.length > 0 && already === rows.length) {
+      info.textContent += " Nic nowego do zapisania.";
+      markItfChecked();
+    }
   });
 
   document.getElementById("btnItfSave").addEventListener("click", async () => {
     const btn = document.getElementById("btnItfSave");
     const info = document.getElementById("itfInfo");
+    const saveInfo = document.getElementById("itfSaveInfo");
     const chosen = [...document.querySelectorAll(".itf-check")].filter((c) => c.checked).map((c) => itfRows[+c.dataset.i]);
-    if (chosen.length === 0) { info.textContent = "Nic nie zaznaczono."; document.getElementById("itfSaveInfo").textContent = "Nic nie zaznaczono."; return; }
+    if (chosen.length === 0) { info.textContent = "Nic nie zaznaczono."; saveInfo.textContent = "Nic nie zaznaczono."; return; }
     btn.disabled = true;
     btn.textContent = "Zapisuję…";
-    const payload = chosen.map((r) => ({
+    const unique = new Map();
+    chosen.forEach((r) => unique.set(r.key, r));
+    const payload = [...unique.values()].map((r) => ({
       source: "itf",
-      external_id: `${slug(r.name)}_${r.from}`,
+      external_id: r.key,
       name: r.name,
       city: r.city || null,
       country: r.country || "Polska",
@@ -407,9 +516,9 @@ let itfRows = [];
     btn.textContent = "Zapisz zaznaczone";
     const msg = error ? `Błąd zapisu: ${error.message}` : `Zapisano turniejów: ${payload.length}. Widać je w zakładce Turnieje w aplikacji.`;
     info.textContent = msg;
-    const saveInfo = document.getElementById("itfSaveInfo");
     saveInfo.textContent = msg;
     saveInfo.style.color = error ? "#ff6b6b" : "#7CFC9A";
+    if (!error) markItfChecked();
   });
 
   // ── Dashboard ────────────────────────────────────────────────────────────
