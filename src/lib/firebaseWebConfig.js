@@ -8,7 +8,7 @@ export const FIREBASE_WEB = {
   projectId: "tennis-together-e3c9d",
   messagingSenderId: "928484232441",
   appId: "1:928484232441:web:cf4844d9dbf91a955a2628",
-  vapidKey: "",
+  vapidKey: "BJCWXB5O7Rc3-p12q1tFZV3TW4s8v6AfXcLRX8RO1gqoE8vPzdNSC7aJzns_UsqXogg6pmHR3bTj4ZgkrK3ifk4",
 };
 
 export const webPushConfigured = Object.values(FIREBASE_WEB).every(Boolean);
