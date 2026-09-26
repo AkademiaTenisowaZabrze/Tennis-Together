@@ -9,6 +9,7 @@ import MessagesPage from "./pages/MessagesPage.jsx";
 import ProfilePage from "./pages/ProfilePage.jsx";
 import ClubPage from "./pages/ClubPage.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
+import SetPasswordPage from "./pages/SetPasswordPage.jsx";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { usePushNotifications } from "./lib/usePushNotifications.js";
 
@@ -49,7 +50,7 @@ function useTheme() {
 
 export default function App() {
   const [theme, setTheme] = useTheme();
-  const { session, loading, account, signOut } = useAuth();
+  const { session, loading, account, signOut, recovery } = useAuth();
   // Rejestracja do powiadomień push — hook sam pilnuje, że nie robi nic
   // bez zalogowanego konta i poza natywną apką (przeglądarka/PWA).
   usePushNotifications(account?.id);
@@ -72,6 +73,10 @@ export default function App() {
 
   if (!session) {
     return <AuthPage />;
+  }
+
+  if (recovery) {
+    return <SetPasswordPage />;
   }
 
   // Zdalny wyłącznik konta (patrz 0016_account_suspension.sql) — RLS i tak

@@ -15,10 +15,15 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(undefined);
   const [account, setAccount] = useState(null);
   const [accountLoading, setAccountLoading] = useState(false);
+  // true po kliknięciu linku "resetuj hasło" z maila - patrz SetPasswordPage.jsx
+  const [recovery, setRecovery] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session ?? null));
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === "PASSWORD_RECOVERY") setRecovery(true);
+      setSession(s);
+    });
     return () => sub.subscription.unsubscribe();
   }, []);
 
@@ -110,6 +115,8 @@ export function AuthProvider({ children }) {
     account,
     user: session?.user ?? null,
     loading: session === undefined || (session !== null && accountLoading && !account),
+    recovery,
+    finishRecovery: () => setRecovery(false),
     registerPendingProfile,
     signOut,
     updateAccount,

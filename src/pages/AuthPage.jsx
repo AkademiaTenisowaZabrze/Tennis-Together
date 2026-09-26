@@ -4,6 +4,7 @@ import { useAuth } from "../lib/AuthContext.jsx";
 import ErrorBox from "../components/ErrorBox.jsx";
 import { inputStyle, labelStyle } from "../components/formStyles.js";
 import { APP_VERSION } from "../lib/appVersion.js";
+import PasswordInput from "../components/PasswordInput.jsx";
 
 const SIGNUP_LIMIT_PER_HOUR = 2;
 
@@ -78,6 +79,8 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [forgot, setForgot] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -88,6 +91,59 @@ function LoginForm() {
     if (error) setError(translateAuthError(error));
   };
 
+  const handleReset = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setBusy(true);
+    // Link z maila prowadzi do wersji webowej aplikacji, gdzie użytkownik
+    // ustawia nowe hasło (SetPasswordPage). Adres musi być na liście
+    // Redirect URLs w Supabase (wpis .../Tennis-Together/** go obejmuje).
+    const siteUrl = import.meta.env.VITE_SITE_URL || "https://akademiatenisowazabrze.github.io/Tennis-Together";
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${siteUrl}/app/` });
+    setBusy(false);
+    if (error) {
+      setError(translateAuthError(error));
+      return;
+    }
+    setResetSent(true);
+  };
+
+  if (forgot && resetSent) {
+    return (
+      <div style={{ textAlign: "center", padding: "8px 0" }}>
+        <p style={{ fontSize: 28, margin: "0 0 8px" }}>📬</p>
+        <p style={{ margin: 0, fontWeight: 700 }}>Sprawdź swoją skrzynkę</p>
+        <p style={{ margin: "8px 0 16px", fontSize: 13, color: "var(--color-text-muted)" }}>
+          Jeśli konto z adresem {email} istnieje, wysłaliśmy na nie link do ustawienia nowego hasła.
+        </p>
+        <button className="btn-ghost" onClick={() => { setForgot(false); setResetSent(false); }}>
+          Wróć do logowania
+        </button>
+      </div>
+    );
+  }
+
+  if (forgot) {
+    return (
+      <form onSubmit={handleReset} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)" }}>
+          Podaj e-mail konta, a wyślemy Ci link do ustawienia nowego hasła.
+        </p>
+        <div>
+          <label style={labelStyle}>E-mail</label>
+          <input style={inputStyle} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        </div>
+        {error && <ErrorBox>{error}</ErrorBox>}
+        <button className="btn-primary" type="submit" disabled={busy}>
+          {busy ? "Wysyłam…" : "Wyślij link"}
+        </button>
+        <button type="button" className="btn-ghost" onClick={() => { setForgot(false); setError(null); }}>
+          Wróć do logowania
+        </button>
+      </form>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div>
@@ -96,17 +152,18 @@ function LoginForm() {
       </div>
       <div>
         <label style={labelStyle}>Hasło</label>
-        <input
-          style={inputStyle}
-          type="password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
       </div>
       {error && <ErrorBox>{error}</ErrorBox>}
       <button className="btn-primary" type="submit" disabled={busy}>
         {busy ? "Loguję…" : "Zaloguj się"}
+      </button>
+      <button
+        type="button"
+        onClick={() => { setForgot(true); setError(null); }}
+        style={{ background: "transparent", border: "none", color: "var(--color-text-muted)", fontSize: 13, textDecoration: "underline", cursor: "pointer", padding: 4 }}
+      >
+        Nie pamiętasz hasła?
       </button>
     </form>
   );
@@ -259,14 +316,7 @@ function RegisterForm({ onDone }) {
       </div>
       <div>
         <label style={labelStyle}>Hasło (min. 8 znaków)</label>
-        <input
-          style={inputStyle}
-          type="password"
-          required
-          minLength={8}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" minLength={8} />
       </div>
       {limitReached && (
         <p style={{ margin: 0, fontSize: 13, color: "var(--color-secondary)" }}>
