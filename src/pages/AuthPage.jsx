@@ -6,7 +6,12 @@ import { inputStyle, labelStyle } from "../components/formStyles.js";
 import { APP_VERSION } from "../lib/appVersion.js";
 import PasswordInput from "../components/PasswordInput.jsx";
 
-const SIGNUP_LIMIT_PER_HOUR = 2;
+// Podniesione z 2 na 30 po wlaczeniu wlasnego SMTP (Gmail akademii) w
+// Supabase - domyslny, wbudowany mailer Supabase mial twardy limit 2/h,
+// wlasny serwer poczty pozwala na znacznie wiecej. Ta liczba MUSI sie
+// zgadzac z "Rate limit for sending emails" w Supabase -> Authentication ->
+// Rate Limits, inaczej licznik w UI klamie.
+const SIGNUP_LIMIT_PER_HOUR = 30;
 
 // Ile prób rejestracji zapisano w ostatniej godzinie — patrz
 // 0023_signup_attempts.sql. Tylko przybliżenie prawdziwego limitu
@@ -282,7 +287,7 @@ function RegisterForm({ onDone }) {
         }}
       >
         🧪 Wczesna wersja beta — z powodu technicznego ograniczenia wysyłki maili można zakładać maks.{" "}
-        <strong>{SIGNUP_LIMIT_PER_HOUR} konta na godzinę</strong> (dla całej aplikacji, nie tylko Ciebie).
+        <strong>{SIGNUP_LIMIT_PER_HOUR} kont na godzinę</strong> (dla całej aplikacji, nie tylko Ciebie).
         {attemptsThisHour != null && (
           <>
             {" "}
