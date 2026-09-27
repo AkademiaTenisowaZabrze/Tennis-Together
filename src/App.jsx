@@ -199,8 +199,12 @@ export default function App() {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <strong style={{ fontFamily: "var(--font-heading)" }}>🎾 Tennis Together</strong>
-          <img src={atzLogo} alt="Akademia Tenisowa Zabrze" style={{ height: 28, width: "auto" }} />
-          <img src={pztLogo} alt="Polski Związek Tenisowy" style={{ height: 28, width: "auto" }} />
+          <a href="https://www.akademiatenisowazabrze.pl/" target="_blank" rel="noopener noreferrer">
+            <img src={atzLogo} alt="Akademia Tenisowa Zabrze" style={{ height: 28, width: "auto" }} />
+          </a>
+          <a href="https://www.pzt.pl/" target="_blank" rel="noopener noreferrer">
+            <img src={pztLogo} alt="Polski Związek Tenisowy" style={{ height: 28, width: "auto" }} />
+          </a>
         </div>
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
