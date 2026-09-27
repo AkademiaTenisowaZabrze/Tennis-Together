@@ -364,7 +364,13 @@ def main() -> int:
         time.sleep(0.5)  # nie zasypujemy portal.pzt.pl seria zapytan pod rzad
 
     print(f"Gotowe - selekcja znaleziona dla {published} turniejow, bledow: {errors}.")
-    mark_synced("tournament_entries_pzt", published, supabase_url, service_role_key)
+    try:
+        mark_synced("tournament_entries_pzt", published, supabase_url, service_role_key)
+    except Exception as exc:
+        # Sam import selekcji juz sie udal (linijka wyzej) - brak/blad tabeli
+        # do banera "ostatnia aktualizacja" (0030_data_sync_status.sql) nie
+        # powinien falszywie oznaczac caly workflow jako czerwony/failed.
+        print(f"Nie udalo sie zapisac znacznika synchronizacji: {exc}", file=sys.stderr)
     return 0
 
 

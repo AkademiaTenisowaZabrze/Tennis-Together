@@ -228,7 +228,13 @@ def main() -> int:
         total += len(rows)
 
     print(f"Gotowe — zaimportowano/zaktualizowano {total} wpisów (suma po 4 kategoriach, mogą się powtarzać).")
-    mark_synced("tournaments_otk", total, supabase_url, service_role_key)
+    try:
+        mark_synced("tournaments_otk", total, supabase_url, service_role_key)
+    except Exception as exc:
+        # Sam import turniejów już się udał (linijka wyżej) — brak/błąd tabeli
+        # do banera "ostatnia aktualizacja" (0030_data_sync_status.sql) nie
+        # powinien fałszywie oznaczać cały workflow jako czerwony/failed.
+        print(f"Nie udało się zapisać znacznika synchronizacji: {exc}", file=sys.stderr)
     return 0
 
 
