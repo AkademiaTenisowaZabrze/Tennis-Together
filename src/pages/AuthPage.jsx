@@ -5,6 +5,8 @@ import ErrorBox from "../components/ErrorBox.jsx";
 import { inputStyle, labelStyle } from "../components/formStyles.js";
 import { APP_VERSION } from "../lib/appVersion.js";
 import PasswordInput from "../components/PasswordInput.jsx";
+import atzLogo from "../assets/atz-logo.png";
+import pztLogo from "../assets/pzt-logo.png";
 
 // Podniesione z 2 na 30 po wlaczeniu wlasnego SMTP (Gmail akademii) w
 // Supabase - domyslny, wbudowany mailer Supabase mial twardy limit 2/h,
@@ -73,6 +75,17 @@ export default function AuthPage() {
         </p>
         <p style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", opacity: 0.6 }}>
           Wersja {APP_VERSION}
+        </p>
+
+        {/* Akademia jako organizator (logo wyraźne) + PZT jako źródło danych
+            turniejów (logo mniejsze, przygaszone — partner, nie główny brand). */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginTop: 4 }}>
+          <img src={atzLogo} alt="Akademia Tenisowa Zabrze" style={{ height: 44, width: "auto" }} />
+          <span style={{ width: 1, height: 28, background: "var(--color-card-border)" }} />
+          <img src={pztLogo} alt="Polski Związek Tenisowy" style={{ height: 44, width: "auto", opacity: 0.7 }} />
+        </div>
+        <p style={{ fontSize: 10.5, color: "var(--color-text-muted)", textAlign: "center", opacity: 0.6, margin: 0 }}>
+          Akademia Tenisowa Zabrze · dane turniejów: Polski Związek Tenisowy
         </p>
       </div>
     </div>
