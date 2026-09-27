@@ -12,6 +12,8 @@ import AuthPage from "./pages/AuthPage.jsx";
 import SetPasswordPage from "./pages/SetPasswordPage.jsx";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { usePushNotifications } from "./lib/usePushNotifications.js";
+import atzLogo from "./assets/atz-logo.png";
+import pztLogo from "./assets/pzt-logo.png";
 
 // Szkielet głównego menu z dokumentu założeń (Start / Turnieje / Przejazdy /
 // Noclegi / Moje wyjazdy / Wiadomości / Profil). Każda zakładka na razie to
@@ -195,7 +197,11 @@ export default function App() {
           borderBottom: "1px solid var(--color-card-border)",
         }}
       >
-        <strong style={{ fontFamily: "var(--font-heading)" }}>🎾 Tennis Together</strong>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <img src={atzLogo} alt="Akademia Tenisowa Zabrze" style={{ height: 28, width: "auto" }} />
+          <img src={pztLogo} alt="Polski Związek Tenisowy" style={{ height: 28, width: "auto" }} />
+          <strong style={{ fontFamily: "var(--font-heading)" }}>🎾 Tennis Together</strong>
+        </div>
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           aria-label="Przełącz tryb jasny/ciemny"
