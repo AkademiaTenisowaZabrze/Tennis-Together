@@ -3,7 +3,6 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useTournaments, sourceLabel } from "../lib/useTournaments.js";
 import { useTrips } from "../lib/useTrips.js";
 import { usePlayers } from "../lib/usePlayers.js";
-import { usePztPlayerSearch } from "../lib/usePztPlayerSearch.js";
 import { useAuth } from "../lib/AuthContext.jsx";
 import ErrorBox from "../components/ErrorBox.jsx";
 import { inputStyle, labelStyle } from "../components/formStyles.js";
@@ -73,8 +72,6 @@ export default function TournamentsPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <h1>Turnieje</h1>
-
-      <PlayerTournamentFinder tournaments={tournaments} onSelectTournament={setOpenTournamentId} />
 
       <div className="chip-row">
         {SOURCES.map((s) => (
@@ -281,141 +278,5 @@ function JoinTripForm({ tournamentId, players, playersLoading, createTrip, onDon
         {busy ? "Zapisuję…" : "Potwierdź wyjazd"}
       </button>
     </form>
-  );
-}
-
-// "Znajdź turniej po zawodniku" — zamiast przeglądać cały kalendarz, rodzic
-// wpisuje imię i nazwisko znanego zawodnika (np. z klubu/okolicy) i widzi, na
-// jakie nadchodzące turnieje PZT jest zgłoszony. Jeśli dany turniej jest już
-// w naszym zaimportowanym kalendarzu (source=otk, dopasowanie po
-// external_id/tournament_id), pozwala od razu przewinąć do niego i zgłosić
-// swój wyjazd — patrz usePztPlayerSearch.js po szczegóły integracji z
-// backendem PZT (osobny projekt, Railway).
-function PlayerTournamentFinder({ tournaments, onSelectTournament }) {
-  const { query, setQuery, results, searching, searchError, getUpcomingTournaments } = usePztPlayerSearch();
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
-  const [upcoming, setUpcoming] = useState(null);
-  const [loadingUpcoming, setLoadingUpcoming] = useState(false);
-  const [upcomingError, setUpcomingError] = useState(null);
-
-  const reset = () => {
-    setSelectedPlayer(null);
-    setUpcoming(null);
-    setUpcomingError(null);
-  };
-
-  const handlePick = async (player) => {
-    setSelectedPlayer(player);
-    setQuery("");
-    setUpcoming(null);
-    setUpcomingError(null);
-    setLoadingUpcoming(true);
-    try {
-      const data = await getUpcomingTournaments(player.login);
-      setUpcoming(data);
-    } catch {
-      setUpcomingError("Nie udało się pobrać turniejów tego zawodnika. Spróbuj ponownie.");
-    }
-    setLoadingUpcoming(false);
-  };
-
-  return (
-    <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <p style={{ margin: 0, fontWeight: 700 }}>🔍 Znajdź turniej po zawodniku</p>
-      <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)" }}>
-        Wpisz imię i nazwisko zawodnika z Twojej okolicy — zobaczysz, na jakie nadchodzące
-        turnieje PZT jest zgłoszony, i dołączysz do niego, jeśli już jest w naszym kalendarzu.
-      </p>
-
-      {!selectedPlayer && (
-        <input
-          style={inputStyle}
-          placeholder="np. Kowalska Zofia"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      )}
-
-      {searching && <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)" }}>Szukam…</p>}
-      {searchError && <ErrorBox>{searchError}</ErrorBox>}
-
-      {!selectedPlayer && results.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {results.map((p, i) => (
-            <button
-              key={p.login || i}
-              type="button"
-              className="list-item"
-              style={{ justifyContent: "space-between", flexWrap: "wrap", cursor: "pointer" }}
-              onClick={() => handlePick(p)}
-            >
-              <strong style={{ fontSize: 14 }}>{p.name}</strong>
-              <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
-                {[p.club, p.province].filter(Boolean).join(" · ") || "brak danych klubu"}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {!selectedPlayer && query.trim().length >= 2 && !searching && results.length === 0 && !searchError && (
-        <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)" }}>
-          Nie znaleziono zawodnika o takim imieniu i nazwisku.
-        </p>
-      )}
-
-      {selectedPlayer && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <strong style={{ fontSize: 14 }}>{selectedPlayer.name}</strong>
-            <button className="btn-ghost" onClick={reset}>
-              Zmień zawodnika
-            </button>
-          </div>
-
-          {loadingUpcoming && (
-            <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)" }}>Wczytywanie turniejów…</p>
-          )}
-          {upcomingError && <ErrorBox>{upcomingError}</ErrorBox>}
-          {upcoming && (upcoming.tournaments?.length ?? 0) === 0 && (
-            <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)" }}>
-              Brak zgłoszonych nadchodzących turniejów.
-            </p>
-          )}
-
-          {upcoming?.tournaments?.map((pt) => {
-            const local = tournaments.find(
-              (t) =>
-                t.source === "otk" &&
-                t.external_id &&
-                pt.tournament_id &&
-                t.external_id.toUpperCase() === pt.tournament_id.toUpperCase()
-            );
-            return (
-              <div
-                key={pt.tournament_id || pt.name}
-                className="list-item"
-                style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}
-              >
-                <div>
-                  <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>{pt.name}</p>
-                  <p style={{ margin: 0, fontSize: 12, color: "var(--color-text-muted)" }}>
-                    {pt.date_from ? formatRange(pt.date_from, pt.date_to) : "termin nieznany"}
-                    {pt.categories?.length ? ` · ${pt.categories.join(", ")}` : ""}
-                  </p>
-                </div>
-                {local ? (
-                  <button className="btn-primary" onClick={() => onSelectTournament(local.id)}>
-                    Zobacz w kalendarzu
-                  </button>
-                ) : (
-                  <span className="status-pill muted">Jeszcze nie w naszym kalendarzu</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
   );
 }

@@ -1,70 +1,4 @@
-import { useEffect, useState } from "react";
 import { supabase } from "./supabase.js";
-
-// "Znajdź turniej po zawodniku" (PLAN.md — kolejny krok w rozbudowie
-// wyszukiwarki turniejów) — miało odpytywać NA ŻYWO backend z sąsiedniego
-// projektu "NOWA APLIKACJA PZT ANDROID" (FastAPI na Railway). TEN BACKEND
-// JEST TRWALE WYŁĄCZONY (limit darmowego planu Railway, wrzesień 2026) —
-// wyszukiwanie po nazwisku (poniżej) i getUpcomingTournaments() dalej są
-// zepsute, bo wymagałyby indeksu całego archiwum zawodników PZT, którego
-// nie da się tu szybko odtworzyć. Weryfikacja loginu (verifyPztLogin,
-// niżej) została NAPRAWIONA — korzysta teraz z Edge Function
-// pzt-player-lookup zamiast Railway.
-const PZT_API_BASE =
-  import.meta.env.VITE_PZT_API_URL || "https://pzt-rankingi-api-production.up.railway.app";
-
-const SEARCH_DEBOUNCE_MS = 400;
-
-export function usePztPlayerSearch() {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
-  const [searching, setSearching] = useState(false);
-  const [searchError, setSearchError] = useState(null);
-
-  useEffect(() => {
-    const q = query.trim();
-    if (q.length < 2) {
-      setResults([]);
-      setSearchError(null);
-      setSearching(false);
-      return;
-    }
-
-    let cancelled = false;
-    setSearching(true);
-    const timer = setTimeout(async () => {
-      try {
-        const res = await fetch(
-          `${PZT_API_BASE}/players/search?q=${encodeURIComponent(q)}&pzt_fallback=true&limit=15`
-        );
-        if (!res.ok) throw new Error(`Serwer PZT odpowiedział błędem ${res.status}`);
-        const data = await res.json();
-        if (cancelled) return;
-        setResults(data.results ?? []);
-        setSearchError(null);
-      } catch {
-        if (cancelled) return;
-        setResults([]);
-        setSearchError("Nie udało się połączyć z bazą PZT. Spróbuj ponownie za chwilę.");
-      } finally {
-        if (!cancelled) setSearching(false);
-      }
-    }, SEARCH_DEBOUNCE_MS);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [query]);
-
-  const getUpcomingTournaments = async (login) => {
-    const res = await fetch(`${PZT_API_BASE}/players/${encodeURIComponent(login)}/upcoming`);
-    if (!res.ok) throw new Error(`Serwer PZT odpowiedział błędem ${res.status}`);
-    return res.json();
-  };
-
-  return { query, setQuery, results, searching, searchError, getUpcomingTournaments };
-}
 
 // Usuwa polskie znaki + normalizuje wielkość liter/spacje — ten sam wzorzec
 // co w useCityCoordinates.js (dopasowanie odporne na literówki/ogonki).
@@ -102,6 +36,10 @@ function namesMatch(firstName, lastName, pztName) {
 // scrapuje portal.pzt.pl bezpośrednio i zwraca prawdziwe imię i nazwisko
 // przypisane do tego loginu, do porównania z tym, co rodzic wpisał
 // w profilu zawodnika.
+//
+// (Wyszukiwanie turniejów po nazwisku zawodnika — dawne "Znajdź turniej po
+// zawodniku" w TournamentsPage.jsx — zostało usunięte 2026-09-27: wymagało
+// martwego backendu Railway i indeksu całego archiwum zawodników PZT.)
 export async function verifyPztLogin(login, firstName, lastName) {
   const { data, error } = await supabase.functions.invoke("pzt-player-lookup", {
     body: { login },
