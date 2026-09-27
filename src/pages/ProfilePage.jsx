@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { MOCK_PARENT_PROFILE } from "../mockData.js";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { usePlayers } from "../lib/usePlayers.js";
+import { useTrips } from "../lib/useTrips.js";
+import { useConsents } from "../lib/useConsents.js";
 import { verifyPztLogin } from "../lib/usePztPlayerSearch.js";
 import { supabase } from "../lib/supabase.js";
 import ErrorBox from "../components/ErrorBox.jsx";
@@ -15,6 +16,15 @@ const ROLE_LABELS = {
   coach: "Trener / klub",
   player_adult: "Zawodnik (16+)",
 };
+
+const CONSENT_TYPE_LABELS = {
+  terms: "Regulamin",
+  data_processing: "Przetwarzanie danych",
+  contact_sharing: "Udostępnianie danych kontaktowych",
+  host_family_stay: "Nocleg u innej rodziny",
+};
+
+const dateFormatter = new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "long", year: "numeric" });
 
 const CATEGORIES = ["U10", "U12", "U14", "U16", "U18", "Senior"];
 
@@ -51,10 +61,10 @@ function ParentProfile() {
   const [editing, setEditing] = useState(false);
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarError, setAvatarError] = useState(null);
-  // Zgody i historia wyjazdów nie są jeszcze podłączone pod `consents`/`trips`
-  // (patrz PLAN.md, "Następne kroki") — na razie dane przykładowe, reszta
-  // karty (imię, rola, e-mail, telefon, wylogowanie, edycja) jest już prawdziwa.
-  const mock = MOCK_PARENT_PROFILE;
+  const { consents, loading: consentsLoading } = useConsents(account?.id);
+  const { trips } = useTrips(account?.id);
+  const today = new Date().toISOString().slice(0, 10);
+  const completedTrips = trips.filter((t) => t.tournaments?.starts_on && t.tournaments.starts_on < today).length;
   const displayName = account?.full_name || user?.email || "…";
 
   // Zdjęcie profilowe — opcjonalne, wyłącznie "żeby się rozpoznać" przy
@@ -174,22 +184,35 @@ function ParentProfile() {
       )}
 
       <div>
-        <p style={{ margin: "0 0 6px", fontSize: 13, color: "var(--color-text-muted)" }}>
-          Zgody <span style={{ opacity: 0.6 }}>(przykładowe — jeszcze nie z bazy)</span>
-        </p>
-        {mock.consents.map((c) => (
-          <div key={c.type} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-            <span>{c.type}</span>
-            <span className="status-pill ok">udzielona {c.date}</span>
-          </div>
-        ))}
+        <p style={{ margin: "0 0 6px", fontSize: 13, color: "var(--color-text-muted)" }}>Zgody</p>
+        {consentsLoading ? (
+          <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)" }}>Wczytywanie…</p>
+        ) : consents.length === 0 ? (
+          <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)" }}>
+            Żadna zgoda nie została jeszcze udzielona.
+          </p>
+        ) : (
+          consents.map((c) => (
+            <div key={c.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4, gap: 8 }}>
+              <span>
+                {CONSENT_TYPE_LABELS[c.consent_type] ?? c.consent_type}
+                {c.players?.first_name ? ` — ${c.players.first_name}` : ""}
+              </span>
+              <span className={`status-pill ${c.granted ? "ok" : "muted"}`}>
+                {c.granted ? "udzielona" : "wycofana"} {dateFormatter.format(new Date(c.created_at))}
+              </span>
+            </div>
+          ))
+        )}
       </div>
 
       <div>
-        <p style={{ margin: "0 0 6px", fontSize: 13, color: "var(--color-text-muted)" }}>
-          Historia wyjazdów <span style={{ opacity: 0.6 }}>(przykładowe)</span>
+        <p style={{ margin: "0 0 6px", fontSize: 13, color: "var(--color-text-muted)" }}>Historia wyjazdów</p>
+        <p style={{ margin: 0 }}>
+          {completedTrips === 0
+            ? "Brak jeszcze zakończonych wyjazdów."
+            : `${completedTrips} ${completedTrips === 1 ? "zakończony wyjazd" : "zakończone wyjazdy"}`}
         </p>
-        <p style={{ margin: 0 }}>{mock.completedTrips} zakończone wyjazdy</p>
       </div>
 
       <WebPushSection accountId={account?.id} />

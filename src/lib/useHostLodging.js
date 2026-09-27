@@ -11,7 +11,7 @@ const REQUEST_SELECT =
   "*, requester_trip:trips(departure_city, created_by_account_id, player_id, players(first_name)), " +
   "lodging_host_offers(id, city, capacity, notes, host_account_id, tournaments(name, starts_on))";
 
-export function useHostOffers() {
+export function useHostOffers(accountId) {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -37,7 +37,13 @@ export function useHostOffers() {
   const createOffer = async ({ tournamentId, city, capacity, notes }) => {
     const { data, error } = await supabase
       .from("lodging_host_offers")
-      .insert({ tournament_id: tournamentId, city, capacity: capacity || 1, notes: notes || null })
+      .insert({
+        tournament_id: tournamentId,
+        host_account_id: accountId,
+        city,
+        capacity: capacity || 1,
+        notes: notes || null,
+      })
       .select(OFFER_SELECT)
       .single();
     if (error) return { error };
@@ -86,7 +92,7 @@ export function useHostRequests(accountId) {
   const requestToJoin = async ({ offerId, requesterTripId, playerId }) => {
     const { error: consentError } = await supabase
       .from("consents")
-      .insert({ player_id: playerId, consent_type: "host_family_stay", granted: true });
+      .insert({ player_id: playerId, given_by_account_id: accountId, consent_type: "host_family_stay", granted: true });
     if (consentError) return { error: consentError };
 
     const { data, error } = await supabase

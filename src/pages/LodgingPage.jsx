@@ -32,7 +32,7 @@ export default function LodgingPage() {
   const { trips } = useTrips(account?.id);
   const { offers, loading, error, createOffer } = useLodgingOffers();
   const joinRequests = useJoinRequests("lodging", account?.id);
-  const hostOffers = useHostOffers();
+  const hostOffers = useHostOffers(account?.id);
   const hostRequests = useHostRequests(account?.id);
 
   return (
