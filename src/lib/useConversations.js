@@ -23,6 +23,7 @@ export function useConversations(accountId) {
          ride_offers(trips(departure_city, tournaments(name))),
          lodging_offers(trips(departure_city, tournaments(name))),
          ride_pings(tournaments(name)),
+         lodging_host_requests(lodging_host_offers(tournaments(name))),
          conversation_participants(account_id, accounts(full_name))`
       )
       .order("created_at", { ascending: false });
@@ -39,6 +40,7 @@ export function useConversations(accountId) {
         c.ride_offers?.trips?.tournaments?.name ??
         c.lodging_offers?.trips?.tournaments?.name ??
         c.ride_pings?.tournaments?.name ??
+        c.lodging_host_requests?.lodging_host_offers?.tournaments?.name ??
         null;
       return {
         ...c,

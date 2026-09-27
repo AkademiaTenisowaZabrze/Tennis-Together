@@ -33,7 +33,29 @@ createRoot(document.getElementById("root")).render(
 // spowodował, że stary Service Worker przechwytywał żądania po każdej
 // aktualizacji APK i serwował nieaktualne pliki.
 if ("serviceWorker" in navigator && !window.Capacitor?.isNativePlatform?.()) {
+  // Samo zarejestrowanie SW nie wystarczy: przy registerType "autoUpdate"
+  // nowy Service Worker przejmuje kontrolę w tle, ale już OTWARTA karta
+  // dalej działa na starym JS z pamięci, dopóki się nie przeładuje — więc
+  // testerzy zostawali na starej wersji appki (brak nowych funkcji/napraw)
+  // mimo poprawnego wdrożenia po naszej stronie (zgłoszenie Pawła,
+  // 2026-09-27: stare logo w nagłówku i usunięta funkcja dalej widoczne).
+  // controllerchange = nowy SW właśnie przejął kontrolę → jedno przeładowanie.
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloaded) return;
+    reloaded = true;
+    window.location.reload();
+  });
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL });
+    navigator.serviceWorker
+      .register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL })
+      .then((reg) => {
+        // Sam SW sprawdza aktualizacje przy nawigacji, ale karta trzymana
+        // otwarta całymi dniami (typowe dla PWA) nigdy by nie nawigowała —
+        // dopytujemy więc ręcznie za każdym powrotem do karty.
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") reg.update();
+        });
+      });
   });
 }

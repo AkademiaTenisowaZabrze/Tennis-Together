@@ -32,7 +32,8 @@ Z = "00000000-0000-0000-0000-000000000000"
 # 1. Anon nie moze CZYTAC danych prywatnych (RLS: pusta lista lub blad, nigdy dane)
 private_tables = ["accounts", "players", "trips", "ride_offers", "lodging_offers", "ride_join_requests",
                   "lodging_join_requests", "conversations", "messages", "consents", "trip_groups",
-                  "trip_group_members", "reports", "blocks", "device_tokens", "ratings"]
+                  "trip_group_members", "reports", "blocks", "device_tokens", "ratings",
+                  "lodging_host_offers", "lodging_host_requests"]
 for t in private_tables:
     s, b = call("GET", f"{U}/rest/v1/{t}?select=*&limit=1")
     leaked = s == 200 and b.strip() not in ("[]", "")
@@ -47,6 +48,8 @@ inserts = {
     "reports": {"reporter_account_id": Z, "reported_account_id": Z, "reason": "x"},
     "device_tokens": {"account_id": Z, "token": "x"},
     "ratings": {"join_request_id": Z, "join_request_kind": "ride", "rater_account_id": Z, "rated_account_id": Z, "stars": 5},
+    "lodging_host_offers": {"tournament_id": Z, "host_account_id": Z, "city": "x"},
+    "lodging_host_requests": {"host_offer_id": Z, "requester_trip_id": Z},
 }
 for t, body in inserts.items():
     s, b = call("POST", f"{U}/rest/v1/{t}", body, {"Prefer": "return=minimal"})
