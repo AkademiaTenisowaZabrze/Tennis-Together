@@ -89,7 +89,14 @@ def scrape_category(category: str, timeout: int = 20) -> list[dict]:
             continue
 
         starts_on = None
-        top_cent = cont.select_one(".tournAppTopCent_B")
+        # PZT renderuje ten sam blok daty pod DWIEMA różnymi klasami zależnie
+        # od turnieju — zwykłe ".tournAppTopCent_B" łapało tylko część
+        # wpisów, resztę (m.in. mistrzostwa drużynowe i kilka WTK) selektor
+        # po prostu pomijał, a "if not starts_on: continue" niżej wyrzucał
+        # je bezpowrotnie z importu. Zgłoszenie Pawła (2026-09-27): PZT ma
+        # 15 turniejów U12, u nas było tylko 9 — brakujące 6 miało właśnie
+        # klasę "tournAppTopCent_B_light" zamiast zwykłej.
+        top_cent = cont.select_one(".tournAppTopCent_B, .tournAppTopCent_B_light")
         if top_cent:
             m = re.search(r"Od:\s*(\d{4})\.(\d{2})\.(\d{2})", top_cent.get_text())
             if m:
