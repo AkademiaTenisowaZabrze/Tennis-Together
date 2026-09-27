@@ -462,7 +462,20 @@ function IncomingHostRequests({ hostRequests, account }) {
                 </span>
               )}
             </div>
-            {r.status === "accepted" && <CounterpartCard accountId={r.requester_trip?.created_by_account_id} />}
+            {r.status === "accepted" && (
+              <>
+                <CounterpartCard accountId={r.requester_trip?.created_by_account_id} />
+                <MeetingConfirmation request={r} joinRequests={hostRequests} />
+                {r.meeting_confirmed_at && (
+                  <RateMatchForm
+                    joinRequestId={r.id}
+                    kind="host_lodging"
+                    raterAccountId={account.id}
+                    ratedAccountId={r.requester_trip?.created_by_account_id}
+                  />
+                )}
+              </>
+            )}
           </div>
         ))}
       </div>
@@ -546,6 +559,15 @@ function HostOfferCard({ offer: o, account, trips, hostRequests }) {
               <button className="btn-ghost" onClick={handleCancelAccepted} disabled={busy}>
                 {busy ? "Rezygnuję…" : "Zrezygnuj z noclegu"}
               </button>
+              <MeetingConfirmation request={myOutgoing} joinRequests={hostRequests} />
+              {myOutgoing.meeting_confirmed_at && (
+                <RateMatchForm
+                  joinRequestId={myOutgoing.id}
+                  kind="host_lodging"
+                  raterAccountId={account.id}
+                  ratedAccountId={o.host_account_id}
+                />
+              )}
             </>
           )}
         </div>

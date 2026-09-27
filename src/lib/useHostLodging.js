@@ -152,5 +152,57 @@ export function useHostRequests(accountId) {
     return { data, warning };
   };
 
-  return { incoming, outgoing, loading, error, requestToJoin, withdraw, respond, refresh };
+  // Potwierdzenie spotkania kodem/QR — identyczny wzorzec co
+  // useJoinRequests.js (0026_meeting_confirmation_server_side.sql,
+  // rozszerzony w 0032 o p_kind "host_lodging").
+  const MEETING_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+  const generateMeetingCode = async (requestId) => {
+    const code = Array.from(
+      { length: 6 },
+      () => MEETING_CODE_ALPHABET[Math.floor(Math.random() * MEETING_CODE_ALPHABET.length)]
+    ).join("");
+    const { data, error } = await supabase
+      .from("lodging_host_requests")
+      .update({ meeting_code: code })
+      .eq("id", requestId)
+      .select(REQUEST_SELECT)
+      .single();
+    if (error) return { error };
+    setRows((prev) => prev.map((r) => (r.id === requestId ? data : r)));
+    return { data };
+  };
+
+  const verifyMeetingCode = async (requestId, enteredCode) => {
+    const { data: res, error } = await supabase.rpc("confirm_meeting", {
+      p_request_id: requestId,
+      p_kind: "host_lodging",
+      p_code: enteredCode,
+    });
+    if (error) return { error };
+    if (res?.result !== "ok" && res?.result !== "already") {
+      return { failure: res?.result ?? "error", attemptsLeft: res?.attempts_left };
+    }
+    const { data, error: readError } = await supabase
+      .from("lodging_host_requests")
+      .select(REQUEST_SELECT)
+      .eq("id", requestId)
+      .single();
+    if (readError) return { error: readError };
+    setRows((prev) => prev.map((r) => (r.id === requestId ? data : r)));
+    return { data };
+  };
+
+  return {
+    incoming,
+    outgoing,
+    loading,
+    error,
+    requestToJoin,
+    withdraw,
+    respond,
+    generateMeetingCode,
+    verifyMeetingCode,
+    refresh,
+  };
 }
