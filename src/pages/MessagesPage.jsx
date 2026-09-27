@@ -4,7 +4,7 @@ import { useConversations } from "../lib/useConversations.js";
 import { useMessages } from "../lib/useMessages.js";
 import ErrorBox from "../components/ErrorBox.jsx";
 
-const KIND_LABELS = { ride: "Przejazd", lodging: "Nocleg" };
+const KIND_LABELS = { ride: "Przejazd", lodging: "Nocleg", direct: "Podwiezienie" };
 
 export default function MessagesPage() {
   const [openId, setOpenId] = useState(null);

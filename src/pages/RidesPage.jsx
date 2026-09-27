@@ -4,6 +4,7 @@ import { useAuth } from "../lib/AuthContext.jsx";
 import { useTrips } from "../lib/useTrips.js";
 import { useRideOffers, useRideRequests } from "../lib/useRides.js";
 import { useJoinRequests } from "../lib/useJoinRequests.js";
+import { useRidePings } from "../lib/useRidePings.js";
 import { useCityCoordinates, findCityCoords, haversineKm } from "../lib/useCityCoordinates.js";
 import ErrorBox from "../components/ErrorBox.jsx";
 import MeetingConfirmation from "../components/MeetingConfirmation.jsx";
@@ -36,6 +37,7 @@ export default function RidesPage() {
   const { offers, loading: offersLoading, error: offersError, createOffer } = useRideOffers();
   const { requests, loading: requestsLoading, error: requestsError, createRequest } = useRideRequests();
   const joinRequests = useJoinRequests("ride", account?.id);
+  const ridePings = useRidePings(account?.id);
   const { cities } = useCityCoordinates();
 
   // "Z mojej okolicy" — sortuje oferty po odległości od miasta z profilu
@@ -67,6 +69,7 @@ export default function RidesPage() {
       <h1>Przejazdy</h1>
 
       <IncomingRequests joinRequests={joinRequests} account={account} />
+      <IncomingRidePings ridePings={ridePings} />
 
       <div className="segmented">
         <button className={tab === "offers" ? "is-active" : ""} onClick={() => switchTab("offers")}>
@@ -133,6 +136,57 @@ export default function RidesPage() {
         Aplikacja docelowo dopasowuje ogłoszenia automatycznie po turnieju,
         terminie i trasie. „Zaproponuj przejazd" dla „Szukam przejazdu" — następny krok.
       </p>
+    </div>
+  );
+}
+
+function IncomingRidePings({ ridePings }) {
+  const { incoming, respond } = ridePings;
+  const [busyId, setBusyId] = useState(null);
+  const [notice, setNotice] = useState(null);
+
+  const pending = incoming.filter((p) => p.status === "pending");
+  if (pending.length === 0) return null;
+
+  const handle = async (id, status) => {
+    setBusyId(id);
+    setNotice(null);
+    const { error, warning } = await respond(id, status);
+    setBusyId(null);
+    if (error) setNotice(error.message || "Nie udało się zapisać odpowiedzi. Spróbuj ponownie.");
+    else if (warning) setNotice(warning);
+  };
+
+  return (
+    <div className="glass-card" style={{ borderColor: "var(--color-primary)" }}>
+      <p style={{ margin: "0 0 10px", fontWeight: 700 }}>
+        Ktoś prosi o podwiezienie ({pending.length})
+      </p>
+      <p style={{ margin: "0 0 10px", fontSize: 13, color: "var(--color-text-muted)" }}>
+        Ta osoba jest oficjalnie zgłoszona na ten sam turniej co Ty (lista PZT) i pyta, czy zabierzesz ją ze sobą.
+      </p>
+      {notice && <ErrorBox>{notice}</ErrorBox>}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {pending.map((p) => (
+          <div key={p.id} className="list-item" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+            <div>
+              <strong style={{ fontSize: 14 }}>{p.requester_trip?.players?.first_name ?? "Zawodnik"}</strong>
+              <span style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
+                {" "}
+                · {p.requester_trip?.tournaments?.name ?? "Turniej"} · z {p.requester_trip?.departure_city ?? "?"}
+              </span>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="btn-primary" disabled={busyId === p.id} onClick={() => handle(p.id, "accepted")}>
+                Zgódź się
+              </button>
+              <button className="btn-ghost" disabled={busyId === p.id} onClick={() => handle(p.id, "declined")}>
+                Odrzuć
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,0 +1,38 @@
+name: Import listy startowej PZT (po selekcji)
+
+# Sprawdza turnieje OTK z najblizszych 60 dni, czy PZT juz opublikowal
+# liste selekcji, i jesli tak - zapisuje ja w `tournament_entries`
+# (umozliwia "Poproś o podwiezienie" w aplikacji). Patrz
+# scripts/import_tournament_entries.py.
+#
+# Wymaga tego samego sekretu co import-tournaments.yml:
+#   SUPABASE_SERVICE_ROLE_KEY
+#
+# Dwa razy dziennie (selekcja bywa ogloszona z niewielkim wyprzedzeniem,
+# wiec czesciej niz kalendarz turniejow) + recznie z zakladki Actions.
+
+on:
+  schedule:
+    - cron: "0 5,17 * * *"
+  workflow_dispatch:
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pobierz kod
+        uses: actions/checkout@v7
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalacja zaleznosci
+        run: pip install -r scripts/requirements.txt
+
+      - name: Import listy startowej
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://jrabxtiranllayerhutm.supabase.co' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/import_tournament_entries.py

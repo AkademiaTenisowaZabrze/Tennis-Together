@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useTrips } from "../lib/useTrips.js";
+import { useTournamentMatches } from "../lib/useTournamentMatches.js";
+import { useRidePings } from "../lib/useRidePings.js";
 import ErrorBox from "../components/ErrorBox.jsx";
 
 const FILTERS = [
@@ -73,6 +75,8 @@ export default function TripsPage() {
                 <Row label="🏨 Nocleg" text="Jeszcze nikt się nie zgłosił" state="muted" />
               </div>
 
+              <MatchedEntrants trip={t} />
+
               <div style={{ display: "flex", gap: 8 }}>
                 <button className="btn-ghost">💬 Czat grupy (wkrótce)</button>
               </div>
@@ -87,6 +91,69 @@ export default function TripsPage() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// Zawodnicy z oficjalnej listy startowej PZT (po selekcji), którzy są już
+// w Tennis Together i sami też jadą na ten turniej — patrz
+// useTournamentMatches.js. Pojawia się dopiero, gdy PZT opublikuje selekcję
+// (patrz scripts/import_tournament_entries.py), więc dla większości
+// wyjazdów ta sekcja po prostu jeszcze nic nie pokaże.
+function MatchedEntrants({ trip }) {
+  const { matches, loading } = useTournamentMatches(trip.tournament_id);
+  const { outgoing, sendPing } = useRidePings(trip.created_by_account_id);
+  const [busyId, setBusyId] = useState(null);
+  const [notice, setNotice] = useState(null);
+
+  if (loading || matches.length === 0) return null;
+
+  const pingFor = (accountId) => outgoing.find((p) => p.target_trip?.created_by_account_id === accountId);
+
+  const handleAsk = async (match) => {
+    setBusyId(match.account_id);
+    setNotice(null);
+    const { error } = await sendPing({
+      tournamentId: trip.tournament_id,
+      requesterTripId: trip.id,
+      targetTripId: match.trip_id,
+    });
+    setBusyId(null);
+    if (error) setNotice(error.message || "Nie udało się wysłać zapytania.");
+  };
+
+  return (
+    <div style={{ marginBottom: 12, padding: 12, borderRadius: 12, background: "var(--color-bg-elevated)" }}>
+      <p style={{ margin: "0 0 8px", fontSize: 13, fontWeight: 700 }}>
+        🎾 Zgłoszeni na ten turniej (lista PZT), już w Tennis Together
+      </p>
+      {notice && <ErrorBox>{notice}</ErrorBox>}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {matches.map((m) => {
+          const ping = pingFor(m.account_id);
+          return (
+            <div key={m.account_id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 13 }}>
+                {m.full_name}
+                {m.club && <span style={{ color: "var(--color-text-muted)" }}> · {m.club}</span>}
+              </span>
+              {!ping ? (
+                <button className="btn-ghost" disabled={busyId === m.account_id} onClick={() => handleAsk(m)}>
+                  {busyId === m.account_id ? "Wysyłam…" : "Poproś o podwiezienie"}
+                </button>
+              ) : ping.status === "pending" ? (
+                <span className="status-pill muted">Wysłano, czekam na odpowiedź</span>
+              ) : ping.status === "accepted" ? (
+                <span className="status-pill ok">Zaakceptowano — sprawdź Wiadomości</span>
+              ) : ping.status === "declined" ? (
+                <span className="status-pill muted">Odrzucono</span>
+              ) : (
+                <span className="status-pill muted">Anulowano</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

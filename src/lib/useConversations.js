@@ -22,6 +22,7 @@ export function useConversations(accountId) {
         `id, kind, created_at,
          ride_offers(trips(departure_city, tournaments(name))),
          lodging_offers(trips(departure_city, tournaments(name))),
+         ride_pings(tournaments(name)),
          conversation_participants(account_id, accounts(full_name))`
       )
       .order("created_at", { ascending: false });
@@ -35,11 +36,14 @@ export function useConversations(accountId) {
     const withOther = (data ?? []).map((c) => {
       const other = c.conversation_participants?.find((p) => p.account_id !== accountId);
       const tournamentName =
-        c.ride_offers?.trips?.tournaments?.name ?? c.lodging_offers?.trips?.tournaments?.name ?? null;
+        c.ride_offers?.trips?.tournaments?.name ??
+        c.lodging_offers?.trips?.tournaments?.name ??
+        c.ride_pings?.tournaments?.name ??
+        null;
       return {
         ...c,
         otherName: other?.accounts?.full_name ?? "Rozmówca",
-        title: tournamentName ?? (c.kind === "ride" ? "Przejazd" : "Nocleg"),
+        title: tournamentName ?? (c.kind === "ride" ? "Przejazd" : c.kind === "lodging" ? "Nocleg" : "Rozmowa"),
       };
     });
 
