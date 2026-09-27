@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
+import { supabase } from "./supabase.js";
 
 // "Znajdź turniej po zawodniku" (PLAN.md — kolejny krok w rozbudowie
-// wyszukiwarki turniejów) — odpytuje NA ŻYWO backend z sąsiedniego projektu
-// "NOWA APLIKACJA PZT ANDROID" (FastAPI na Railway, ten sam co zasila
-// aplikację rankingową), zamiast duplikować scraper w tym projekcie.
-// Wymaga, żeby origin tej apki był dopuszczony w CORS tamtego backendu
-// (main.py, allow_origin_regex dla localhost:31xx) — inaczej przeglądarka
-// po cichu zablokuje odpowiedź.
+// wyszukiwarki turniejów) — miało odpytywać NA ŻYWO backend z sąsiedniego
+// projektu "NOWA APLIKACJA PZT ANDROID" (FastAPI na Railway). TEN BACKEND
+// JEST TRWALE WYŁĄCZONY (limit darmowego planu Railway, wrzesień 2026) —
+// wyszukiwanie po nazwisku (poniżej) i getUpcomingTournaments() dalej są
+// zepsute, bo wymagałyby indeksu całego archiwum zawodników PZT, którego
+// nie da się tu szybko odtworzyć. Weryfikacja loginu (verifyPztLogin,
+// niżej) została NAPRAWIONA — korzysta teraz z Edge Function
+// pzt-player-lookup zamiast Railway.
 const PZT_API_BASE =
   import.meta.env.VITE_PZT_API_URL || "https://pzt-rankingi-api-production.up.railway.app";
 
@@ -94,16 +97,17 @@ function namesMatch(firstName, lastName, pztName) {
 }
 
 // Weryfikacja zawodnika przez login PZT (PLAN.md, "z kim ja właściwie
-// jadę") — pyta ten sam endpoint co wyszukiwarka turniejów
-// (/players/{login}/upcoming, live scrape z portal.pzt.pl, patrz projekt
-// NOWA APLIKACJA PZT ANDROID) tylko po to, żeby dostać prawdziwe imię i
-// nazwisko przypisane do tego loginu, i porównać je z tym, co rodzic
-// wpisał w profilu zawodnika.
+// jadę") — wywołuje Edge Function pzt-player-lookup (zastępuje martwy
+// Railway, patrz supabase/functions/pzt-player-lookup/index.ts), która
+// scrapuje portal.pzt.pl bezpośrednio i zwraca prawdziwe imię i nazwisko
+// przypisane do tego loginu, do porównania z tym, co rodzic wpisał
+// w profilu zawodnika.
 export async function verifyPztLogin(login, firstName, lastName) {
-  const res = await fetch(`${PZT_API_BASE}/players/${encodeURIComponent(login)}/upcoming`);
-  if (!res.ok) throw new Error(`Serwer PZT odpowiedział błędem ${res.status}`);
-  const data = await res.json();
-  if (!data.player_name) {
+  const { data, error } = await supabase.functions.invoke("pzt-player-lookup", {
+    body: { login },
+  });
+  if (error) throw new Error("Serwer PZT odpowiedział błędem — spróbuj ponownie za chwilę.");
+  if (!data?.player_name) {
     return { found: false, pztName: null, matches: false };
   }
   return { found: true, pztName: data.player_name, matches: namesMatch(firstName, lastName, data.player_name) };

@@ -73,6 +73,15 @@ check("funkcja powiadomien odpowiada", s in (200, 400, 404), f"HTTP {s} {b[:80]}
 s, b = call("POST", f"{U}/functions/v1/notify-tournament", {"trip_id": "x", "offer_kind": "zle"})
 check("funkcja powiadomien odrzuca bledne dane (wymaga wdrozenia poprawki)", s == 400, f"HTTP {s} {b[:80]}")
 
+# Weryfikacja loginu PZT (usePztPlayerSearch.js -> verifyPztLogin) - zastapila
+# martwy Railway (2026-09-27, zgloszenie: blad przy dodawaniu zawodnika).
+s, b = call("POST", f"{U}/functions/v1/pzt-player-lookup", {"login": "MRO2043343"})
+d = json.loads(b) if s == 200 else {}
+check("funkcja pzt-player-lookup znajduje prawdziwego zawodnika", s == 200 and d.get("found") is True, f"HTTP {s} {b[:120]}")
+s, b = call("POST", f"{U}/functions/v1/pzt-player-lookup", {"login": "NIEISTNIEJACYLOGIN999"})
+d = json.loads(b) if s == 200 else {}
+check("funkcja pzt-player-lookup zwraca found=false dla nieistniejacego loginu", s == 200 and d.get("found") is False, f"HTTP {s} {b[:120]}")
+
 # 6. Auth
 s, b = call("GET", f"{U}/auth/v1/settings")
 d = json.loads(b) if s == 200 else {}
