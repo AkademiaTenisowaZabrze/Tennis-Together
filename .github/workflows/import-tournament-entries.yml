@@ -1,8 +1,9 @@
 name: Import listy startowej PZT (po selekcji)
 
 # Sprawdza turnieje OTK z najblizszych 60 dni, czy PZT juz opublikowal
-# liste selekcji, i jesli tak - zapisuje ja w `tournament_entries`
-# (umozliwia "Poproś o podwiezienie" w aplikacji). Patrz
+# liste selekcji na portal.pzt.pl, i jesli tak - zapisuje ja w
+# `tournament_entries` (umozliwia "Poproś o podwiezienie" w aplikacji).
+# Scrapuje portal.pzt.pl bezposrednio, bez zadnego posrednika - patrz
 # scripts/import_tournament_entries.py.
 #
 # Wymaga tego samego sekretu co import-tournaments.yml:
