@@ -33,7 +33,7 @@ import os
 import re
 import sys
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 import requests
 from bs4 import BeautifulSoup
@@ -310,6 +310,26 @@ def upsert_entries(tournament_uuid: str, rows: list[dict], supabase_url: str, se
     resp.raise_for_status()
 
 
+def mark_synced(key: str, count: int, supabase_url: str, service_role_key: str) -> None:
+    # Baner "Dane zaktualizowano dzis o HH:MM" na Start (StartPage.jsx) czyta
+    # ten wiersz - patrz supabase/migrations/0030_data_sync_status.sql.
+    endpoint = f"{supabase_url}/rest/v1/data_sync_status"
+    headers = {
+        "apikey": service_role_key,
+        "Authorization": f"Bearer {service_role_key}",
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates,return=minimal",
+    }
+    resp = requests.post(
+        endpoint,
+        params={"on_conflict": "key"},
+        headers=headers,
+        json=[{"key": key, "last_synced_at": datetime.now(timezone.utc).isoformat(), "last_count": count}],
+        timeout=30,
+    )
+    resp.raise_for_status()
+
+
 def main() -> int:
     supabase_url = os.environ.get("SUPABASE_URL", "").strip().rstrip("/")
     service_role_key = _clean_key(os.environ.get("SUPABASE_SERVICE_ROLE_KEY", ""))
@@ -344,6 +364,7 @@ def main() -> int:
         time.sleep(0.5)  # nie zasypujemy portal.pzt.pl seria zapytan pod rzad
 
     print(f"Gotowe - selekcja znaleziona dla {published} turniejow, bledow: {errors}.")
+    mark_synced("tournament_entries_pzt", published, supabase_url, service_role_key)
     return 0
 
 

@@ -247,7 +247,7 @@ function RegisterForm({ onDone }) {
         // URL Configuration → Redirect URLs, inaczej Supabase odrzuci
         // przekierowanie własnym, technicznym komunikatem błędu zanim
         // użytkownik w ogóle zobaczy tę stronę.
-        emailRedirectTo: `${import.meta.env.VITE_SITE_URL || "https://pmesznik.github.io/Tennis-Together"}/potwierdz-email.html`,
+        emailRedirectTo: `${import.meta.env.VITE_SITE_URL || "https://akademiatenisowazabrze.github.io/Tennis-Together"}/potwierdz-email.html`,
         // Imię trafia do metadanych konta w Supabase Auth (nie tylko do
         // naszej tabeli `accounts`), żeby szablon maila potwierdzającego
         // mógł się zwrócić po imieniu przez {{ .Data.full_name }} — patrz

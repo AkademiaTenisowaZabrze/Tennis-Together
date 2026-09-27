@@ -25,6 +25,7 @@ import hashlib
 import os
 import re
 import sys
+from datetime import datetime, timezone
 
 import requests
 from bs4 import BeautifulSoup
@@ -176,6 +177,26 @@ def upsert_tournaments(rows: list[dict], supabase_url: str, service_role_key: st
     resp.raise_for_status()
 
 
+def mark_synced(key: str, count: int, supabase_url: str, service_role_key: str) -> None:
+    # Baner "Dane zaktualizowano dziś o HH:MM" na Start (StartPage.jsx) czyta
+    # ten wiersz — patrz supabase/migrations/0030_data_sync_status.sql.
+    endpoint = f"{supabase_url.rstrip('/')}/rest/v1/data_sync_status"
+    headers = {
+        "apikey": service_role_key,
+        "Authorization": f"Bearer {service_role_key}",
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates,return=minimal",
+    }
+    resp = requests.post(
+        endpoint,
+        params={"on_conflict": "key"},
+        headers=headers,
+        json=[{"key": key, "last_synced_at": datetime.now(timezone.utc).isoformat(), "last_count": count}],
+        timeout=30,
+    )
+    resp.raise_for_status()
+
+
 def main() -> int:
     supabase_url = os.environ.get("SUPABASE_URL", "").strip()
     # Klucze API nigdy legalnie nie zawierają białych znaków — usuwamy
@@ -200,6 +221,7 @@ def main() -> int:
         total += len(rows)
 
     print(f"Gotowe — zaimportowano/zaktualizowano {total} wpisów (suma po 4 kategoriach, mogą się powtarzać).")
+    mark_synced("tournaments_otk", total, supabase_url, service_role_key)
     return 0
 
 
