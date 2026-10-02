@@ -91,32 +91,62 @@ async function sendPush(accessToken: string, token: string, title: string, body:
   }
 }
 
-// ── Tryb "request_accepted" (0033_push_request_accepted.sql) ──────────────
-// Powiadamia proszącego, że druga strona zaakceptowała jego prośbę. W treści
-// pusha celowo bez imion (ekran blokady widzi każdy).
-const ACCEPTED_CONFIG: Record<string, { table: string; select: string; label: string }> = {
+// ── Tryby "request_accepted" / "request_created" (0033, 0034) ─────────────
+// accepted: powiadamia PROSZĄCEGO, że druga strona zaakceptowała prośbę.
+// created: powiadamia WŁAŚCICIELA oferty (albo adresata zapytania o
+// podwiezienie), że ktoś o coś poprosił. W treści pusha celowo bez imion
+// (ekran blokady widzi każdy).
+type RequestCfg = { table: string; select: string; label: string };
+const REQUEST_CONFIG: Record<string, RequestCfg> = {
   ride: {
     table: "ride_join_requests",
-    select: "id, requester_trip:trips(created_by_account_id), ride_offers(trips(tournaments(name)))",
+    select:
+      "id, requester_trip:trips(created_by_account_id), ride_offers(trips(created_by_account_id, tournaments(name)))",
     label: "przejazd",
   },
   lodging: {
     table: "lodging_join_requests",
-    select: "id, requester_trip:trips(created_by_account_id), lodging_offers(trips(tournaments(name)))",
+    select:
+      "id, requester_trip:trips(created_by_account_id), lodging_offers(trips(created_by_account_id, tournaments(name)))",
     label: "nocleg",
   },
   ride_ping: {
     table: "ride_pings",
     select:
-      "id, requester_trip:trips!ride_pings_requester_trip_id_fkey(created_by_account_id), tournaments(name)",
+      "id, requester_trip:trips!ride_pings_requester_trip_id_fkey(created_by_account_id), " +
+      "target_trip:trips!ride_pings_target_trip_id_fkey(created_by_account_id), tournaments(name)",
     label: "podwiezienie",
   },
   host_lodging: {
     table: "lodging_host_requests",
-    select: "id, requester_trip:trips(created_by_account_id), lodging_host_offers(tournaments(name))",
+    select:
+      "id, requester_trip:trips(created_by_account_id), lodging_host_offers(host_account_id, tournaments(name))",
     label: "nocleg u rodziny",
   },
 };
+
+const EVENTS = {
+  request_accepted: {
+    guardColumn: "push_sent_at",
+    status: "accepted",
+    title: (label: string) => `✅ Prośba zaakceptowana (${label})`,
+    text: (tournament: string) => `${tournament} — otwórz aplikację, żeby napisać do drugiej strony.`,
+    // deno-lint-ignore no-explicit-any
+    recipient: (row: any) => row.requester_trip?.created_by_account_id as string | undefined,
+  },
+  request_created: {
+    guardColumn: "created_push_sent_at",
+    status: "pending",
+    title: (label: string) => `📩 Nowa prośba (${label})`,
+    text: (tournament: string) => `${tournament} — ktoś o coś prosi, otwórz aplikację i odpowiedz.`,
+    // deno-lint-ignore no-explicit-any
+    recipient: (row: any) =>
+      (row.ride_offers?.trips?.created_by_account_id ??
+        row.lodging_offers?.trips?.created_by_account_id ??
+        row.target_trip?.created_by_account_id ??
+        row.lodging_host_offers?.host_account_id) as string | undefined,
+  },
+} as const;
 
 // deno-lint-ignore no-explicit-any
 function tournamentNameOf(row: any): string {
@@ -129,40 +159,40 @@ function tournamentNameOf(row: any): string {
   );
 }
 
-async function handleRequestAccepted(requestKind: unknown, requestId: unknown) {
-  const cfg = typeof requestKind === "string" ? ACCEPTED_CONFIG[requestKind] : undefined;
+async function handleRequestEvent(eventName: keyof typeof EVENTS, requestKind: unknown, requestId: unknown) {
+  const cfg = typeof requestKind === "string" ? REQUEST_CONFIG[requestKind] : undefined;
+  const ev = EVENTS[eventName];
   if (!cfg || typeof requestId !== "string") {
     return new Response(JSON.stringify({ error: "bad request" }), { status: 400 });
   }
 
-  // Jednorazowy bilet: tylko pierwsze wywołanie dla zaakceptowanej prośby
-  // przechodzi dalej (patrz komentarz w 0033).
+  // Jednorazowy bilet: tylko pierwsze wywołanie dla danej prośby przechodzi
+  // dalej (patrz komentarze w 0033 i 0034).
   const { data: row, error } = await supabase
     .from(cfg.table)
-    .update({ push_sent_at: new Date().toISOString() })
+    .update({ [ev.guardColumn]: new Date().toISOString() })
     .eq("id", requestId)
-    .eq("status", "accepted")
-    .is("push_sent_at", null)
+    .eq("status", ev.status)
+    .is(ev.guardColumn, null)
     .select(cfg.select)
     .maybeSingle();
   if (error) throw error;
-  if (!row) return new Response(JSON.stringify({ skipped: "already sent or not accepted" }), { status: 200 });
+  if (!row) return new Response(JSON.stringify({ skipped: "already sent or wrong status" }), { status: 200 });
 
-  // deno-lint-ignore no-explicit-any
-  const requesterAccountId = (row as any).requester_trip?.created_by_account_id;
-  if (!requesterAccountId) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
+  const recipientId = ev.recipient(row);
+  if (!recipientId) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
 
   const { data: tokens, error: tokensError } = await supabase
     .from("device_tokens")
     .select("token")
-    .eq("account_id", requesterAccountId);
+    .eq("account_id", recipientId);
   if (tokensError) throw tokensError;
   if (!tokens || tokens.length === 0) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
 
-  const title = `✅ Prośba zaakceptowana (${cfg.label})`;
-  const body = `${tournamentNameOf(row)} — otwórz aplikację, żeby napisać do drugiej strony.`;
   const accessToken = await getAccessToken(JSON.parse(SERVICE_ACCOUNT_RAW));
-  await Promise.all(tokens.map((t) => sendPush(accessToken, t.token, title, body)));
+  await Promise.all(
+    tokens.map((t) => sendPush(accessToken, t.token, ev.title(cfg.label), ev.text(tournamentNameOf(row))))
+  );
   return new Response(JSON.stringify({ notified: tokens.length }), { status: 200 });
 }
 
@@ -176,8 +206,8 @@ Deno.serve(async (req) => {
 
   try {
     const payload = await req.json();
-    if (payload?.event === "request_accepted") {
-      return await handleRequestAccepted(payload.request_kind, payload.request_id);
+    if (payload?.event === "request_accepted" || payload?.event === "request_created") {
+      return await handleRequestEvent(payload.event, payload.request_kind, payload.request_id);
     }
     const { trip_id, offer_kind } = payload;
     if (typeof trip_id !== "string" || (offer_kind !== "ride" && offer_kind !== "lodging")) {

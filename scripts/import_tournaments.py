@@ -204,6 +204,20 @@ def mark_synced(key: str, count: int, supabase_url: str, service_role_key: str) 
     resp.raise_for_status()
 
 
+def expire_stale_requests(supabase_url: str, service_role_key: str) -> None:
+    # Prosby "oczekuje" na turniej, ktory juz sie odbyl, same przechodza w
+    # "anulowano" - patrz supabase/migrations/0034_push_new_request_and_expire.sql.
+    endpoint = f"{supabase_url.rstrip('/')}/rest/v1/rpc/expire_stale_requests"
+    headers = {
+        "apikey": service_role_key,
+        "Authorization": f"Bearer {service_role_key}",
+        "Content-Type": "application/json",
+    }
+    resp = requests.post(endpoint, headers=headers, json={}, timeout=30)
+    resp.raise_for_status()
+    print(f"Wygaszono przeterminowane prosby: {resp.text}")
+
+
 def main() -> int:
     supabase_url = os.environ.get("SUPABASE_URL", "").strip()
     # Klucze API nigdy legalnie nie zawierają białych znaków — usuwamy
@@ -228,6 +242,12 @@ def main() -> int:
         total += len(rows)
 
     print(f"Gotowe — zaimportowano/zaktualizowano {total} wpisów (suma po 4 kategoriach, mogą się powtarzać).")
+    try:
+        expire_stale_requests(supabase_url, service_role_key)
+    except Exception as exc:
+        # Funkcja pojawia sie dopiero po uruchomieniu 0034 w Supabase - jej
+        # brak nie moze psuc samego importu turniejow.
+        print(f"Nie udalo sie wygasic przeterminowanych prosb: {exc}", file=sys.stderr)
     try:
         mark_synced("tournaments_otk", total, supabase_url, service_role_key)
     except Exception as exc:
