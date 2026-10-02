@@ -167,6 +167,35 @@ const EVENTS = {
       return (row.meeting_point_set_by === requester ? owner : requester) as string | undefined;
     },
   },
+  // 0038: prosba odrzucona albo druga strona zrezygnowala. Powiadamiamy strone,
+  // ktora tego NIE zrobila - kto to zrobil, wiemy z actor_id przekazanego przez
+  // trigger (auth.uid()). Zmiany systemowe (wygaszanie przeterminowanych
+  // prosb, 0034) nie maja aktora, wiec nikogo nie powiadamiaja.
+  request_closed: {
+    guardColumn: "closed_push_sent_at",
+    status: "declined",
+    statuses: ["declined", "cancelled"],
+    // deno-lint-ignore no-explicit-any
+    title: (label: string, row: any) =>
+      row.status === "declined" ? `❌ Prośba odrzucona (${label})` : `⚠️ Druga strona zrezygnowała (${label})`,
+    // deno-lint-ignore no-explicit-any
+    text: (tournament: string, row: any) =>
+      row.status === "declined"
+        ? `${tournament} — poszukaj innej oferty w aplikacji.`
+        : `${tournament} — sprawdź w aplikacji, czy trzeba coś zorganizować inaczej.`,
+    // deno-lint-ignore no-explicit-any
+    recipient: (row: any, actorId?: string) => {
+      if (!actorId) return undefined;
+      const requester = row.requester_trip?.created_by_account_id as string | undefined;
+      const owner = (row.ride_offers?.trips?.created_by_account_id ??
+        row.lodging_offers?.trips?.created_by_account_id ??
+        row.target_trip?.created_by_account_id ??
+        row.lodging_host_offers?.host_account_id) as string | undefined;
+      if (actorId === requester) return owner;
+      if (actorId === owner) return requester;
+      return undefined;
+    },
+  },
 } as const;
 
 // deno-lint-ignore no-explicit-any
@@ -180,7 +209,12 @@ function tournamentNameOf(row: any): string {
   );
 }
 
-async function handleRequestEvent(eventName: keyof typeof EVENTS, requestKind: unknown, requestId: unknown) {
+async function handleRequestEvent(
+  eventName: keyof typeof EVENTS,
+  requestKind: unknown,
+  requestId: unknown,
+  actorId?: unknown,
+) {
   const cfg = typeof requestKind === "string" ? REQUEST_CONFIG[requestKind] : undefined;
   const ev = EVENTS[eventName];
   if (!cfg || typeof requestId !== "string") {
@@ -198,8 +232,8 @@ async function handleRequestEvent(eventName: keyof typeof EVENTS, requestKind: u
   let q = supabase
     .from(cfg.table)
     .update({ [ev.guardColumn]: new Date().toISOString() })
-    .eq("id", requestId)
-    .eq("status", ev.status);
+    .eq("id", requestId);
+  q = evAny.statuses ? q.in("status", evAny.statuses) : q.eq("status", evAny.status);
   if (evAny.throttleMinutes) {
     const cutoff = new Date(Date.now() - evAny.throttleMinutes * 60 * 1000).toISOString();
     q = q
@@ -214,7 +248,7 @@ async function handleRequestEvent(eventName: keyof typeof EVENTS, requestKind: u
   if (error) throw error;
   if (!row) return new Response(JSON.stringify({ skipped: "already sent or wrong status" }), { status: 200 });
 
-  const recipientId = ev.recipient(row);
+  const recipientId = evAny.recipient(row, typeof actorId === "string" ? actorId : undefined);
   if (!recipientId) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
 
   const { data: tokens, error: tokensError } = await supabase
@@ -226,9 +260,149 @@ async function handleRequestEvent(eventName: keyof typeof EVENTS, requestKind: u
 
   const accessToken = await getAccessToken(JSON.parse(SERVICE_ACCOUNT_RAW));
   await Promise.all(
-    tokens.map((t) => sendPush(accessToken, t.token, ev.title(cfg.label), ev.text(tournamentNameOf(row))))
+    tokens.map((t) =>
+      sendPush(accessToken, t.token, evAny.title(cfg.label, row), evAny.text(tournamentNameOf(row), row))
+    )
   );
   return new Response(JSON.stringify({ notified: tokens.length }), { status: 200 });
+}
+
+// ── Tryb "new_message" (0038) ──────────────────────────────────────────────
+// Powiadamia pozostałych uczestników rozmowy o nowej wiadomości — bez treści
+// (ekran blokady widzi każdy). Dla każdego uczestnika nie częściej niż raz na
+// 2 minuty (conversation_participants.last_push_at), żeby żywa rozmowa nie
+// zasypywała telefonu. Ostatnia linia obrony przed spamem z publicznego klucza:
+// liczy się tylko świeża wiadomość (ostatnie 2 minuty), jak przy ofertach.
+async function handleNewMessage(messageId: unknown) {
+  if (typeof messageId !== "string") {
+    return new Response(JSON.stringify({ error: "bad request" }), { status: 400 });
+  }
+  const since = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+  const { data: msg, error: msgError } = await supabase
+    .from("messages")
+    .select("id, conversation_id, sender_account_id")
+    .eq("id", messageId)
+    .gte("created_at", since)
+    .maybeSingle();
+  if (msgError) throw msgError;
+  if (!msg) return new Response(JSON.stringify({ skipped: "no fresh message" }), { status: 200 });
+
+  const { data: claimed, error: claimError } = await supabase
+    .from("conversation_participants")
+    .update({ last_push_at: new Date().toISOString() })
+    .eq("conversation_id", msg.conversation_id)
+    .neq("account_id", msg.sender_account_id)
+    .or(`last_push_at.is.null,last_push_at.lt.${since}`)
+    .select("account_id");
+  if (claimError) throw claimError;
+  const accountIds = (claimed ?? []).map((c) => c.account_id);
+  if (accountIds.length === 0) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
+
+  const { data: tokens, error: tokensError } = await supabase
+    .from("device_tokens")
+    .select("token")
+    .in("account_id", accountIds);
+  if (tokensError) throw tokensError;
+  if (!tokens || tokens.length === 0) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
+
+  const accessToken = await getAccessToken(JSON.parse(SERVICE_ACCOUNT_RAW));
+  await Promise.all(
+    tokens.map((t) => sendPush(accessToken, t.token, "💬 Nowa wiadomość", "Otwórz aplikację, żeby ją przeczytać."))
+  );
+  return new Response(JSON.stringify({ notified: tokens.length }), { status: 200 });
+}
+
+// ── Tryb "selection_published" (0039) ──────────────────────────────────────
+// PZT opublikował listę startową: powiadamia wszystkich z wyjazdem na ten
+// turniej. Jednorazowo na turniej (tournaments.selection_push_at); wołane przez
+// scripts/import_tournament_entries.py. Zabezpieczenie przed wcześniejszym
+// wywołaniem z publicznego klucza: bilet jest zajmowany dopiero, gdy lista
+// faktycznie jest w bazie.
+async function handleSelectionPublished(tournamentId: unknown) {
+  if (typeof tournamentId !== "string") {
+    return new Response(JSON.stringify({ error: "bad request" }), { status: 400 });
+  }
+  const { count, error: countError } = await supabase
+    .from("tournament_entries")
+    .select("tournament_id", { count: "exact", head: true })
+    .eq("tournament_id", tournamentId);
+  if (countError) throw countError;
+  if (!count) return new Response(JSON.stringify({ skipped: "no entries yet" }), { status: 200 });
+
+  const { data: tournament, error } = await supabase
+    .from("tournaments")
+    .update({ selection_push_at: new Date().toISOString() })
+    .eq("id", tournamentId)
+    .is("selection_push_at", null)
+    .select("name")
+    .maybeSingle();
+  if (error) throw error;
+  if (!tournament) return new Response(JSON.stringify({ skipped: "already sent" }), { status: 200 });
+
+  const { data: trips, error: tripsError } = await supabase
+    .from("trips")
+    .select("created_by_account_id")
+    .eq("tournament_id", tournamentId);
+  if (tripsError) throw tripsError;
+  const accountIds = [...new Set((trips ?? []).map((t) => t.created_by_account_id))];
+  if (accountIds.length === 0) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
+
+  const { data: tokens, error: tokensError } = await supabase
+    .from("device_tokens")
+    .select("token")
+    .in("account_id", accountIds);
+  if (tokensError) throw tokensError;
+  if (!tokens || tokens.length === 0) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
+
+  const accessToken = await getAccessToken(JSON.parse(SERVICE_ACCOUNT_RAW));
+  await Promise.all(
+    tokens.map((t) =>
+      sendPush(
+        accessToken,
+        t.token,
+        "📋 Lista startowa PZT opublikowana",
+        `${tournament.name} — zobacz w Moich wyjazdach, kto jeszcze jedzie, i poproś o podwiezienie.`
+      )
+    )
+  );
+  return new Response(JSON.stringify({ notified: tokens.length }), { status: 200 });
+}
+
+// ── Tryb "trip_reminders" (0039) ───────────────────────────────────────────
+// Wołany raz dziennie przez GitHub Actions (.github/workflows/trip-reminders.yml)
+// z days=1 (jutro turniej) i days=7 (za tydzień, brakuje transportu). Wybór
+// wyjazdów i jednorazowość robi claim_trip_reminders() w bazie.
+async function handleTripReminders(days: unknown) {
+  if (days !== 1 && days !== 7) {
+    return new Response(JSON.stringify({ error: "bad request" }), { status: 400 });
+  }
+  const { data: rows, error } = await supabase.rpc("claim_trip_reminders", { p_days: days });
+  if (error) throw error;
+  if (!rows || rows.length === 0) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
+
+  const list = rows as Array<{ account_id: string; tournament_name: string; ride_status: string }>;
+  const accountIds = [...new Set(list.map((r) => r.account_id))];
+  const { data: tokens, error: tokensError } = await supabase
+    .from("device_tokens")
+    .select("account_id, token")
+    .in("account_id", accountIds);
+  if (tokensError) throw tokensError;
+  if (!tokens || tokens.length === 0) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
+
+  const accessToken = await getAccessToken(JSON.parse(SERVICE_ACCOUNT_RAW));
+  let sent = 0;
+  for (const r of list) {
+    const rideMissing = r.ride_status === "none" || r.ride_status === "pending";
+    const title = days === 1 ? "🎾 Jutro turniej" : "⏰ Za tydzień turniej";
+    const body =
+      days === 1
+        ? `${r.tournament_name}${rideMissing ? " — transport wciąż nie jest ustalony." : " — sprawdź miejsce spotkania w aplikacji."}`
+        : `${r.tournament_name} — transport jeszcze nie jest ustalony. Poszukaj przejazdu w aplikacji.`;
+    const mine = tokens.filter((t) => t.account_id === r.account_id);
+    await Promise.all(mine.map((t) => sendPush(accessToken, t.token, title, body)));
+    sent += mine.length;
+  }
+  return new Response(JSON.stringify({ notified: sent }), { status: 200 });
 }
 
 // ── Główna logika ──────────────────────────────────────────────────────────
@@ -241,8 +415,22 @@ Deno.serve(async (req) => {
 
   try {
     const payload = await req.json();
-    if (payload?.event === "request_accepted" || payload?.event === "request_created" || payload?.event === "meeting_point_set") {
-      return await handleRequestEvent(payload.event, payload.request_kind, payload.request_id);
+    if (payload?.event === "selection_published") {
+      return await handleSelectionPublished(payload.tournament_id);
+    }
+    if (payload?.event === "trip_reminders") {
+      return await handleTripReminders(payload.days);
+    }
+    if (payload?.event === "new_message") {
+      return await handleNewMessage(payload.message_id);
+    }
+    if (
+      payload?.event === "request_accepted" ||
+      payload?.event === "request_created" ||
+      payload?.event === "meeting_point_set" ||
+      payload?.event === "request_closed"
+    ) {
+      return await handleRequestEvent(payload.event, payload.request_kind, payload.request_id, payload.actor_id);
     }
     const { trip_id, offer_kind } = payload;
     if (typeof trip_id !== "string" || (offer_kind !== "ride" && offer_kind !== "lodging")) {

@@ -310,6 +310,27 @@ def upsert_entries(tournament_uuid: str, rows: list[dict], supabase_url: str, se
     resp.raise_for_status()
 
 
+def notify_selection_published(tournament_id: str, supabase_url: str, service_role_key: str) -> None:
+    # Push "lista startowa PZT opublikowana" dla wszystkich z wyjazdem na ten
+    # turniej (patrz 0039_push_selection_and_reminders.sql). Funkcja sama
+    # pilnuje, ze wysyla to tylko RAZ na turniej, wiec mozna ja wolac przy
+    # kazdym imporcie. Blad powiadomienia nie moze psuc samego importu.
+    try:
+        resp = requests.post(
+            f"{supabase_url}/functions/v1/notify-tournament",
+            headers={
+                "apikey": service_role_key,
+                "Authorization": f"Bearer {service_role_key}",
+                "Content-Type": "application/json",
+            },
+            json={"event": "selection_published", "tournament_id": tournament_id},
+            timeout=30,
+        )
+        print(f"    powiadomienie o liscie startowej: HTTP {resp.status_code} {resp.text[:80]}")
+    except Exception as exc:
+        print(f"    nie udalo sie wyslac powiadomienia o liscie startowej: {exc}", file=sys.stderr)
+
+
 def mark_synced(key: str, count: int, supabase_url: str, service_role_key: str) -> None:
     # Baner "Dane zaktualizowano dzis o HH:MM" na Start (StartPage.jsx) czyta
     # ten wiersz - patrz supabase/migrations/0030_data_sync_status.sql.
@@ -359,6 +380,7 @@ def main() -> int:
         if not rows:
             continue
         upsert_entries(t["id"], rows, supabase_url, service_role_key)
+        notify_selection_published(t["id"], supabase_url, service_role_key)
         published += 1
         print(f"  [{t['name']}] selekcja opublikowana - zapisano {len(rows)} zawodnikow")
         time.sleep(0.5)  # nie zasypujemy portal.pzt.pl seria zapytan pod rzad
