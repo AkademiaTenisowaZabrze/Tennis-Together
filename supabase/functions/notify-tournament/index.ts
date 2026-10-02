@@ -167,6 +167,25 @@ const EVENTS = {
       return (row.meeting_point_set_by === requester ? owner : requester) as string | undefined;
     },
   },
+  // 0040: spotkanie potwierdzone kodem. Powiadomienie dostaje strona, ktora
+  // kodu NIE wpisala (potwierdzenie robi ta, ktora wpisuje kod drugiej).
+  meeting_confirmed: {
+    guardColumn: "confirmed_push_sent_at",
+    status: "accepted",
+    kinds: ["ride", "lodging", "host_lodging"],
+    requireNotNull: "meeting_confirmed_at",
+    extraSelect: "meeting_confirmed_by",
+    title: (_label: string) => "🤝 Spotkanie potwierdzone",
+    text: (tournament: string) => `${tournament} — możesz teraz ocenić drugą stronę w aplikacji.`,
+    // deno-lint-ignore no-explicit-any
+    recipient: (row: any) => {
+      const requester = row.requester_trip?.created_by_account_id as string | undefined;
+      const owner = (row.ride_offers?.trips?.created_by_account_id ??
+        row.lodging_offers?.trips?.created_by_account_id ??
+        row.lodging_host_offers?.host_account_id) as string | undefined;
+      return (row.meeting_confirmed_by === requester ? owner : requester) as string | undefined;
+    },
+  },
   // 0038: prosba odrzucona albo druga strona zrezygnowala. Powiadamiamy strone,
   // ktora tego NIE zrobila - kto to zrobil, wiemy z actor_id przekazanego przez
   // trigger (auth.uid()). Zmiany systemowe (wygaszanie przeterminowanych
@@ -241,6 +260,7 @@ async function handleRequestEvent(
       .or(`${ev.guardColumn}.is.null,${ev.guardColumn}.lt.${cutoff}`);
   } else {
     q = q.is(ev.guardColumn, null);
+    if (evAny.requireNotNull) q = q.not(evAny.requireNotNull, "is", null);
   }
   const { data: row, error } = await q
     .select(evAny.extraSelect ? `${cfg.select}, ${evAny.extraSelect}` : cfg.select)
@@ -376,9 +396,25 @@ async function handleTripReminders(days: unknown) {
   if (days !== 1 && days !== 7) {
     return new Response(JSON.stringify({ error: "bad request" }), { status: 400 });
   }
+  const reminders = await sendTripReminders(days);
+  // Tygodniowe podsumowanie dla trenerów idzie razem z przypomnieniem "za tydzień".
+  let digests = 0;
+  if (days === 7) {
+    try {
+      digests = await sendCoachDigests();
+    } catch (err) {
+      // Brak funkcji claim_coach_digests (przed 0040) albo chwilowy błąd nie
+      // może psuć zwykłych przypomnień, które już poszły.
+      console.error("notify-tournament: podsumowanie dla trenerów nie powiodło się:", err);
+    }
+  }
+  return new Response(JSON.stringify({ notified: reminders, coach_digests: digests }), { status: 200 });
+}
+
+async function sendTripReminders(days: 1 | 7): Promise<number> {
   const { data: rows, error } = await supabase.rpc("claim_trip_reminders", { p_days: days });
   if (error) throw error;
-  if (!rows || rows.length === 0) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
+  if (!rows || rows.length === 0) return 0;
 
   const list = rows as Array<{ account_id: string; tournament_name: string; ride_status: string }>;
   const accountIds = [...new Set(list.map((r) => r.account_id))];
@@ -387,7 +423,7 @@ async function handleTripReminders(days: unknown) {
     .select("account_id, token")
     .in("account_id", accountIds);
   if (tokensError) throw tokensError;
-  if (!tokens || tokens.length === 0) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
+  if (!tokens || tokens.length === 0) return 0;
 
   const accessToken = await getAccessToken(JSON.parse(SERVICE_ACCOUNT_RAW));
   let sent = 0;
@@ -402,7 +438,129 @@ async function handleTripReminders(days: unknown) {
     await Promise.all(mine.map((t) => sendPush(accessToken, t.token, title, body)));
     sent += mine.length;
   }
-  return new Response(JSON.stringify({ notified: sent }), { status: 200 });
+  return sent;
+}
+
+// Trener: "w klubie N osób nie ma jeszcze transportu na turniej za tydzień"
+// (0040, claim_coach_digests — raz na trenera i turniej).
+async function sendCoachDigests(): Promise<number> {
+  const { data: rows, error } = await supabase.rpc("claim_coach_digests");
+  if (error) throw error;
+  if (!rows || rows.length === 0) return 0;
+
+  const list = rows as Array<{ coach_account_id: string; tournament_name: string; missing_ride: number }>;
+  const { data: tokens, error: tokensError } = await supabase
+    .from("device_tokens")
+    .select("account_id, token")
+    .in("account_id", [...new Set(list.map((r) => r.coach_account_id))]);
+  if (tokensError) throw tokensError;
+  if (!tokens || tokens.length === 0) return 0;
+
+  const accessToken = await getAccessToken(JSON.parse(SERVICE_ACCOUNT_RAW));
+  let sent = 0;
+  for (const r of list) {
+    const mine = tokens.filter((t) => t.account_id === r.coach_account_id);
+    const body = `${r.tournament_name} (za tydzień) — transportu wciąż nie ma ustalonego dla: ${r.missing_ride}. Zobacz w panelu klubu.`;
+    await Promise.all(mine.map((t) => sendPush(accessToken, t.token, "🚗 Brakujący transport w klubie", body)));
+    sent += mine.length;
+  }
+  return sent;
+}
+
+// ── Tryb "club_trip_created" (0040) ────────────────────────────────────────
+// Zawodnik z klubu zgłosił wyjazd -> push do trenera(ów) tego klubu. Tylko
+// świeże wyjazdy (2 min) i odstęp 60 min na trenera i turniej, żeby klubowe
+// zgłoszenia hurtem nie zasypały trenera. Bez nazwisk w treści.
+async function handleClubTripCreated(tripId: unknown) {
+  if (typeof tripId !== "string") {
+    return new Response(JSON.stringify({ error: "bad request" }), { status: 400 });
+  }
+  const since = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+  const { data: trip, error } = await supabase
+    .from("trips")
+    .select("tournament_id, tournaments(name), players(club_name)")
+    .eq("id", tripId)
+    .gte("created_at", since)
+    .maybeSingle();
+  if (error) throw error;
+  if (!trip) return new Response(JSON.stringify({ skipped: "no fresh trip" }), { status: 200 });
+
+  // deno-lint-ignore no-explicit-any
+  const t = trip as any;
+  const club = String(t.players?.club_name ?? "").trim().toLowerCase();
+  if (!club) return new Response(JSON.stringify({ skipped: "player without club" }), { status: 200 });
+
+  const { data: coaches, error: coachError } = await supabase
+    .from("accounts")
+    .select("id, club_name")
+    .eq("role", "coach")
+    .not("club_name", "is", null);
+  if (coachError) throw coachError;
+  const matching = (coaches ?? []).filter((c) => String(c.club_name).trim().toLowerCase() === club);
+
+  const toNotify: string[] = [];
+  for (const c of matching) {
+    const { data: ok, error: slotError } = await supabase.rpc("claim_push_slot", {
+      p_key: `coach_trip_${c.id}_${t.tournament_id}`,
+      p_minutes: 60,
+    });
+    if (slotError) throw slotError;
+    if (ok) toNotify.push(c.id);
+  }
+  if (toNotify.length === 0) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
+
+  const { data: tokens, error: tokensError } = await supabase
+    .from("device_tokens")
+    .select("token")
+    .in("account_id", toNotify);
+  if (tokensError) throw tokensError;
+  if (!tokens || tokens.length === 0) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
+
+  const accessToken = await getAccessToken(JSON.parse(SERVICE_ACCOUNT_RAW));
+  await Promise.all(
+    tokens.map((tk) =>
+      sendPush(
+        accessToken,
+        tk.token,
+        "🎾 Nowy wyjazd w klubie",
+        `${t.tournaments?.name ?? "Turniej"} — ktoś z klubu zgłosił wyjazd. Zobacz w panelu klubu.`
+      )
+    )
+  );
+  return new Response(JSON.stringify({ notified: tokens.length }), { status: 200 });
+}
+
+// ── Tryb "admin_report" (0040) ─────────────────────────────────────────────
+// Nowe zgłoszenie błędu (formularz publiczny!) albo nadużycia -> push do
+// administratorów. Nie częściej niż raz na 10 minut na rodzaj zgłoszenia,
+// żeby nikt nie mógł zasypać administratora; bez treści zgłoszenia.
+async function handleAdminReport(source: unknown) {
+  if (source !== "bug" && source !== "abuse") {
+    return new Response(JSON.stringify({ error: "bad request" }), { status: 400 });
+  }
+  const { data: ok, error: slotError } = await supabase.rpc("claim_push_slot", {
+    p_key: `admin_${source}`,
+    p_minutes: 10,
+  });
+  if (slotError) throw slotError;
+  if (!ok) return new Response(JSON.stringify({ skipped: "throttled" }), { status: 200 });
+
+  const { data: admins, error } = await supabase.from("accounts").select("id").eq("is_admin", true);
+  if (error) throw error;
+  const adminIds = (admins ?? []).map((a) => a.id);
+  if (adminIds.length === 0) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
+
+  const { data: tokens, error: tokensError } = await supabase
+    .from("device_tokens")
+    .select("token")
+    .in("account_id", adminIds);
+  if (tokensError) throw tokensError;
+  if (!tokens || tokens.length === 0) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
+
+  const title = source === "bug" ? "🐞 Nowe zgłoszenie błędu" : "🚩 Nowe zgłoszenie nadużycia";
+  const accessToken = await getAccessToken(JSON.parse(SERVICE_ACCOUNT_RAW));
+  await Promise.all(tokens.map((t) => sendPush(accessToken, t.token, title, "Otwórz panel administratora.")));
+  return new Response(JSON.stringify({ notified: tokens.length }), { status: 200 });
 }
 
 // ── Główna logika ──────────────────────────────────────────────────────────
@@ -415,6 +573,12 @@ Deno.serve(async (req) => {
 
   try {
     const payload = await req.json();
+    if (payload?.event === "club_trip_created") {
+      return await handleClubTripCreated(payload.trip_id);
+    }
+    if (payload?.event === "admin_report") {
+      return await handleAdminReport(payload.source);
+    }
     if (payload?.event === "selection_published") {
       return await handleSelectionPublished(payload.tournament_id);
     }
@@ -428,6 +592,7 @@ Deno.serve(async (req) => {
       payload?.event === "request_accepted" ||
       payload?.event === "request_created" ||
       payload?.event === "meeting_point_set" ||
+      payload?.event === "meeting_confirmed" ||
       payload?.event === "request_closed"
     ) {
       return await handleRequestEvent(payload.event, payload.request_kind, payload.request_id, payload.actor_id);

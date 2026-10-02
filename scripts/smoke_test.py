@@ -99,6 +99,15 @@ check("push: lista startowa - brak wpisow pominiety", s == 200 and "skipped" in 
 s, b = call("POST", F, {"event": "trip_reminders", "days": 3})
 check("push: przypomnienia - zle days odrzucone", s == 400, f"HTTP {s} {b[:80]}")
 
+s, b = call("POST", F, {"event": "meeting_confirmed", "request_kind": "ride_ping", "request_id": Z})
+check("push: potwierdzenie spotkania - nieobslugiwany rodzaj odrzucony", s == 400, f"HTTP {s} {b[:80]}")
+s, b = call("POST", F, {"event": "club_trip_created", "trip_id": Z})
+check("push: wyjazd w klubie - brak swiezego wyjazdu pominiety", s == 200 and "skipped" in b, f"HTTP {s} {b[:80]}")
+s, b = call("POST", F, {"event": "admin_report", "source": "x"})
+check("push: zgloszenie dla admina - zly rodzaj odrzucony", s == 400, f"HTTP {s} {b[:80]}")
+s, b = call("POST", f"{U}/rest/v1/rpc/claim_push_slot", {"p_key": "x", "p_minutes": 1})
+check("rpc claim_push_slot niedostepne dla anon (albo jeszcze nie wdrozone)", s in (401, 403, 404), f"HTTP {s} {b[:80]}")
+
 # Weryfikacja loginu PZT (usePztPlayerSearch.js -> verifyPztLogin) - zastapila
 # martwy Railway (2026-09-27, zgloszenie: blad przy dodawaniu zawodnika).
 s, b = call("POST", f"{U}/functions/v1/pzt-player-lookup", {"login": "MRO2043343"})
