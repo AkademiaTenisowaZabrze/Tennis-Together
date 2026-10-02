@@ -86,6 +86,9 @@ check("funkcja powiadomien odrzuca bledne dane (wymaga wdrozenia poprawki)", s =
 s, b = call("POST", f"{U}/functions/v1/notify-tournament", {"event": "request_accepted", "request_kind": "x", "request_id": "y"})
 check("funkcja powiadomien odrzuca nieznany rodzaj prosby", s == 400, f"HTTP {s} {b[:80]}")
 
+s, b = call("POST", f"{U}/functions/v1/notify-tournament", {"event": "meeting_point_set", "request_kind": "lodging", "request_id": "x"})
+check("powiadomienie o pineski odrzuca nieobslugiwany rodzaj", s == 400, f"HTTP {s} {b[:80]}")
+
 # Weryfikacja loginu PZT (usePztPlayerSearch.js -> verifyPztLogin) - zastapila
 # martwy Railway (2026-09-27, zgloszenie: blad przy dodawaniu zawodnika).
 s, b = call("POST", f"{U}/functions/v1/pzt-player-lookup", {"login": "MRO2043343"})

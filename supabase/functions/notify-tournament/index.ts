@@ -146,6 +146,27 @@ const EVENTS = {
         row.target_trip?.created_by_account_id ??
         row.lodging_host_offers?.host_account_id) as string | undefined,
   },
+  // 0037: druga strona ustawila pineske miejsca spotkania. Powiadomienie dostaje
+  // ta strona, ktora pineski NIE ustawila. Zamiast jednorazowego biletu jest
+  // odstep (throttleMinutes), zeby wielokrotne przesuwanie pineski nie spamowalo.
+  meeting_point_set: {
+    guardColumn: "meeting_point_push_at",
+    status: "accepted",
+    kinds: ["ride", "ride_ping"],
+    throttleMinutes: 5,
+    // Kolumna z 0036 - dopinana tylko dla tego zdarzenia, zeby pozostale
+    // powiadomienia dzialaly tez przed uruchomieniem 0036 w bazie.
+    extraSelect: "meeting_point_set_by",
+    title: (_label: string) => "📍 Ustalono miejsce spotkania",
+    text: (tournament: string) => `${tournament} — sprawdź pineskę na mapie w aplikacji.`,
+    // deno-lint-ignore no-explicit-any
+    recipient: (row: any) => {
+      const requester = row.requester_trip?.created_by_account_id as string | undefined;
+      const owner = (row.ride_offers?.trips?.created_by_account_id ??
+        row.target_trip?.created_by_account_id) as string | undefined;
+      return (row.meeting_point_set_by === requester ? owner : requester) as string | undefined;
+    },
+  },
 } as const;
 
 // deno-lint-ignore no-explicit-any
@@ -166,15 +187,29 @@ async function handleRequestEvent(eventName: keyof typeof EVENTS, requestKind: u
     return new Response(JSON.stringify({ error: "bad request" }), { status: 400 });
   }
 
-  // Jednorazowy bilet: tylko pierwsze wywołanie dla danej prośby przechodzi
-  // dalej (patrz komentarze w 0033 i 0034).
-  const { data: row, error } = await supabase
+  // deno-lint-ignore no-explicit-any
+  const evAny = ev as any;
+  if (evAny.kinds && !evAny.kinds.includes(requestKind)) {
+    return new Response(JSON.stringify({ error: "bad request" }), { status: 400 });
+  }
+
+  // Bilet: domyślnie jednorazowy (kolumna jeszcze pusta), a dla zdarzeń z
+  // throttleMinutes — dozwolony ponownie po upływie odstępu (patrz 0033/0034/0037).
+  let q = supabase
     .from(cfg.table)
     .update({ [ev.guardColumn]: new Date().toISOString() })
     .eq("id", requestId)
-    .eq("status", ev.status)
-    .is(ev.guardColumn, null)
-    .select(cfg.select)
+    .eq("status", ev.status);
+  if (evAny.throttleMinutes) {
+    const cutoff = new Date(Date.now() - evAny.throttleMinutes * 60 * 1000).toISOString();
+    q = q
+      .not("meeting_lat", "is", null)
+      .or(`${ev.guardColumn}.is.null,${ev.guardColumn}.lt.${cutoff}`);
+  } else {
+    q = q.is(ev.guardColumn, null);
+  }
+  const { data: row, error } = await q
+    .select(evAny.extraSelect ? `${cfg.select}, ${evAny.extraSelect}` : cfg.select)
     .maybeSingle();
   if (error) throw error;
   if (!row) return new Response(JSON.stringify({ skipped: "already sent or wrong status" }), { status: 200 });
@@ -206,7 +241,7 @@ Deno.serve(async (req) => {
 
   try {
     const payload = await req.json();
-    if (payload?.event === "request_accepted" || payload?.event === "request_created") {
+    if (payload?.event === "request_accepted" || payload?.event === "request_created" || payload?.event === "meeting_point_set") {
       return await handleRequestEvent(payload.event, payload.request_kind, payload.request_id);
     }
     const { trip_id, offer_kind } = payload;
