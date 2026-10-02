@@ -70,6 +70,10 @@ for fn, body in [("admin_stats", {}), ("match_profile", {"other_account_id": Z})
 s, b = call("POST", f"{U}/rest/v1/rpc/confirm_meeting", {"p_request_id": Z, "p_kind": "ride", "p_code": "AAAAAA"})
 check("rpc confirm_meeting niedostepne dla anon (albo jeszcze nie wdrozone)", s in (401, 403, 404), f"HTTP {s} {b[:80]}")
 
+for fn in ("expire_stale_requests", "trip_arrangements"):
+    s, b = call("POST", f"{U}/rest/v1/rpc/{fn}", {})
+    check(f"rpc {fn} niedostepne dla anon (albo jeszcze nie wdrozone)", s in (401, 403, 404), f"HTTP {s} {b[:80]}")
+
 # 5. Funkcja powiadomien
 s, b = call("POST", f"{U}/functions/v1/notify-tournament", {"trip_id": Z, "offer_kind": "ride"})
 check("funkcja powiadomien odpowiada", s in (200, 400, 404), f"HTTP {s} {b[:80]}")

@@ -3,6 +3,8 @@ import { useAuth } from "../lib/AuthContext.jsx";
 import { useTrips } from "../lib/useTrips.js";
 import { useTournamentMatches } from "../lib/useTournamentMatches.js";
 import { useRidePings } from "../lib/useRidePings.js";
+import { useTripArrangements, ARRANGEMENT_LABELS } from "../lib/useTripArrangements.js";
+import { buildTripICS, downloadICS } from "../lib/calendarExport.js";
 import ErrorBox from "../components/ErrorBox.jsx";
 
 const FILTERS = [
@@ -36,6 +38,7 @@ export default function TripsPage() {
   const [filter, setFilter] = useState("upcoming");
   const { account } = useAuth();
   const { trips, loading, error } = useTrips(account?.id);
+  const { byTrip } = useTripArrangements();
 
   const visible = trips.filter((t) => classify(t) === filter);
 
@@ -71,13 +74,24 @@ export default function TripsPage() {
               </p>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
-                <Row label="🚗 Transport" text="Jeszcze nikt się nie zgłosił" state="muted" />
-                <Row label="🏨 Nocleg" text="Jeszcze nikt się nie zgłosił" state="muted" />
+                <ArrangementRow label="🚗 Transport" value={byTrip.get(t.id)?.ride} />
+                <ArrangementRow label="🏨 Nocleg" value={byTrip.get(t.id)?.lodging} />
               </div>
 
               <MatchedEntrants trip={t} />
 
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {t.tournaments?.starts_on && (
+                  <button
+                    className="btn-ghost"
+                    onClick={() => {
+                      const ics = buildTripICS(t);
+                      if (ics) downloadICS(`wyjazd-${t.tournaments.starts_on}.ics`, ics);
+                    }}
+                  >
+                    📅 Dodaj do kalendarza
+                  </button>
+                )}
                 <button className="btn-ghost">💬 Czat grupy (wkrótce)</button>
               </div>
             </div>
@@ -156,6 +170,13 @@ function MatchedEntrants({ trip }) {
       </div>
     </div>
   );
+}
+
+// Gdy stan nieznany (np. funkcja trip_arrangements jeszcze nie wdrożona) —
+// uczciwie "brak danych" zamiast zmyślonego "nikt się nie zgłosił".
+function ArrangementRow({ label, value }) {
+  const info = ARRANGEMENT_LABELS[value];
+  return <Row label={label} text={info?.text ?? "—"} state={info?.cls ?? "muted"} />;
 }
 
 function Row({ label, text, state }) {
