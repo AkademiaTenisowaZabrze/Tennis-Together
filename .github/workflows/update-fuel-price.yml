@@ -1,0 +1,39 @@
+name: Cena paliwa (Biuletyn UE)
+
+# Raz w tygodniu pobiera średnią cenę paliwa w Polsce z oficjalnego
+# Biuletynu Paliwowego Komisji Europejskiej, przelicza ją na zł kursem NBP
+# i zapisuje w ustawieniach kalkulatora kosztów przejazdu (ride_cost_settings).
+# Patrz scripts/update_fuel_price.py i migracja 0042_fuel_price_auto.sql.
+#
+# Biuletyn wychodzi w czwartki, więc workflow startuje w piątek rano.
+# Gdy dane są niedostępne albo nieprawdopodobne, workflow kończy się błędem
+# (czerwony znacznik w Actions), a w bazie zostaje poprzednia cena.
+# Administrator może wyłączyć automat w panelu admina (wtedy skrypt nic nie robi).
+#
+# Wymaga tego samego sekretu co importy turniejów: SUPABASE_SERVICE_ROLE_KEY.
+
+on:
+  schedule:
+    - cron: "0 8 * * 5"
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pobierz kod
+        uses: actions/checkout@v7
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalacja zależności
+        run: pip install -r scripts/requirements.txt
+
+      - name: Aktualizacja ceny paliwa
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://jrabxtiranllayerhutm.supabase.co' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/update_fuel_price.py
