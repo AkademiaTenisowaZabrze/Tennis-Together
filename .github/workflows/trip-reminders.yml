@@ -1,0 +1,44 @@
+name: Przypomnienia o wyjazdach
+
+# Codziennie wysyla powiadomienia push:
+#   - "Jutro turniej" (wyjazdy na turniej startujacy jutro),
+#   - "Za tydzien turniej" (wyjazdy na turniej za 7 dni, ktorym wciaz brakuje
+#     transportu).
+# Wybor wyjazdow i jednorazowosc (kazdy wyjazd dostaje kazde przypomnienie
+# najwyzej raz) robi funkcja claim_trip_reminders() w bazie (migracja
+# 0039_push_selection_and_reminders.sql), a wysylke - Edge Function
+# notify-tournament (tryb trip_reminders). Nie wymaga zadnych sekretow:
+# klucz "anon" jest publiczny (ten sam co w aplikacji), a funkcja sama ma
+# swoj klucz serwisowy.
+#
+# 7:00 UTC = 8:00/9:00 czasu polskiego. Mozna tez uruchomic recznie z Actions.
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://jrabxtiranllayerhutm.supabase.co' }}
+      SUPABASE_ANON_KEY: sb_publishable_8-yxyMhoEEq-kHx2opU0Pg_QylogBur
+    steps:
+      - name: Przypomnienie "jutro turniej"
+        run: |
+          curl -fsS -X POST "$SUPABASE_URL/functions/v1/notify-tournament" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"event":"trip_reminders","days":1}'
+          echo
+
+      - name: Przypomnienie "za tydzien turniej, brakuje transportu"
+        run: |
+          curl -fsS -X POST "$SUPABASE_URL/functions/v1/notify-tournament" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"event":"trip_reminders","days":7}'
+          echo
