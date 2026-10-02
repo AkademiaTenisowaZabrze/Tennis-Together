@@ -8,6 +8,7 @@ import { useRidePings } from "../lib/useRidePings.js";
 import { useCityCoordinates, findCityCoords, haversineKm } from "../lib/useCityCoordinates.js";
 import ErrorBox from "../components/ErrorBox.jsx";
 import MeetingConfirmation from "../components/MeetingConfirmation.jsx";
+import MeetingPoint from "../components/MeetingPoint.jsx";
 import CounterpartCard from "../components/CounterpartCard.jsx";
 import RateMatchForm from "../components/RateMatchForm.jsx";
 import StarRating from "../components/StarRating.jsx";
@@ -70,6 +71,7 @@ export default function RidesPage() {
 
       <IncomingRequests joinRequests={joinRequests} account={account} />
       <IncomingRidePings ridePings={ridePings} />
+      <AcceptedRidePings ridePings={ridePings} accountId={account?.id} />
 
       <div className="segmented">
         <button className={tab === "offers" ? "is-active" : ""} onClick={() => switchTab("offers")}>
@@ -191,6 +193,41 @@ function IncomingRidePings({ ridePings }) {
   );
 }
 
+// Zaakceptowane prośby o podwiezienie (obie strony) — po akceptacji znikały z
+// listy i zostawał tylko czat, a tu jest miejsce na ustalenie pineski.
+function AcceptedRidePings({ ridePings, accountId }) {
+  const accepted = [...ridePings.incoming, ...ridePings.outgoing].filter((p) => p.status === "accepted");
+  if (accepted.length === 0) return null;
+  return (
+    <div className="glass-card">
+      <p style={{ margin: "0 0 10px", fontWeight: 700 }}>Uzgodnione podwiezienia ({accepted.length})</p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {accepted.map((p) => {
+          const iAmTarget = p.target_trip?.created_by_account_id === accountId;
+          const other = iAmTarget ? p.requester_trip : p.target_trip;
+          return (
+            <div key={p.id} className="list-item" style={{ flexDirection: "column", alignItems: "stretch", gap: 10 }}>
+              <div>
+                <strong style={{ fontSize: 14 }}>{other?.players?.first_name ?? "Zawodnik"}</strong>
+                <span style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
+                  {" "}
+                  · {p.requester_trip?.tournaments?.name ?? "Turniej"}
+                </span>
+              </div>
+              <MeetingPoint
+                kind="ride_ping"
+                request={p}
+                onSaved={ridePings.refresh}
+                centerCity={p.requester_trip?.departure_city}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function IncomingRequests({ joinRequests, account }) {
   const { incoming, respond } = joinRequests;
   const [busyId, setBusyId] = useState(null);
@@ -249,6 +286,12 @@ function IncomingRequests({ joinRequests, account }) {
             {r.status === "accepted" && (
               <>
                 <CounterpartCard accountId={r.requester_trip?.created_by_account_id} />
+                <MeetingPoint
+                  kind="ride"
+                  request={r}
+                  onSaved={joinRequests.refresh}
+                  centerCity={r.requester_trip?.departure_city}
+                />
                 <MeetingConfirmation request={r} joinRequests={joinRequests} />
                 {r.meeting_confirmed_at && (
                   <RateMatchForm
@@ -342,6 +385,12 @@ function OfferCard({ offer: r, account, trips, joinRequests }) {
               <button className="btn-ghost" onClick={handleCancelAccepted} disabled={busy}>
                 {busy ? "Rezygnuję…" : "Zrezygnuj z przejazdu"}
               </button>
+              <MeetingPoint
+                kind="ride"
+                request={myOutgoing}
+                onSaved={joinRequests.refresh}
+                centerCity={myOutgoing.ride_offers?.trips?.departure_city}
+              />
               <MeetingConfirmation request={myOutgoing} joinRequests={joinRequests} />
               {myOutgoing.meeting_confirmed_at && (
                 <RateMatchForm

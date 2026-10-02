@@ -70,6 +70,8 @@ for fn, body in [("admin_stats", {}), ("match_profile", {"other_account_id": Z})
 s, b = call("POST", f"{U}/rest/v1/rpc/confirm_meeting", {"p_request_id": Z, "p_kind": "ride", "p_code": "AAAAAA"})
 check("rpc confirm_meeting niedostepne dla anon (albo jeszcze nie wdrozone)", s in (401, 403, 404), f"HTTP {s} {b[:80]}")
 
+s, b = call("POST", f"{U}/rest/v1/rpc/set_meeting_point", {"p_kind": "ride", "p_request_id": Z, "p_lat": 50.0, "p_lng": 19.0, "p_place": "x"})
+check("rpc set_meeting_point niedostepne dla anon (albo jeszcze nie wdrozone)", s in (401, 403, 404), f"HTTP {s} {b[:80]}")
 for fn in ("expire_stale_requests", "trip_arrangements"):
     s, b = call("POST", f"{U}/rest/v1/rpc/{fn}", {})
     check(f"rpc {fn} niedostepne dla anon (albo jeszcze nie wdrozone)", s in (401, 403, 404), f"HTTP {s} {b[:80]}")
