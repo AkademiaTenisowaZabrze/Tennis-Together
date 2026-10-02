@@ -108,6 +108,12 @@ check("push: zgloszenie dla admina - zly rodzaj odrzucony", s == 400, f"HTTP {s}
 s, b = call("POST", f"{U}/rest/v1/rpc/claim_push_slot", {"p_key": "x", "p_minutes": 1})
 check("rpc claim_push_slot niedostepne dla anon (albo jeszcze nie wdrozone)", s in (401, 403, 404), f"HTTP {s} {b[:80]}")
 
+# Kalkulator kosztow przejazdu (0041): parametry tylko dla admina, wynik nie dla anon.
+s, b = call("GET", f"{U}/rest/v1/ride_cost_settings?select=*")
+check("kalkulator kosztow: ustawienia niewidoczne dla anon", (s == 200 and b.strip() == "[]") or s in (401, 403, 404), f"HTTP {s} {b[:80]}")
+s, b = call("POST", f"{U}/rest/v1/rpc/ride_cost_suggestion", {"p_trip_id": Z})
+check("rpc ride_cost_suggestion niedostepne dla anon", s in (401, 403, 404), f"HTTP {s} {b[:80]}")
+
 # Weryfikacja loginu PZT (usePztPlayerSearch.js -> verifyPztLogin) - zastapila
 # martwy Railway (2026-09-27, zgloszenie: blad przy dodawaniu zawodnika).
 s, b = call("POST", f"{U}/functions/v1/pzt-player-lookup", {"login": "MRO2043343"})

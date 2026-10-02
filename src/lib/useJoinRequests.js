@@ -16,7 +16,7 @@ const CONFIG = {
     table: "ride_join_requests",
     offerFk: "ride_offer_id",
     offerEmbed:
-      "ride_offers(id, free_seats, luggage_space, cost_split_suggestion, trips(departure_city, created_by_account_id, players(first_name), tournaments(name)))",
+      "ride_offers(id, free_seats, luggage_space, cost_split_suggestion, cost_per_person_pln, trips(departure_city, created_by_account_id, players(first_name), tournaments(name)))",
   },
   lodging: {
     table: "lodging_join_requests",

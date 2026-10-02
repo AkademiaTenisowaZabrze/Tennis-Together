@@ -286,6 +286,27 @@
     </div>
   </section>
 
+  <section id="koszty">
+    <div class="section-head"><h2>Dzielenie kosztów przejazdu</h2></div>
+    <p>
+      Aplikacja nie służy do zarabiania, tylko do wzajemnej pomocy rodzin. Kierowca zaznacza na
+      ofercie, czy chce zwrotu kosztów paliwa. Jeśli tak, musi potwierdzić, że przyjmuje do
+      wiadomości kwotę wyliczoną przez kalkulator i się na nią zgadza. Kwoty nie wpisuje sam.
+      Zawodnik widzi kwotę przed wysłaniem prośby, a wysyłając ją, zgadza się na nią (kwota
+      zapisuje się przy prośbie i nie zmienia się później). Rozliczenie odbywa się bezpośrednio
+      między rodzinami, aplikacja nie przyjmuje żadnych płatności.
+    </p>
+    <p>
+      Kalkulator liczy odległość między miastem wyjazdu a miastem turnieju (linia prosta razy
+      współczynnik drogi), trasę tam i z powrotem, spalanie i cenę paliwa, a wynik dzieli przez
+      liczbę osób w aucie i zaokrągla. Jego parametry widzi i zmienia tylko administrator w panelu
+      admina. Cena paliwa aktualizuje się co tydzień z oficjalnego Biuletynu Paliwowego Komisji
+      Europejskiej (średnia cena w Polsce przeliczona kursem NBP), a administrator może to wyłączyć
+      i wpisać cenę ręcznie. Obliczenia wykonuje baza danych (funkcja ride_cost_suggestion),
+      a nie przeglądarka.
+    </p>
+  </section>
+
   <section id="budowanie">
     <div class="section-head"><h2>Budowanie i wydawanie</h2></div>
     <p>Dwa workflow GitHub Actions do budowy Androida:</p>

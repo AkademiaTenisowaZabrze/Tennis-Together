@@ -32,7 +32,7 @@ export function useRideOffers() {
     refresh();
   }, [refresh]);
 
-  const createOffer = async ({ tripId, freeSeats, luggageSpace, driverNotes, costSplitSuggestion }) => {
+  const createOffer = async ({ tripId, freeSeats, luggageSpace, driverNotes, costSplitSuggestion, costRefund, costTermsAccepted }) => {
     const { data, error } = await supabase
       .from("ride_offers")
       .insert({
@@ -41,6 +41,9 @@ export function useRideOffers() {
         luggage_space: luggageSpace || null,
         driver_notes: driverNotes || null,
         cost_split_suggestion: costSplitSuggestion || null,
+        // kwotę wylicza i zamraża baza (0041); tu tylko wybór i zgoda kierowcy
+        cost_refund: !!costRefund,
+        cost_terms_accepted: !!costTermsAccepted,
       })
       .select(SELECT_WITH_TRIP)
       .single();
@@ -51,6 +54,34 @@ export function useRideOffers() {
   };
 
   return { offers, loading, error, createOffer, refresh };
+}
+
+// Sugerowana kwota od osoby (kalkulator po stronie bazy, 0041). Parametry
+// kalkulatora zna tylko administrator; tu dostajemy sam wynik albo null, gdy
+// nie da się policzyć (np. miasto spoza listy).
+export function useRideCostSuggestion(tripId) {
+  const [suggestion, setSuggestion] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!tripId) {
+      setSuggestion(null);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    supabase.rpc("ride_cost_suggestion", { p_trip_id: tripId }).then(({ data, error }) => {
+      if (cancelled) return;
+      const row = Array.isArray(data) ? data[0] : data;
+      setSuggestion(!error && row ? { distanceKm: row.distance_km, perPersonPln: row.per_person_pln } : null);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [tripId]);
+
+  return { suggestion, loading };
 }
 
 export function useRideRequests() {

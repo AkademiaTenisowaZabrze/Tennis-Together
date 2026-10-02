@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useTrips } from "../lib/useTrips.js";
-import { useRideOffers, useRideRequests } from "../lib/useRides.js";
+import { useRideOffers, useRideRequests, useRideCostSuggestion } from "../lib/useRides.js";
 import { useJoinRequests } from "../lib/useJoinRequests.js";
 import { useRidePings } from "../lib/useRidePings.js";
 import { useCityCoordinates, findCityCoords, haversineKm } from "../lib/useCityCoordinates.js";
@@ -28,6 +28,10 @@ function tripLabel(trip) {
   if (!t) return "Turniej";
   const date = t.starts_on ? dateFormatter.format(new Date(t.starts_on)) : "termin nieznany";
   return `${t.name} (${date})`;
+}
+
+function costLabel(amount) {
+  return amount === 0 ? "bez opłaty" : `${amount} zł od osoby`;
 }
 
 export default function RidesPage() {
@@ -104,7 +108,13 @@ export default function RidesPage() {
           )}
           {!offersLoading &&
             sortedOffers.map((r) => (
-              <OfferCard key={r.id} offer={r} account={account} trips={trips} joinRequests={joinRequests} />
+              <OfferCard
+                key={r.id}
+                offer={r}
+                account={account}
+                trips={trips}
+                joinRequests={joinRequests}
+              />
             ))}
           {!offersLoading && offers.length === 0 && (
             <p style={{ color: "var(--color-text-muted)" }}>Nikt jeszcze nie zgłosił wolnego miejsca.</p>
@@ -260,6 +270,12 @@ function IncomingRequests({ joinRequests, account }) {
                   {" "}
                   · {r.requester_trip?.departure_city ?? "?"}
                 </span>
+                {r.agreed_cost_pln != null && (
+                  <span style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
+                    {" "}
+                    · zgoda na: {costLabel(r.agreed_cost_pln)}
+                  </span>
+                )}
               </div>
               {r.status === "pending" ? (
                 <div style={{ display: "flex", gap: 8 }}>
@@ -363,6 +379,11 @@ function OfferCard({ offer: r, account, trips, joinRequests }) {
           <span className="status-pill muted">📍 ~{Math.round(r._distanceKm)} km od Ciebie</span>
         )}
         {r.luggage_space && <span className="status-pill muted">🧳 {r.luggage_space}</span>}
+        {r.cost_refund && r.cost_per_person_pln != null ? (
+          <span className="status-pill muted">💰 zwrot kosztów: {costLabel(r.cost_per_person_pln)}</span>
+        ) : (
+          <span className="status-pill muted">💚 bez zwrotu kosztów</span>
+        )}
         {r.cost_split_suggestion && <span className="status-pill muted">{r.cost_split_suggestion}</span>}
       </div>
 
@@ -378,6 +399,11 @@ function OfferCard({ offer: r, account, trips, joinRequests }) {
             <button className="btn-ghost" onClick={handleWithdraw} disabled={busy}>
               {busy ? "Cofam…" : "Cofnij prośbę"}
             </button>
+          )}
+          {myOutgoing.agreed_cost_pln != null && (
+            <span style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
+              Uzgodniony koszt: {costLabel(myOutgoing.agreed_cost_pln)} (rozliczenie bezpośrednio z kierowcą)
+            </span>
           )}
           {myOutgoing.status === "accepted" && (
             <>
@@ -424,10 +450,21 @@ function OfferCard({ offer: r, account, trips, joinRequests }) {
                   </button>
                 ))}
               </div>
+              {r.cost_per_person_pln != null && (
+                <p style={{ margin: 0, fontSize: 13 }}>
+                  💰 Kierowca proponuje <strong>{costLabel(r.cost_per_person_pln)}</strong> (dzielenie kosztów paliwa).
+                  Wysyłając prośbę zgadzasz się na tę kwotę. Jeśli Ci nie pasuje, nie wysyłaj prośby albo ustal inną
+                  kwotę w czacie. Rozliczacie się bezpośrednio.
+                </p>
+              )}
               {error && <ErrorBox>{error}</ErrorBox>}
               <div style={{ display: "flex", gap: 8 }}>
                 <button className="btn-primary" onClick={handleRequest} disabled={busy}>
-                  {busy ? "Wysyłam…" : "Potwierdź prośbę"}
+                  {busy
+                    ? "Wysyłam…"
+                    : r.cost_per_person_pln != null
+                      ? "Zgadzam się i proszę o miejsce"
+                      : "Potwierdź prośbę"}
                 </button>
                 <button className="btn-ghost" onClick={() => setShowPicker(false)}>
                   Anuluj
@@ -463,20 +500,33 @@ function AddOfferForm({ trips, createOffer, onDone }) {
   const [freeSeats, setFreeSeats] = useState(1);
   const [luggageSpace, setLuggageSpace] = useState("");
   const [costSplitSuggestion, setCostSplitSuggestion] = useState("");
+  const [costRefund, setCostRefund] = useState(false);
+  const [costAccepted, setCostAccepted] = useState(false);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const { suggestion } = useRideCostSuggestion(costRefund ? tripId : null);
 
   if (trips.length === 0) return <NoTripsNotice />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    if (costRefund && !suggestion) {
+      setError("Nie można wyliczyć kwoty dla tej trasy. Dodaj ofertę bez zwrotu kosztów.");
+      return;
+    }
+    if (costRefund && !costAccepted) {
+      setError("Aby żądać zwrotu kosztów, potwierdź zgodę na kwotę z kalkulatora.");
+      return;
+    }
     setBusy(true);
     const { error } = await createOffer({
       tripId,
       freeSeats: Number(freeSeats) || 1,
       luggageSpace,
       costSplitSuggestion,
+      costRefund,
+      costTermsAccepted: costAccepted,
     });
     setBusy(false);
     if (error) {
@@ -503,13 +553,53 @@ function AddOfferForm({ trips, createOffer, onDone }) {
         <label style={labelStyle}>Miejsce na bagaż (opcjonalnie)</label>
         <input style={inputStyle} value={luggageSpace} onChange={(e) => setLuggageSpace(e.target.value)} placeholder="np. 2 torby + rakiety" />
       </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <label style={{ ...labelStyle, display: "flex", gap: 8, alignItems: "flex-start" }}>
+          <input
+            type="checkbox"
+            checked={costRefund}
+            onChange={(e) => {
+              setCostRefund(e.target.checked);
+              if (!e.target.checked) setCostAccepted(false);
+            }}
+            style={{ marginTop: 3 }}
+          />
+          <span>Chcę zwrotu kosztów paliwa (bez zaznaczenia jedziesz bez opłaty)</span>
+        </label>
+        {costRefund && (
+          <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {suggestion ? (
+              <p style={{ margin: 0, fontSize: 14 }}>
+                Kalkulator aplikacji wylicza: <strong>{suggestion.perPersonPln} zł od osoby</strong> (trasa ok.{" "}
+                {suggestion.distanceKm} km w jedną stronę, koszt paliwa podzielony na całe auto).
+              </p>
+            ) : (
+              <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)" }}>
+                Nie da się wyliczyć kwoty dla tej trasy (miasto spoza listy). Dodaj ofertę bez zwrotu kosztów.
+              </p>
+            )}
+            <label style={{ ...labelStyle, display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <input
+                type="checkbox"
+                checked={costAccepted}
+                onChange={(e) => setCostAccepted(e.target.checked)}
+                style={{ marginTop: 3 }}
+              />
+              <span>
+                Przyjmuję do wiadomości i zgadzam się na kwotę wyliczoną przez kalkulator (jej parametry ustala
+                administrator). To zwrot kosztów paliwa, nie zarobek. Zawodnik widzi kwotę przed wysłaniem prośby.
+              </span>
+            </label>
+          </div>
+        )}
+      </div>
       <div>
-        <label style={labelStyle}>Proponowany podział kosztów (opcjonalnie)</label>
+        <label style={labelStyle}>Uwagi o kosztach (opcjonalnie)</label>
         <input
           style={inputStyle}
           value={costSplitSuggestion}
           onChange={(e) => setCostSplitSuggestion(e.target.value)}
-          placeholder="np. 40 zł/os. za paliwo"
+          placeholder="np. plus opłata za autostradę"
         />
       </div>
       {error && <ErrorBox>{error}</ErrorBox>}

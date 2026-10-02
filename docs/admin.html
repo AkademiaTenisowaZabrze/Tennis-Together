@@ -57,7 +57,7 @@
   .login-card h1 { font-size: 20px; margin-bottom: 4px; }
 
   label { font-size: 13px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px; }
-  input[type="email"], input[type="password"], input[type="text"], input[type="number"], textarea {
+  input[type="email"], input[type="password"], input[type="text"], input[type="number"], select, textarea {
     width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--card-border);
     background: var(--bg-elevated); color: var(--text); font-family: var(--font-body); font-size: 14px;
   }
@@ -110,6 +110,7 @@
     <a href="#zgloszenia">Zgłoszenia</a>
     <a href="#bledy">Błędy testerów</a>
     <a href="#turnieje">Turnieje</a>
+    <a href="#koszty">Koszty przejazdu</a>
     <button id="btnLogout">Wyloguj</button>
   </nav>
 </div>
@@ -183,6 +184,46 @@
       </table>
     </div>
   </section>
+  <section id="koszty">
+    <h2>Kalkulator kosztów przejazdu</h2>
+    <p style="color:var(--text-muted); font-size:13px; margin:0 0 12px;">
+      Te parametry widzisz tylko Ty. Użytkownicy dostają wyłącznie gotową sugerowaną kwotę od osoby:
+      odległość między miastem wyjazdu a miastem turnieju (linia prosta × współczynnik drogi) × spalanie × cena paliwa,
+      podzielone przez liczbę osób w aucie i zaokrąglone. Kierowca może wpisać własną kwotę, a zawodnik zgadza się na nią
+      albo nie wysyła prośby.
+    </p>
+    <div class="toolbar" style="align-items:flex-end;">
+      <div>
+        <label for="c-type">Rodzaj paliwa</label>
+        <select id="c-type" style="width:150px;">
+          <option value="pb95">Benzyna 95</option>
+          <option value="diesel">Diesel (ON)</option>
+          <option value="lpg">LPG</option>
+        </select>
+      </div>
+      <label style="display:flex; align-items:center; gap:6px; font-weight:400; margin-bottom:10px;">
+        <input type="checkbox" id="c-auto" style="width:auto;" /> Cena paliwa automatycznie z Biuletynu Paliwowego UE (co tydzień)
+      </label>
+    </div>
+    <p id="fuelInfo" style="font-size:13px; margin:0 0 12px;"></p>
+    <div class="toolbar" style="align-items:flex-end;">
+      <div><label for="c-cons">Spalanie (l/100 km)</label><input type="number" id="c-cons" step="0.1" min="3" max="20" style="width:120px;" /></div>
+      <div><label for="c-fuel">Cena paliwa (zł/l)</label><input type="number" id="c-fuel" step="0.01" min="2" max="15" style="width:120px;" /></div>
+      <div><label for="c-road">Współczynnik drogi</label><input type="number" id="c-road" step="0.01" min="1" max="2" style="width:120px;" /></div>
+      <div><label for="c-div">Dzielnik (osób w aucie)</label><input type="number" id="c-div" step="1" min="1" max="8" style="width:120px;" /></div>
+      <div><label for="c-round">Zaokrąglenie (zł)</label><input type="number" id="c-round" step="1" min="1" max="50" style="width:120px;" /></div>
+      <label style="display:flex; align-items:center; gap:6px; font-weight:400; margin-bottom:10px;">
+        <input type="checkbox" id="c-trip" style="width:auto;" /> Liczyć trasę tam i z powrotem
+      </label>
+      <button class="btn btn-primary" id="btnCostSave" type="button">Zapisz</button>
+    </div>
+    <p id="costInfo" style="font-size:14px;"></p>
+    <div class="toolbar" style="align-items:flex-end;">
+      <div><label for="c-km">Przykład: trasa w jedną stronę (km, w linii prostej)</label><input type="number" id="c-km" value="200" min="1" style="width:120px;" /></div>
+      <p id="costExample" style="font-size:14px; font-weight:600; margin:0 0 10px;"></p>
+    </div>
+  </section>
+
   <section id="turnieje">
     <h2>Turnieje: import ITF</h2>
     <div class="itf-reminder" id="itfReminder">
@@ -291,7 +332,111 @@
     loadReports();
     loadBugs();
     loadItfStatus();
+    loadCostSettings();
   }
+
+  // ── Kalkulator kosztów przejazdu ─────────────────────────────────────────
+  const costIds = { cons: "c-cons", fuel: "c-fuel", road: "c-road", div: "c-div", round: "c-round" };
+  const costVal = (k) => +document.getElementById(costIds[k]).value;
+
+  function updateCostExample() {
+    const km = (+document.getElementById("c-km").value || 0) * costVal("road");
+    const trip = document.getElementById("c-trip").checked ? 2 : 1;
+    const total = km * trip * costVal("cons") / 100 * costVal("fuel");
+    const step = costVal("round") || 1;
+    const per = Math.max(step, Math.round(total / (costVal("div") || 1) / step) * step);
+    document.getElementById("costExample").textContent =
+      `Droga ok. ${Math.round(km)} km, koszt całego przejazdu ok. ${Math.round(total)} zł, od osoby: ${per} zł`;
+  }
+
+  async function loadCostSettings() {
+    const info = document.getElementById("costInfo");
+    const { data, error } = await db.from("ride_cost_settings").select("*").maybeSingle();
+    if (error || !data) {
+      info.textContent = "Nie udało się wczytać ustawień kalkulatora (czy migracja 0041 jest zastosowana?).";
+      return;
+    }
+    document.getElementById("c-cons").value = data.consumption_l_per_100km;
+    document.getElementById("c-fuel").value = data.fuel_price_pln;
+    document.getElementById("c-road").value = data.road_factor;
+    document.getElementById("c-div").value = data.share_divisor;
+    document.getElementById("c-round").value = data.round_to_pln;
+    document.getElementById("c-trip").checked = data.round_trip;
+    document.getElementById("c-type").value = data.fuel_type || "pb95";
+    document.getElementById("c-auto").checked = data.fuel_price_auto !== false;
+    loadedFuelPrice = +data.fuel_price_pln;
+    loadedFuelUpdated = data.fuel_price_updated_at;
+    loadedFuelSource = data.fuel_price_source;
+    syncFuelUi();
+    info.textContent = "";
+    updateCostExample();
+  }
+
+  let loadedFuelPrice = null;
+  let loadedFuelUpdated = null;
+  let loadedFuelSource = null;
+
+  // Cena jest tylko do odczytu, gdy ustawia ją automat; w trybie ręcznym
+  // przypominamy o jej aktualizacji po 21 dniach (w automacie ostrzegamy po 14,
+  // bo to znaczy, że tygodniowe pobieranie nie działa).
+  function syncFuelUi() {
+    const auto = document.getElementById("c-auto").checked;
+    document.getElementById("c-fuel").disabled = auto;
+    const el = document.getElementById("fuelInfo");
+    const days = loadedFuelUpdated ? Math.floor((Date.now() - new Date(loadedFuelUpdated)) / 86400000) : null;
+    const when = days === null ? "" : days === 0 ? "dzisiaj" : `${days} dni temu`;
+    const src = loadedFuelSource ? `Źródło: ${loadedFuelSource}. ` : "";
+    el.style.color = "var(--text-muted)";
+    el.textContent = `${src}Cena ustawiona ${when}.`;
+    if (!auto && days !== null && days >= 21) {
+      el.style.color = "#c0392b";
+      el.textContent += " Minęło ponad 21 dni. Sprawdź aktualną cenę (np. e-petrol.pl) i zaktualizuj ją ręcznie.";
+    } else if (auto && days !== null && days >= 14) {
+      el.style.color = "#c0392b";
+      el.textContent += " Automat nie aktualizuje ceny od ponad 14 dni. Sprawdź zakładkę Actions na GitHubie (Cena paliwa) albo wyłącz automat i wpisz cenę ręcznie.";
+    }
+  }
+  document.getElementById("c-auto").addEventListener("change", () => {
+    syncFuelUi();
+    updateCostExample();
+  });
+
+  ["c-cons", "c-fuel", "c-road", "c-div", "c-round", "c-km", "c-trip"].forEach((id) =>
+    document.getElementById(id).addEventListener("input", updateCostExample)
+  );
+
+  document.getElementById("btnCostSave").addEventListener("click", async () => {
+    const info = document.getElementById("costInfo");
+    const auto = document.getElementById("c-auto").checked;
+    const manualChange = !auto && costVal("fuel") !== loadedFuelPrice;
+    const patch = {
+        fuel_type: document.getElementById("c-type").value,
+        fuel_price_auto: auto,
+    };
+    if (manualChange) {
+      patch.fuel_price_source = "ręcznie (administrator)";
+      patch.fuel_price_updated_at = new Date().toISOString();
+    }
+    const { error } = await db
+      .from("ride_cost_settings")
+      .update({
+        ...patch,
+        consumption_l_per_100km: costVal("cons"),
+        fuel_price_pln: auto ? loadedFuelPrice : costVal("fuel"),
+        road_factor: costVal("road"),
+        share_divisor: costVal("div"),
+        round_to_pln: costVal("round"),
+        round_trip: document.getElementById("c-trip").checked,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", true);
+    if (!error) await loadCostSettings();
+    info.textContent = error
+      ? "Błąd zapisu: " + error.message
+      : auto
+        ? "Zapisano. Cena paliwa zaktualizuje się przy najbliższym tygodniowym pobraniu (albo uruchom ręcznie workflow Cena paliwa w GitHub Actions)."
+        : "Zapisano. Nowe sugestie liczą się już z tych wartości.";
+  });
 
 
   // ── Import turniejów ITF (wklejony tekst) ────────────────────────────────
