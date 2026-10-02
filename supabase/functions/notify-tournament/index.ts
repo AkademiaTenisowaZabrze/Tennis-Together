@@ -91,6 +91,81 @@ async function sendPush(accessToken: string, token: string, title: string, body:
   }
 }
 
+// ── Tryb "request_accepted" (0033_push_request_accepted.sql) ──────────────
+// Powiadamia proszącego, że druga strona zaakceptowała jego prośbę. W treści
+// pusha celowo bez imion (ekran blokady widzi każdy).
+const ACCEPTED_CONFIG: Record<string, { table: string; select: string; label: string }> = {
+  ride: {
+    table: "ride_join_requests",
+    select: "id, requester_trip:trips(created_by_account_id), ride_offers(trips(tournaments(name)))",
+    label: "przejazd",
+  },
+  lodging: {
+    table: "lodging_join_requests",
+    select: "id, requester_trip:trips(created_by_account_id), lodging_offers(trips(tournaments(name)))",
+    label: "nocleg",
+  },
+  ride_ping: {
+    table: "ride_pings",
+    select:
+      "id, requester_trip:trips!ride_pings_requester_trip_id_fkey(created_by_account_id), tournaments(name)",
+    label: "podwiezienie",
+  },
+  host_lodging: {
+    table: "lodging_host_requests",
+    select: "id, requester_trip:trips(created_by_account_id), lodging_host_offers(tournaments(name))",
+    label: "nocleg u rodziny",
+  },
+};
+
+// deno-lint-ignore no-explicit-any
+function tournamentNameOf(row: any): string {
+  return (
+    row.ride_offers?.trips?.tournaments?.name ??
+    row.lodging_offers?.trips?.tournaments?.name ??
+    row.tournaments?.name ??
+    row.lodging_host_offers?.tournaments?.name ??
+    "turniej"
+  );
+}
+
+async function handleRequestAccepted(requestKind: unknown, requestId: unknown) {
+  const cfg = typeof requestKind === "string" ? ACCEPTED_CONFIG[requestKind] : undefined;
+  if (!cfg || typeof requestId !== "string") {
+    return new Response(JSON.stringify({ error: "bad request" }), { status: 400 });
+  }
+
+  // Jednorazowy bilet: tylko pierwsze wywołanie dla zaakceptowanej prośby
+  // przechodzi dalej (patrz komentarz w 0033).
+  const { data: row, error } = await supabase
+    .from(cfg.table)
+    .update({ push_sent_at: new Date().toISOString() })
+    .eq("id", requestId)
+    .eq("status", "accepted")
+    .is("push_sent_at", null)
+    .select(cfg.select)
+    .maybeSingle();
+  if (error) throw error;
+  if (!row) return new Response(JSON.stringify({ skipped: "already sent or not accepted" }), { status: 200 });
+
+  // deno-lint-ignore no-explicit-any
+  const requesterAccountId = (row as any).requester_trip?.created_by_account_id;
+  if (!requesterAccountId) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
+
+  const { data: tokens, error: tokensError } = await supabase
+    .from("device_tokens")
+    .select("token")
+    .eq("account_id", requesterAccountId);
+  if (tokensError) throw tokensError;
+  if (!tokens || tokens.length === 0) return new Response(JSON.stringify({ notified: 0 }), { status: 200 });
+
+  const title = `✅ Prośba zaakceptowana (${cfg.label})`;
+  const body = `${tournamentNameOf(row)} — otwórz aplikację, żeby napisać do drugiej strony.`;
+  const accessToken = await getAccessToken(JSON.parse(SERVICE_ACCOUNT_RAW));
+  await Promise.all(tokens.map((t) => sendPush(accessToken, t.token, title, body)));
+  return new Response(JSON.stringify({ notified: tokens.length }), { status: 200 });
+}
+
 // ── Główna logika ──────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
@@ -100,7 +175,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { trip_id, offer_kind } = await req.json();
+    const payload = await req.json();
+    if (payload?.event === "request_accepted") {
+      return await handleRequestAccepted(payload.request_kind, payload.request_id);
+    }
+    const { trip_id, offer_kind } = payload;
     if (typeof trip_id !== "string" || (offer_kind !== "ride" && offer_kind !== "lodging")) {
       return new Response(JSON.stringify({ error: "bad request" }), { status: 400 });
     }
