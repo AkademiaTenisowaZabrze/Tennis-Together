@@ -6,7 +6,16 @@
   "scripts": {
     "dev": "vite --port 3100",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:db": "vitest run tests/db",
+    "test:static": "vitest run tests/static",
+    "test:unit": "vitest run tests/unit",
+    "test:ui": "vitest run tests/ui",
+    "test:py": "python -m unittest discover -s tests/python",
+    "test:live": "python -m unittest discover -s tests/live",
+    "test:mutation": "node tests/mutation/run_mutations.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",
@@ -24,8 +33,14 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.1",
+    "@electric-sql/pglite": "^0.5.8",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@vitejs/plugin-react": "^4.3.1",
+    "jsdom": "^25.0.1",
     "vite": "^5.3.1",
-    "vite-plugin-pwa": "^0.20.1"
+    "vite-plugin-pwa": "^0.20.1",
+    "vitest": "^2.1.9"
   }
 }

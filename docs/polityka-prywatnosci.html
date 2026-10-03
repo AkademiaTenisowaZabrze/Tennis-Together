@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Polityka prywatności Tennis Together</title>
+<style>
+  :root {
+    --bg: #0d131e; --bg-elevated: #121a28; --card-border: rgba(255,255,255,.09);
+    --text: #f4f6fb; --text-muted: #9aa5b8; --primary: #d4ff00; --warn: #ff5e3a;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, "Inter", sans-serif; line-height: 1.65; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 20px 80px; }
+  h1 { margin: 0 0 8px; font-size: 28px; }
+  h2 { margin: 32px 0 8px; font-size: 19px; }
+  a { color: var(--primary); }
+  .draft { border: 1px solid var(--warn); border-radius: 12px; padding: 12px 14px; margin: 16px 0; color: var(--text); background: rgba(255,94,58,.08); }
+  .todo { background: rgba(212,255,0,.14); padding: 0 4px; border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px; border-bottom: 1px solid var(--card-border); }
+  th { color: var(--text-muted); font-weight: 600; }
+  .muted { color: var(--text-muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="muted"><a href="dokumentacja.html">← Dokumentacja</a></p>
+  <h1>Polityka prywatności</h1>
+  <p class="muted">Aplikacja Tennis Together. Wersja robocza z dnia 2026-10-03.</p>
+
+  <div class="draft">
+    <strong>Projekt do weryfikacji prawnika.</strong> Tekst opisuje faktyczne działanie aplikacji, ale nie został
+    jeszcze zatwierdzony przez prawnika. Pola oznaczone <span class="todo">[DO UZUPEŁNIENIA]</span> wymagają
+    danych organizatora. Przed publicznym uruchomieniem dokument należy sprawdzić.
+  </div>
+
+  <h2>1. Kto odpowiada za Twoje dane</h2>
+  <p>Administratorem danych jest <span class="todo">[DO UZUPEŁNIENIA: pełna nazwa, adres i dane kontaktowe organizatora, np. Akademii Tenisowej Zabrze]</span>.
+  W sprawach danych osobowych napisz na adres <span class="todo">[DO UZUPEŁNIENIA: e-mail do spraw prywatności]</span>.</p>
+
+  <h2>2. Dla kogo jest aplikacja</h2>
+  <p>Konto zakłada wyłącznie dorosła osoba: rodzic, opiekun prawny, trener albo pełnoletni zawodnik. Dzieci nie zakładają kont.
+  Dane małoletniego zawodnika podaje i zarządza nimi jego rodzic lub opiekun, który oświadcza, że ma do tego prawo.</p>
+
+  <h2>3. Jakie dane przetwarzamy i po co</h2>
+  <table>
+    <tr><th>Dane</th><th>Cel</th><th>Podstawa prawna</th></tr>
+    <tr><td>Imię i nazwisko, e-mail, hasło (w postaci skrótu), rola, opcjonalnie telefon, miasto, klub, zdjęcie profilowe</td>
+        <td>Założenie i prowadzenie konta, logowanie, rozpoznanie się przy spotkaniu</td><td>Umowa (art. 6 ust. 1 lit. b RODO)</td></tr>
+    <tr><td>Dane zawodnika: imię, nazwisko, rok urodzenia, kategoria, klub, miasto, opcjonalnie login PZT</td>
+        <td>Dopasowanie wyjazdów na turnieje, weryfikacja zawodnika z portalem PZT</td><td>Umowa oraz zgoda rodzica/opiekuna (art. 6 ust. 1 lit. a i b, art. 8 RODO)</td></tr>
+    <tr><td>Wyjazdy, oferty i prośby o przejazd lub nocleg, uzgodniona kwota zwrotu kosztów, miejsce spotkania, potwierdzenie spotkania, oceny</td>
+        <td>Organizacja wspólnych wyjazdów</td><td>Umowa (art. 6 ust. 1 lit. b)</td></tr>
+    <tr><td>Wiadomości między uczestnikami uzgodnień</td><td>Kontakt w sprawie wyjazdu</td><td>Umowa (art. 6 ust. 1 lit. b)</td></tr>
+    <tr><td>Zgody rodzica (np. na nocleg u innej rodziny) wraz z datą</td><td>Wykazanie zgody, ochrona małoletnich</td><td>Zgoda (art. 6 ust. 1 lit. a, art. 8) i obowiązek wykazania zgody</td></tr>
+    <tr><td>Token powiadomień push urządzenia</td><td>Wysyłanie powiadomień o prośbach i wiadomościach</td><td>Umowa; możesz wyłączyć powiadomienia w telefonie</td></tr>
+    <tr><td>Zgłoszenia błędów i nadużyć</td><td>Utrzymanie i bezpieczeństwo aplikacji, moderacja</td><td>Prawnie uzasadniony interes (art. 6 ust. 1 lit. f)</td></tr>
+  </table>
+  <p>Nie sprzedajemy danych i nie używamy ich do reklam. Numer telefonu i nazwisko dziecka nie są pokazywane innym użytkownikom:
+  osoby, z którymi się nie umawiasz, widzą wyłącznie imię zawodnika (oraz kategorię i klub) przy ofercie wyjazdu, a rozmówca widzi Twoje imię i nazwisko.</p>
+
+  <h2>4. Komu przekazujemy dane</h2>
+  <p>Korzystamy z podmiotów przetwarzających na nasze zlecenie:</p>
+  <ul>
+    <li>Supabase (baza danych, logowanie, pliki), region Frankfurt (UE),</li>
+    <li>Google / Firebase Cloud Messaging (dostarczanie powiadomień push),</li>
+    <li>GitHub (hosting stron pomocniczych i budowanie aplikacji).</li>
+  </ul>
+  <p>Adres miejsca spotkania oraz mapy korzystają z OpenStreetMap. Dane drugiej strony uzgodnienia (imię, nazwisko, zdjęcie) są widoczne
+  dopiero po zaakceptowaniu prośby.</p>
+
+  <h2>5. Jak długo przechowujemy dane</h2>
+  <ul>
+    <li>Konto i jego dane: do czasu usunięcia konta (w aplikacji: Profil, Usuń konto; kasuje konto, zawodników, wyjazdy, oferty, prośby, wiadomości, zgody i zdjęcie),</li>
+    <li>wiadomości: do 12 miesięcy od wysłania,</li>
+    <li>prośby i zapytania po zakończonym turnieju: do 12 miesięcy po turnieju,</li>
+    <li>zgłoszenia błędów po rozwiązaniu: do 6 miesięcy, zgłoszenia nadużyć po rozwiązaniu: do 12 miesięcy,</li>
+    <li>licznik prób rejestracji (bez danych osobowych): 2 dni.</li>
+  </ul>
+
+  <h2>6. Twoje prawa</h2>
+  <p>Masz prawo dostępu do danych, ich sprostowania (edytujesz je w profilu), usunięcia (przycisk w profilu), ograniczenia przetwarzania,
+  przenoszenia, sprzeciwu oraz wycofania zgody w dowolnym momencie (Profil, Zgody, Wycofaj), bez wpływu na zgodność z prawem
+  wcześniejszego przetwarzania. Możesz złożyć skargę do Prezesa Urzędu Ochrony Danych Osobowych (ul. Stawki 2, Warszawa).</p>
+
+  <h2>7. Bezpieczeństwo</h2>
+  <p>Dostęp do danych jest ograniczony regułami bazy (każdy widzi tylko to, do czego ma prawo), połączenia są szyfrowane,
+  a spotkania potwierdza się kodem lub QR. Zalecamy silne, unikalne hasło. Jeśli zauważysz nadużycie, zgłoś je w aplikacji lub administratorowi.</p>
+
+  <h2>8. Zmiany polityki</h2>
+  <p>O istotnych zmianach poinformujemy w aplikacji. Aktualna wersja jest zawsze pod tym adresem.</p>
+
+  <p class="muted"><a href="regulamin.html">Regulamin korzystania z aplikacji</a></p>
+</div>
+</body>
+</html>

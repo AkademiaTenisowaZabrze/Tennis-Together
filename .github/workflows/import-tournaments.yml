@@ -18,6 +18,10 @@ on:
     - cron: "0 2 * * *"
   workflow_dispatch:
 
+# Minimalne uprawnienia tokenu GitHub (audyt F20): job tylko czyta repozytorium, a do bazy pisze kluczem z sekretów.
+permissions:
+  contents: read
+
 jobs:
   import:
     runs-on: ubuntu-latest

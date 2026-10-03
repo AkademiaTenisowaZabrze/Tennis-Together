@@ -322,6 +322,8 @@ def notify_selection_published(tournament_id: str, supabase_url: str, service_ro
                 "apikey": service_role_key,
                 "Authorization": f"Bearer {service_role_key}",
                 "Content-Type": "application/json",
+                # wspolny sekret wywolan funkcji (migracja 0045); bez niego funkcja z wlaczonym sekretem odpowie 401
+                **({"x-webhook-secret": os.environ["NOTIFY_WEBHOOK_SECRET"]} if os.environ.get("NOTIFY_WEBHOOK_SECRET") else {}),
             },
             json={"event": "selection_published", "tournament_id": tournament_id},
             timeout=30,

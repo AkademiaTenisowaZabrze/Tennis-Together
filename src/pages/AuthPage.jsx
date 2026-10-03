@@ -18,14 +18,15 @@ const SIGNUP_LIMIT_PER_HOUR = 30;
 // Ile prób rejestracji zapisano w ostatniej godzinie — patrz
 // 0023_signup_attempts.sql. Tylko przybliżenie prawdziwego limitu
 // wysyłki maili Supabase, ale wystarczające do ostrzeżenia w UI.
+// Liczbę zwraca funkcja bazy (tabela nie jest czytelna dla anonima, 0044).
 async function countRecentSignupAttempts() {
-  const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-  const { count } = await supabase
-    .from("signup_attempts")
-    .select("id", { count: "exact", head: true })
-    .gte("created_at", since);
-  return count ?? 0;
+  const { data } = await supabase.rpc("signup_attempts_last_hour");
+  return typeof data === "number" ? data : 0;
 }
+
+// Wersja regulaminu i polityki prywatności, na którą użytkownik się zgadza (zapisywana w koncie, 0051).
+const TERMS_VERSION = "2026-10-03";
+const SITE_URL = import.meta.env.VITE_SITE_URL || "https://akademiatenisowazabrze.github.io/Tennis-Together";
 
 const ROLES = [
   { value: "parent", label: "Rodzic" },
@@ -71,7 +72,6 @@ export default function AuthPage() {
 
         <p style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center" }}>
           Konto zakłada tylko dorosły (rodzic/opiekun/trener) — patrz PLAN.md.
-          Regulamin i polityka prywatności są w przygotowaniu.
         </p>
         <p style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", opacity: 0.6 }}>
           Wersja {APP_VERSION}
@@ -201,6 +201,7 @@ function RegisterForm({ onDone }) {
   const [busy, setBusy] = useState(false);
   const [confirmNotice, setConfirmNotice] = useState(false);
   const [attemptsThisHour, setAttemptsThisHour] = useState(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -220,6 +221,10 @@ function RegisterForm({ onDone }) {
       setError("Hasło musi mieć co najmniej 8 znaków.");
       return;
     }
+    if (!acceptedTerms) {
+      setError("Aby założyć konto, zaakceptuj regulamin i politykę prywatności.");
+      return;
+    }
 
     setBusy(true);
     // Log próby PRZED signUp — liczy się każda próba wysłania
@@ -235,7 +240,7 @@ function RegisterForm({ onDone }) {
     // potwierdzenia e-maila, sesja (i możliwość zapisu do `accounts`)
     // pojawi się dopiero po kliknięciu linku z maila, w zupełnie nowym
     // wczytaniu aplikacji. Patrz AuthContext.jsx.
-    registerPendingProfile({ role, full_name: fullName });
+    registerPendingProfile({ role, full_name: fullName, terms_accepted_at: new Date().toISOString(), terms_version: TERMS_VERSION });
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -327,6 +332,11 @@ function RegisterForm({ onDone }) {
             </button>
           ))}
         </div>
+        {role === "coach" && (
+          <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--color-text-muted)" }}>
+            Rola trenera wymaga zatwierdzenia przez administratora. Do tego czasu konto działa jak konto rodzica.
+          </p>
+        )}
       </div>
       <div>
         <label style={labelStyle}>Imię i nazwisko</label>
@@ -340,6 +350,14 @@ function RegisterForm({ onDone }) {
         <label style={labelStyle}>Hasło (min. 8 znaków)</label>
         <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" minLength={8} />
       </div>
+      <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, color: "var(--color-text-muted)" }}>
+        <input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} style={{ marginTop: 3 }} />
+        <span>
+          Mam ukończone 18 lat i akceptuję{" "}
+          <a href={`${SITE_URL}/regulamin.html`} target="_blank" rel="noopener noreferrer">regulamin</a> oraz{" "}
+          <a href={`${SITE_URL}/polityka-prywatnosci.html`} target="_blank" rel="noopener noreferrer">politykę prywatności</a>.
+        </span>
+      </label>
       {limitReached && (
         <p style={{ margin: 0, fontSize: 13, color: "var(--color-secondary)" }}>
           Limit rejestracji na tę godzinę prawdopodobnie wyczerpany — możesz spróbować, ale mail może nie dojść.

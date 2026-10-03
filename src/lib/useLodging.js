@@ -5,7 +5,7 @@ import { supabase } from "./supabase.js";
 // useRides.js), zapis tylko dla właściciela powiązanego wyjazdu. RLS w
 // supabase/migrations/0006_lodging_rls.sql.
 const SELECT_WITH_TRIP =
-  "*, trips(tournament_id, created_by_account_id, departure_city, tournaments(name, starts_on, category), players(first_name))";
+  "*, trips(tournament_id, created_by_account_id, departure_city, tournaments(name, starts_on, category), players:player_cards(first_name))";
 
 export function useLodgingOffers() {
   const [offers, setOffers] = useState([]);

@@ -12,6 +12,21 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Wspólny sekret wywołań (audyt 2026-10-03, F5). Wywołują tę funkcję triggery bazy (przez pg_net),
+// workflow przypomnień i skrypt importu; sam klucz publiczny Supabase nie wystarcza, żeby ją
+// uruchomić. Gdy sekret jest ustawiony, każde żądanie musi mieć nagłówek x-webhook-secret o tej
+// wartości. Gdy go nie ma (przed konfiguracją), funkcja działa jak dotąd, żeby wdrożenie nie
+// wyłączyło powiadomień. Ustawienie: README.md, punkt "Sekret wywołań".
+const WEBHOOK_SECRET = Deno.env.get("NOTIFY_WEBHOOK_SECRET") ?? "";
+
+function secretMatches(provided: string): boolean {
+  const a = new TextEncoder().encode(provided);
+  const b = new TextEncoder().encode(WEBHOOK_SECRET);
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) diff |= (a[i] ?? 0) ^ (b[i] ?? 0);
+  return diff === 0;
+}
+
 const FIREBASE_PROJECT_ID = Deno.env.get("FIREBASE_PROJECT_ID") ?? "";
 const SERVICE_ACCOUNT_RAW = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON") ?? "";
 
@@ -566,13 +581,22 @@ async function handleAdminReport(source: unknown) {
 // ── Główna logika ──────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
+  if (WEBHOOK_SECRET && !secretMatches(req.headers.get("x-webhook-secret") ?? "")) {
+    return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 });
+  }
+
   if (!FIREBASE_PROJECT_ID || !SERVICE_ACCOUNT_RAW) {
     console.error("notify-tournament: brak FIREBASE_PROJECT_ID / FIREBASE_SERVICE_ACCOUNT_JSON — pomijam wysyłkę.");
     return new Response(JSON.stringify({ skipped: "firebase not configured" }), { status: 200 });
   }
 
   try {
-    const payload = await req.json();
+    let payload: Record<string, any>;
+    try {
+      payload = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "bad request" }), { status: 400 });
+    }
     if (payload?.event === "club_trip_created") {
       return await handleClubTripCreated(payload.trip_id);
     }
@@ -661,6 +685,6 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ notified: tokens.length }), { status: 200 });
   } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify({ error: String(err) }), { status: 500 });
+    return new Response(JSON.stringify({ error: "internal error" }), { status: 500 });
   }
 });

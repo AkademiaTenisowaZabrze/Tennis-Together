@@ -78,3 +78,16 @@ maszynę CI).
 4. Konto B powinno dostać powiadomienie push w ciągu kilku sekund.
 
 Jeśli nie przyjdzie: sprawdź logi funkcji (`supabase functions logs notify-tournament`) — najczęstsze przyczyny to zły `FIREBASE_PROJECT_ID`, źle wklejony JSON konta serwisowego, albo brak zapisanego tokenu urządzenia w tabeli `device_tokens` (dzieje się to dopiero po zaakceptowaniu uprawnień do powiadomień w apce na telefonie).
+
+## Sekret wywołań (zalecane, audyt 2026-10-03)
+
+Funkcję wołają triggery bazy, workflow przypomnień i skrypt importu. Żeby nie dało się jej
+uruchomić samym publicznym kluczem, wprowadzono wspólny sekret (migracja `0045`). Kolejność:
+
+1. Wymyśl sekret (np. 40 losowych znaków).
+2. SQL Editor: `insert into private_config(key, value) values ('notify_webhook_secret', '<SEKRET>') on conflict (key) do update set value = excluded.value;`
+3. GitHub: Settings > Secrets and variables > Actions > **NOTIFY_WEBHOOK_SECRET** (ten sam sekret; używa go workflow przypomnień i import wpisów PZT).
+4. Na końcu: `supabase secrets set NOTIFY_WEBHOOK_SECRET=<SEKRET>` i `supabase functions deploy notify-tournament`.
+
+Dopóki w kroku 4 nie ustawisz sekretu, funkcja działa jak dotąd (bez sprawdzania). Po kroku 4 żądania
+bez nagłówka `x-webhook-secret` dostają 401.

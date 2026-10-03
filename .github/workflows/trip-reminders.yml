@@ -7,9 +7,9 @@ name: Przypomnienia o wyjazdach
 # Wybor wyjazdow i jednorazowosc (kazdy wyjazd dostaje kazde przypomnienie
 # najwyzej raz) robi funkcja claim_trip_reminders() w bazie (migracja
 # 0039_push_selection_and_reminders.sql), a wysylke - Edge Function
-# notify-tournament (tryb trip_reminders). Nie wymaga zadnych sekretow:
-# klucz "anon" jest publiczny (ten sam co w aplikacji), a funkcja sama ma
-# swoj klucz serwisowy.
+# notify-tournament (tryb trip_reminders). Funkcja wymaga wspolnego sekretu
+# NOTIFY_WEBHOOK_SECRET (GitHub > Settings > Secrets > Actions; ten sam, co w
+# Supabase i w tabeli private_config, patrz migracja 0045).
 #
 # 7:00 UTC = 8:00/9:00 czasu polskiego. Mozna tez uruchomic recznie z Actions.
 
@@ -24,12 +24,13 @@ jobs:
     env:
       SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://jrabxtiranllayerhutm.supabase.co' }}
       SUPABASE_ANON_KEY: sb_publishable_8-yxyMhoEEq-kHx2opU0Pg_QylogBur
+      NOTIFY_WEBHOOK_SECRET: ${{ secrets.NOTIFY_WEBHOOK_SECRET }}
     steps:
       - name: Przypomnienie "jutro turniej"
         run: |
           curl -fsS -X POST "$SUPABASE_URL/functions/v1/notify-tournament" \
             -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY"             -H "x-webhook-secret: $NOTIFY_WEBHOOK_SECRET" \
             -H "Content-Type: application/json" \
             -d '{"event":"trip_reminders","days":1}'
           echo
@@ -38,7 +39,7 @@ jobs:
         run: |
           curl -fsS -X POST "$SUPABASE_URL/functions/v1/notify-tournament" \
             -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY"             -H "x-webhook-secret: $NOTIFY_WEBHOOK_SECRET" \
             -H "Content-Type: application/json" \
             -d '{"event":"trip_reminders","days":7}'
           echo

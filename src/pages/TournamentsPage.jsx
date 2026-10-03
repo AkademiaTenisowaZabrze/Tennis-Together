@@ -16,6 +16,18 @@ const SOURCES = [
 
 const dateFormatter = new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "long" });
 
+// Adres strony turnieju pochodzi z bazy (import z PZT/Tennis Europe), więc przed wstawieniem do linku
+// przepuszczamy tylko http/https: inaczej wpis typu javascript: mógłby uruchomić kod po kliknięciu (F18).
+function safeHttpUrl(value) {
+  if (typeof value !== "string") return null;
+  try {
+    const u = new URL(value.trim());
+    return u.protocol === "https:" || u.protocol === "http:" ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
 function formatRange(startsOn, endsOn) {
   const start = dateFormatter.format(new Date(startsOn));
   if (!endsOn || endsOn === startsOn) return start;
@@ -152,8 +164,8 @@ export default function TournamentsPage() {
                       Zobacz w Moich wyjazdach
                     </Link>
                   )}
-                  {t.website_url && (
-                    <a className="btn-ghost" href={t.website_url} target="_blank" rel="noreferrer">
+                  {safeHttpUrl(t.website_url) && (
+                    <a className="btn-ghost" href={safeHttpUrl(t.website_url)} target="_blank" rel="noreferrer">
                       Strona turnieju
                     </a>
                   )}
@@ -191,7 +203,8 @@ export default function TournamentsPage() {
 }
 
 function JoinTripForm({ tournamentId, players, playersLoading, createTrip, onDone }) {
-  const [playerId, setPlayerId] = useState(players[0]?.id ?? "");
+  const [pickedPlayerId, setPlayerId] = useState("");
+  const playerId = pickedPlayerId || players[0]?.id || "";
   const [departureCity, setDepartureCity] = useState("");
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);

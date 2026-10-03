@@ -141,6 +141,7 @@
     <a href="testerzy.html">Strona testerów</a>
     <a href="#architektura">Architektura</a>
     <a href="#dane">Model danych</a>
+    <a href="#prywatnosc">Prywatność</a>
     <a href="#zaufanie">Zaufanie</a>
     <a href="#budowanie">Budowanie</a>
     <a href="admin.html">Panel admina</a>
@@ -251,6 +252,34 @@
         <tr><td>Referencyjne</td><td><code>tournaments</code> (import automatyczny), <code>city_coordinates</code> (439 miast, dopasowania po odległości), <code>bug_reports</code> (formularz testerów)</td></tr>
       </table>
     </div>
+  </section>
+
+  <section id="prywatnosc">
+    <div class="section-head"><h2>Prywatność i ochrona danych (audyt 2026-10-03)</h2></div>
+    <p>
+      Po audycie bezpieczeństwa obowiązują dodatkowe reguły, każda sprawdzana automatycznie
+      (katalog <code>tests/</code>, spis w <code>tests/KNOWN_ISSUES.md</code>):
+    </p>
+    <ul>
+      <li><strong>Uprawnienia konta</strong>: zwykły użytkownik nie nadaje sobie administratora,
+        odznaki „Parent Verified” ani nie zdejmuje zawieszenia. Rola trenera wymaga zatwierdzenia
+        przez administratora (panel admina, kolumna „Konta”).</li>
+      <li><strong>Dane dzieci</strong>: osoby spoza uzgodnienia widzą tylko „kartę” zawodnika (imię,
+        kategoria, klub). Nazwisko, rocznik, miasto i login PZT widzi tylko rodzic i trener klubu.
+        Rozmówca widzi imię i nazwisko drugiej osoby, ale nie jej telefon.</li>
+      <li><strong>Prośby</strong>: zawsze startują jako oczekujące, nie da się ich przepiąć na inną
+        ofertę ani cofnąć po odrzuceniu. Do rozmowy dopisują się tylko strony zaakceptowanego uzgodnienia.</li>
+      <li><strong>Zgody rodzica</strong>: zgodę dodaje tylko rodzic zawodnika i może ją wycofać w profilu;
+        wycofanie blokuje nowe prośby o nocleg u innej rodziny.</li>
+      <li><strong>Usunięcie konta</strong>: Profil, Usuń konto kasuje konto i wszystkie dane (RODO art. 17).</li>
+      <li><strong>Retencja</strong>: wiadomości do 12 miesięcy, prośby do 12 miesięcy po turnieju,
+        rozwiązane zgłoszenia 6 do 12 miesięcy (workflow tygodniowy).</li>
+      <li><strong>Funkcje brzegowe</strong>: <code>notify-tournament</code> wymaga wspólnego sekretu,
+        <code>pzt-player-lookup</code> wymaga zalogowania.</li>
+      <li><strong>Dokumenty</strong>: <a href="regulamin.html">regulamin</a> i
+        <a href="polityka-prywatnosci.html">polityka prywatności</a> (szkice do weryfikacji prawnika);
+        akceptacja przy rejestracji jest zapisywana w koncie.</li>
+    </ul>
   </section>
 
   <section id="zaufanie">

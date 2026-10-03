@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "./supabase.js";
 
 const SELECT = `*,
-  requester_trip:trips!ride_pings_requester_trip_id_fkey(departure_city, created_by_account_id, players(first_name), tournaments(name)),
-  target_trip:trips!ride_pings_target_trip_id_fkey(departure_city, created_by_account_id, players(first_name), tournaments(name))`;
+  requester_trip:trips!ride_pings_requester_trip_id_fkey(departure_city, created_by_account_id, players:player_cards(first_name), tournaments(name)),
+  target_trip:trips!ride_pings_target_trip_id_fkey(departure_city, created_by_account_id, players:player_cards(first_name), tournaments(name))`;
 
 // "Poproś o podwiezienie" — zapytania niezależne od oferty przejazdu,
 // wysyłane wprost do zawodnika z oficjalnej listy startowej PZT (patrz

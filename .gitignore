@@ -27,3 +27,6 @@ supabase/.temp/
 
 # Wygenerowane przez scripts/build_setup_sql.py
 supabase/setup/
+
+# Testy: szablon bazy PGlite budowany z migracji (tests/db/globalSetup.mjs)
+tests/.cache/

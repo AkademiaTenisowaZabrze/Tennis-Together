@@ -278,7 +278,9 @@
   const topnav = document.getElementById("topnav");
 
   function esc(s) {
-    return (s ?? "").toString().replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+    return (s ?? "")
+      .toString()
+      .replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
   // ── Logowanie ────────────────────────────────────────────────────────────
@@ -691,7 +693,7 @@ let itfRows = [];
   async function loadAccounts() {
     const { data, error } = await db
       .from("accounts")
-      .select("id, full_name, role, club_name, city, status")
+      .select("id, full_name, role, club_name, city, status, coach_requested")
       .order("full_name", { ascending: true });
     if (error) {
       document.getElementById("accountsBody").innerHTML = `<tr><td colspan="6">Błąd: ${esc(error.message)}</td></tr>`;
@@ -712,10 +714,14 @@ let itfRows = [];
     body.innerHTML = rows
       .map((a) => {
         const suspended = a.status === "suspended";
+        const coachRequest =
+          a.coach_requested && a.role !== "coach"
+            ? ' <span class="pill warn">prosi o rolę trenera</span> <button class="btn btn-ghost approve-coach" data-id="' + esc(a.id) + '">Zatwierdź trenera</button>'
+            : "";
         return `
           <tr>
             <td>${esc(a.full_name)}</td>
-            <td>${esc(ROLE_LABELS[a.role] ?? a.role)}</td>
+            <td>${esc(ROLE_LABELS[a.role] ?? a.role)}${coachRequest}</td>
             <td>${esc(a.club_name) || "—"}</td>
             <td>${esc(a.city) || "—"}</td>
             <td><span class="pill ${suspended ? "warn" : "ok"}">${suspended ? "Zawieszone" : "Aktywne"}</span></td>
@@ -727,6 +733,23 @@ let itfRows = [];
           </tr>`;
       })
       .join("");
+
+    body.querySelectorAll(".approve-coach").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const row = allAccounts.find((a) => a.id === btn.dataset.id);
+        const who = row ? row.full_name : "to konto";
+        const club = row && row.club_name ? " klubu " + row.club_name : "";
+        if (!confirm("Zatwierdzić: " + who + " jako trenera" + club + "? Trener widzi zawodników swojego klubu.")) return;
+        btn.disabled = true;
+        const { error } = await db.from("accounts").update({ role: "coach", coach_requested: false }).eq("id", btn.dataset.id);
+        btn.disabled = false;
+        if (error) {
+          alert("Nie udało się zatwierdzić trenera: " + error.message);
+          return;
+        }
+        loadAccounts();
+      });
+    });
 
     body.querySelectorAll(".toggle-suspend").forEach((btn) => {
       btn.addEventListener("click", async () => {

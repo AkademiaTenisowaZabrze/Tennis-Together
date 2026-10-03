@@ -6,7 +6,7 @@ import { supabase } from "./supabase.js";
 // rodzinami. RLS w bazie (supabase/migrations/0005_rides_rls.sql) i tak to
 // egzekwuje — tu tylko dołączamy dane turnieju/zawodnika do wyświetlenia.
 const SELECT_WITH_TRIP =
-  "*, trips(tournament_id, created_by_account_id, departure_city, departure_date, tournaments(name, starts_on, category), players(first_name))";
+  "*, trips(tournament_id, created_by_account_id, departure_city, departure_date, tournaments(name, starts_on, category), players:player_cards(first_name))";
 
 export function useRideOffers() {
   const [offers, setOffers] = useState([]);

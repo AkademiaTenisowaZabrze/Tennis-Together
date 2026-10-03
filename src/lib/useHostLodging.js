@@ -8,7 +8,7 @@ import { supabase } from "./supabase.js";
 // 0031_host_family_lodging.sql po pełny model bezpieczeństwa.
 const OFFER_SELECT = "*, tournaments(name, starts_on, category)";
 const REQUEST_SELECT =
-  "*, requester_trip:trips(departure_city, created_by_account_id, player_id, players(first_name)), " +
+  "*, requester_trip:trips(departure_city, created_by_account_id, player_id, players:player_cards(first_name)), " +
   "lodging_host_offers(id, city, capacity, notes, host_account_id, tournaments(name, starts_on))";
 
 export function useHostOffers(accountId) {

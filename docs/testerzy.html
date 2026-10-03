@@ -495,13 +495,11 @@
   </section>
 
   <section id="lista-zgloszen">
-    <div class="section-head"><span class="num">04</span><h2>Ostatnie zgłoszenia</h2></div>
+    <div class="section-head"><span class="num">04</span><h2>Co dzieje się ze zgłoszeniem</h2></div>
     <p style="color:var(--text-muted); font-size:14px; margin-top:-8px;">
-      Podgląd tego, co już zgłoszono — żeby nie duplikować.
+      Zgłoszenia widzi wyłącznie administrator aplikacji (treść może zawierać dane testerów, więc nie jest publiczna).
+      Każde zgłoszenie jest czytane i trafia na listę poprawek. Dziękujemy!
     </p>
-    <div id="reportsList" style="display:flex; flex-direction:column; gap:10px;">
-      <p style="color:var(--text-muted); font-size:13px;">Wczytywanie…</p>
-    </div>
   </section>
 
     <div style="display:flex; align-items:center; justify-content:center; gap:14px; margin:28px 0 6px;">
@@ -579,44 +577,8 @@
     setTimeout(() => (el.hidden = true), 5000);
   }
 
-  async function loadRecentReports() {
-    const list = document.getElementById("reportsList");
-    try {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/bug_reports?select=*&order=created_at.desc&limit=15`,
-        { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const rows = await res.json();
-      if (rows.length === 0) {
-        list.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Jeszcze nic nie zgłoszono — bądź pierwszy/a.</p>';
-        return;
-      }
-      list.innerHTML = rows
-        .map((r) => {
-          const when = new Date(r.created_at).toLocaleString("pl-PL", {
-            day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
-          });
-          const esc = (s) => (s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-          return `
-            <div class="report-item">
-              <div class="row1">
-                <strong>${esc(r.tester_name) || "Anonimowy tester"}</strong>
-                <span class="when">${when}</span>
-              </div>
-              <div class="tags">
-                ${r.screen ? `<span class="tag">${esc(r.screen)}</span>` : ""}
-                ${r.report_type ? `<span class="tag">${esc(r.report_type)}</span>` : ""}
-                ${r.priority ? `<span class="tag">${esc(r.priority)}</span>` : ""}
-              </div>
-              <div class="desc">${esc(r.description)}</div>
-            </div>`;
-        })
-        .join("");
-    } catch {
-      list.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Nie udało się wczytać listy zgłoszeń (spróbuj odświeżyć stronę).</p>';
-    }
-  }
+  // Lista zgłoszeń nie jest już publiczna (0044): odczyt bug_reports ma tylko administrator.
+  function loadRecentReports() {}
   loadRecentReports();
 
   document.getElementById("btnSend").addEventListener("click", async () => {

@@ -32,5 +32,14 @@ export function useConsents(accountId) {
     };
   }, [accountId]);
 
-  return { consents, loading };
+  // Wycofanie zgody: zmieniamy tylko `granted` (RLS i trigger z 0046 pilnują reszty wiersza).
+  // Po wycofaniu zgody na nocleg u rodziny nowe prośby są odrzucane przez bazę.
+  const withdraw = async (consentId) => {
+    const { error } = await supabase.from("consents").update({ granted: false }).eq("id", consentId);
+    if (error) return { error };
+    setConsents((prev) => prev.map((c) => (c.id === consentId ? { ...c, granted: false } : c)));
+    return {};
+  };
+
+  return { consents, loading, withdraw };
 }

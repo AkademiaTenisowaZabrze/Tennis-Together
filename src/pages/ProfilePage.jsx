@@ -61,7 +61,8 @@ function ParentProfile() {
   const [editing, setEditing] = useState(false);
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarError, setAvatarError] = useState(null);
-  const { consents, loading: consentsLoading } = useConsents(account?.id);
+  const { consents, loading: consentsLoading, withdraw: withdrawConsent } = useConsents(account?.id);
+  const [consentError, setConsentError] = useState(null);
   const { trips } = useTrips(account?.id);
   const today = new Date().toISOString().slice(0, 10);
   const completedTrips = trips.filter((t) => t.tournaments?.starts_on && t.tournaments.starts_on < today).length;
@@ -156,6 +157,11 @@ function ParentProfile() {
             {account ? ROLE_LABELS[account.role] ?? account.role : "…"}
           </p>
           {account?.verified && <span className="badge-verified">🛡️ Parent Verified</span>}
+          {account?.coach_requested && account.role !== "coach" && (
+            <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--color-text-muted)" }}>
+              ⏳ Prośba o rolę trenera czeka na zatwierdzenie przez administratora.
+            </p>
+          )}
         </div>
       </div>
       {avatarBusy && <p style={{ margin: 0, fontSize: 12, color: "var(--color-text-muted)" }}>Wgrywam zdjęcie…</p>}
@@ -198,12 +204,30 @@ function ParentProfile() {
                 {CONSENT_TYPE_LABELS[c.consent_type] ?? c.consent_type}
                 {c.players?.first_name ? ` — ${c.players.first_name}` : ""}
               </span>
-              <span className={`status-pill ${c.granted ? "ok" : "muted"}`}>
-                {c.granted ? "udzielona" : "wycofana"} {dateFormatter.format(new Date(c.created_at))}
+              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span className={`status-pill ${c.granted ? "ok" : "muted"}`}>
+                  {c.granted ? "udzielona" : "wycofana"} {dateFormatter.format(new Date(c.created_at))}
+                </span>
+                {c.granted && (
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    style={{ padding: "2px 8px", fontSize: 12 }}
+                    onClick={async () => {
+                      if (!window.confirm("Wycofać tę zgodę? Nowe prośby wymagające zgody będą wtedy blokowane.")) return;
+                      setConsentError(null);
+                      const { error } = await withdrawConsent(c.id);
+                      if (error) setConsentError("Nie udało się wycofać zgody. Spróbuj ponownie.");
+                    }}
+                  >
+                    Wycofaj
+                  </button>
+                )}
               </span>
             </div>
           ))
         )}
+        {consentError && <ErrorBox>{consentError}</ErrorBox>}
       </div>
 
       <div>
@@ -223,6 +247,53 @@ function ParentProfile() {
         </button>
         <button className="btn-ghost" onClick={signOut}>
           Wyloguj
+        </button>
+      </div>
+
+      <DeleteAccountSection />
+    </div>
+  );
+}
+
+// Usunięcie konta (RODO art. 17): wymaga wpisania słowa USUŃ, żeby nie dało się tego zrobić przypadkiem.
+function DeleteAccountSection() {
+  const { deleteAccount } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  if (!open) {
+    return (
+      <button type="button" className="btn-ghost" style={{ alignSelf: "flex-start", color: "var(--color-secondary)" }} onClick={() => setOpen(true)}>
+        Usuń konto
+      </button>
+    );
+  }
+
+  const confirm = async () => {
+    setBusy(true);
+    setError(null);
+    const { error } = await deleteAccount();
+    setBusy(false);
+    if (error) setError("Nie udało się usunąć konta. Spróbuj ponownie albo napisz do administratora.");
+  };
+
+  return (
+    <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <p style={{ margin: 0, fontWeight: 700 }}>Usunąć konto?</p>
+      <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)" }}>
+        Skasujemy bezpowrotnie Twoje konto, zawodników, wyjazdy, oferty, prośby, wiadomości, zgody i zdjęcie.
+        Tego nie da się cofnąć. Aby potwierdzić, wpisz <strong>USUŃ</strong>.
+      </p>
+      <input style={inputStyle} value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="USUŃ" aria-label="Potwierdzenie usunięcia konta" />
+      {error && <ErrorBox>{error}</ErrorBox>}
+      <div style={{ display: "flex", gap: 8 }}>
+        <button type="button" className="btn-primary" disabled={busy || typed.trim().toUpperCase() !== "USUŃ"} onClick={confirm}>
+          {busy ? "Usuwam…" : "Usuń konto na zawsze"}
+        </button>
+        <button type="button" className="btn-ghost" disabled={busy} onClick={() => { setOpen(false); setTyped(""); setError(null); }}>
+          Anuluj
         </button>
       </div>
     </div>

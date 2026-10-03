@@ -16,13 +16,13 @@ const CONFIG = {
     table: "ride_join_requests",
     offerFk: "ride_offer_id",
     offerEmbed:
-      "ride_offers(id, free_seats, luggage_space, cost_split_suggestion, cost_per_person_pln, trips(departure_city, created_by_account_id, players(first_name), tournaments(name)))",
+      "ride_offers(id, free_seats, luggage_space, cost_split_suggestion, cost_per_person_pln, trips(departure_city, created_by_account_id, players:player_cards(first_name), tournaments(name)))",
   },
   lodging: {
     table: "lodging_join_requests",
     offerFk: "lodging_offer_id",
     offerEmbed:
-      "lodging_offers(id, kind, place_name, free_spots, trips(departure_city, created_by_account_id, players(first_name), tournaments(name)))",
+      "lodging_offers(id, kind, place_name, free_spots, trips(departure_city, created_by_account_id, players:player_cards(first_name), tournaments(name)))",
   },
 };
 
@@ -41,7 +41,7 @@ export function useJoinRequests(kind, accountId) {
     setLoading(true);
     const { data, error } = await supabase
       .from(cfg.table)
-      .select(`*, requester_trip:trips(departure_city, created_by_account_id, players(first_name)), ${cfg.offerEmbed}`)
+      .select(`*, requester_trip:trips(departure_city, created_by_account_id, players:player_cards(first_name)), ${cfg.offerEmbed}`)
       .order("created_at", { ascending: false });
 
     if (error) setError(error.message);
@@ -64,7 +64,7 @@ export function useJoinRequests(kind, accountId) {
     const { data, error } = await supabase
       .from(cfg.table)
       .insert({ [cfg.offerFk]: offerId, requester_trip_id: requesterTripId })
-      .select(`*, requester_trip:trips(departure_city, created_by_account_id, players(first_name)), ${cfg.offerEmbed}`)
+      .select(`*, requester_trip:trips(departure_city, created_by_account_id, players:player_cards(first_name)), ${cfg.offerEmbed}`)
       .single();
     if (error) return { error };
     setRows((prev) => [data, ...prev]);
@@ -76,7 +76,7 @@ export function useJoinRequests(kind, accountId) {
       .from(cfg.table)
       .update({ status })
       .eq("id", requestId)
-      .select(`*, requester_trip:trips(departure_city, created_by_account_id, players(first_name)), ${cfg.offerEmbed}`)
+      .select(`*, requester_trip:trips(departure_city, created_by_account_id, players:player_cards(first_name)), ${cfg.offerEmbed}`)
       .single();
     if (error) return { error };
     setRows((prev) => prev.map((r) => (r.id === requestId ? data : r)));
@@ -159,7 +159,7 @@ export function useJoinRequests(kind, accountId) {
       .from(cfg.table)
       .update({ meeting_code: code })
       .eq("id", requestId)
-      .select(`*, requester_trip:trips(departure_city, created_by_account_id, players(first_name)), ${cfg.offerEmbed}`)
+      .select(`*, requester_trip:trips(departure_city, created_by_account_id, players:player_cards(first_name)), ${cfg.offerEmbed}`)
       .single();
     if (error) return { error };
     setRows((prev) => prev.map((r) => (r.id === requestId ? data : r)));
@@ -182,7 +182,7 @@ export function useJoinRequests(kind, accountId) {
     }
     const { data, error: readError } = await supabase
       .from(cfg.table)
-      .select(`*, requester_trip:trips(departure_city, created_by_account_id, players(first_name)), ${cfg.offerEmbed}`)
+      .select(`*, requester_trip:trips(departure_city, created_by_account_id, players:player_cards(first_name)), ${cfg.offerEmbed}`)
       .eq("id", requestId)
       .single();
     if (readError) return { error: readError };

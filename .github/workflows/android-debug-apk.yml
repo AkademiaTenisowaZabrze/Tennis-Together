@@ -131,7 +131,7 @@ jobs:
         # (w przeciwieństwie do artifactu wyżej). Osobny prefiks tagu
         # "debug-vN" niż w android-build.yml ("vN"), żeby numery przebiegów
         # tych dwóch workflowów nigdy się nie zderzyły.
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: debug-v${{ github.run_number }}
           name: "Debug APK #${{ github.run_number }}"
@@ -153,7 +153,7 @@ jobs:
         # .../releases/download/debug-latest/tennis-together-debug-latest.apk
         # nigdy się nie zmienia, mimo że plik pod spodem jest za każdym razem
         # świeży.
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: debug-latest
           name: "Debug APK — zawsze najnowszy (obecnie #${{ github.run_number }})"

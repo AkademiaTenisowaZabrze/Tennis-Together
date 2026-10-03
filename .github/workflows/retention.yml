@@ -1,0 +1,29 @@
+name: Retencja danych
+
+# Raz w tygodniu usuwa dane po terminie przechowywania (wiadomości, stare prośby, zgłoszenia, próby
+# rejestracji). Okresy są opisane w supabase/migrations/0050_length_limits_and_retention.sql.
+# Wymaga tego samego sekretu co importy: SUPABASE_SERVICE_ROLE_KEY.
+
+on:
+  schedule:
+    - cron: "30 3 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Usuń dane po terminie
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://jrabxtiranllayerhutm.supabase.co' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          curl -fsS -X POST "$SUPABASE_URL/rest/v1/rpc/purge_old_data" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}'
+          echo

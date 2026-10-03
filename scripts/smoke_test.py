@@ -56,10 +56,12 @@ for t, body in inserts.items():
     check(f"anon nie zapisuje do {t}", s in (401, 403) or "row-level security" in b or s in (400, 404) and "violates" in b or s == 401, f"HTTP {s} {b[:80]}")
 
 # 3. Tabele celowo publiczne
+s, b = call("POST", f"{U}/rest/v1/rpc/signup_attempts_last_hour", {})
+check("licznik rejestracji dostepny dla anon przez funkcje", s == 200 and b.strip().isdigit(), f"HTTP {s} {b[:60]}")
 s, b = call("GET", f"{U}/rest/v1/signup_attempts?select=id&limit=1")
-check("licznik rejestracji czytelny dla anon", s == 200, f"HTTP {s}")
+check("tabela signup_attempts nie jest czytelna dla anon", s != 200 or b.strip() == "[]", f"HTTP {s} {b[:60]}")
 s, b = call("GET", f"{U}/rest/v1/bug_reports?select=id&limit=1")
-check("zgloszenia bledow czytelne dla anon (celowo)", s == 200, f"HTTP {s}")
+check("zgloszenia bledow nie sa czytelne dla anon", s != 200 or b.strip() == "[]", f"HTTP {s} {b[:60]}")
 
 # 4. Funkcje RPC nie moga zdradzac danych anonowi
 for fn, body in [("admin_stats", {}), ("match_profile", {"other_account_id": Z}),
@@ -114,14 +116,12 @@ check("kalkulator kosztow: ustawienia niewidoczne dla anon", (s == 200 and b.str
 s, b = call("POST", f"{U}/rest/v1/rpc/ride_cost_suggestion", {"p_trip_id": Z})
 check("rpc ride_cost_suggestion niedostepne dla anon", s in (401, 403, 404), f"HTTP {s} {b[:80]}")
 
-# Weryfikacja loginu PZT (usePztPlayerSearch.js -> verifyPztLogin) - zastapila
-# martwy Railway (2026-09-27, zgloszenie: blad przy dodawaniu zawodnika).
+# Weryfikacja loginu PZT (usePztPlayerSearch.js -> verifyPztLogin) wymaga zalogowanego uzytkownika
+# (audyt F5): sam klucz publiczny dostaje 401, a zly format loginu nie trafia do portalu PZT.
 s, b = call("POST", f"{U}/functions/v1/pzt-player-lookup", {"login": "MRO2043343"})
-d = json.loads(b) if s == 200 else {}
-check("funkcja pzt-player-lookup znajduje prawdziwego zawodnika", s == 200 and d.get("found") is True, f"HTTP {s} {b[:120]}")
-s, b = call("POST", f"{U}/functions/v1/pzt-player-lookup", {"login": "NIEISTNIEJACYLOGIN999"})
-d = json.loads(b) if s == 200 else {}
-check("funkcja pzt-player-lookup zwraca found=false dla nieistniejacego loginu", s == 200 and d.get("found") is False, f"HTTP {s} {b[:120]}")
+check("funkcja pzt-player-lookup odrzuca anonima (401)", s == 401, f"HTTP {s} {b[:120]}")
+s, b = call("POST", f"{U}/functions/v1/pzt-player-lookup", {"login": "../../x"})
+check("funkcja pzt-player-lookup nie przyjmuje dziwnego loginu od anonima", s in (400, 401), f"HTTP {s} {b[:120]}")
 
 # 6. Auth
 s, b = call("GET", f"{U}/auth/v1/settings")

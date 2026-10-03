@@ -332,7 +332,10 @@ function OfferCard({ offer: r, account, trips, joinRequests }) {
   // pomyłkę (albo brak innej opcji) swój wyjazd na turniej Y.
   const matchingTrips = trips.filter((t) => t.tournament_id === r.trips?.tournament_id);
   const [showPicker, setShowPicker] = useState(false);
-  const [tripId, setTripId] = useState(matchingTrips[0]?.id ?? "");
+  // Wybór wyjazdu liczymy z aktualnej listy, nie z jej stanu w pierwszym renderze:
+  // gdy wyjazdy wczytają się wolniej niż oferty, inaczej wysłalibyśmy pusty identyfikator.
+  const [pickedTripId, setTripId] = useState("");
+  const tripId = pickedTripId || matchingTrips[0]?.id || "";
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -496,7 +499,8 @@ function NoTripsNotice() {
 }
 
 function AddOfferForm({ trips, createOffer, onDone }) {
-  const [tripId, setTripId] = useState(trips[0]?.id ?? "");
+  const [pickedTripId, setTripId] = useState("");
+  const tripId = pickedTripId || trips[0]?.id || "";
   const [freeSeats, setFreeSeats] = useState(1);
   const [luggageSpace, setLuggageSpace] = useState("");
   const [costSplitSuggestion, setCostSplitSuggestion] = useState("");
@@ -611,7 +615,8 @@ function AddOfferForm({ trips, createOffer, onDone }) {
 }
 
 function AddRequestForm({ trips, createRequest, onDone }) {
-  const [tripId, setTripId] = useState(trips[0]?.id ?? "");
+  const [pickedTripId, setTripId] = useState("");
+  const tripId = pickedTripId || trips[0]?.id || "";
   const [seatsNeeded, setSeatsNeeded] = useState(1);
   const [notes, setNotes] = useState("");
   const [error, setError] = useState(null);

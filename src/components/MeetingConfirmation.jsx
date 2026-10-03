@@ -60,13 +60,17 @@ export default function MeetingConfirmation({ request, joinRequests }) {
 
   if (!mode) {
     return (
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button type="button" className="btn-ghost" onClick={handleShowCode} disabled={busy}>
-          📱 Pokaż mój kod
-        </button>
-        <button type="button" className="btn-ghost" onClick={() => setMode("enter")} disabled={busy}>
-          🔢 Wpisz kod drugiej osoby
-        </button>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button type="button" className="btn-ghost" onClick={handleShowCode} disabled={busy}>
+            📱 Pokaż mój kod
+          </button>
+          <button type="button" className="btn-ghost" onClick={() => setMode("enter")} disabled={busy}>
+            🔢 Wpisz kod drugiej osoby
+          </button>
+        </div>
+        {/* Błąd generowania kodu musi być widoczny także przed wejściem w tryb "show" */}
+        {error && <p style={{ margin: 0, fontSize: 13, color: "var(--color-secondary)" }}>{error}</p>}
       </div>
     );
   }

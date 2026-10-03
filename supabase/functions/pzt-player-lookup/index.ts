@@ -21,6 +21,25 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Login PZT to 3 litery i 7 cyfr (np. BAZ2368226); dopuszczamy lekki zapas, żeby nie odrzucić
+// rzadkich wariantów, ale nie pozwalamy wstawić do adresu portalu niczego poza literami i cyframi.
+const PZT_LOGIN_FORMAT = /^[A-Z0-9]{6,12}$/;
+
+// Funkcja służy wyłącznie zalogowanym użytkownikom aplikacji (formularz zawodnika). Sam klucz
+// publiczny (rola anon) nie wystarcza: pytamy serwer autoryzacji, czy token należy do użytkownika.
+async function isLoggedInUser(req: Request): Promise<boolean> {
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+  if (!token) return false;
+  try {
+    const res = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/user`, {
+      headers: { apikey: Deno.env.get("SUPABASE_ANON_KEY") ?? token, Authorization: `Bearer ${token}` },
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -31,6 +50,8 @@ function jsonResponse(body: unknown, status = 200) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  if (!(await isLoggedInUser(req))) return jsonResponse({ error: "Wymagane zalogowanie" }, 401);
+
   let login = "";
   try {
     const body = await req.json();
@@ -39,6 +60,7 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Nieprawidłowe zapytanie" }, 400);
   }
   if (!login) return jsonResponse({ error: "Brak loginu PZT" }, 400);
+  if (!PZT_LOGIN_FORMAT.test(login)) return jsonResponse({ error: "Nieprawidłowy format loginu PZT" }, 400);
 
   const url = `https://portal.pzt.pl/PlayerTournament.aspx?UserID=${encodeURIComponent(login)}`;
   let html: string;

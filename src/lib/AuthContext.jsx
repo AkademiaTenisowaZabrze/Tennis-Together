@@ -16,6 +16,10 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(undefined);
   const [account, setAccount] = useState(null);
   const [accountLoading, setAccountLoading] = useState(false);
+  // Id użytkownika, dla którego próba wczytania konta już się zakończyła (udana
+  // lub nie). Dzięki temu między "jest sesja" a "zaczęło się wczytywanie konta"
+  // nie mignie pełny ekran aplikacji bez konta.
+  const [checkedFor, setCheckedFor] = useState(null);
   // true po kliknięciu linku "resetuj hasło" z maila - patrz SetPasswordPage.jsx
   const [recovery, setRecovery] = useState(false);
 
@@ -66,6 +70,8 @@ export function AuthProvider({ children }) {
         id: userId,
         role: pending?.role ?? "parent",
         full_name: pending?.full_name ?? "Nowy użytkownik",
+        // zgoda na regulamin i politykę prywatności z formularza rejestracji (0051)
+        ...(pending?.terms_accepted_at ? { terms_accepted_at: pending.terms_accepted_at, terms_version: pending.terms_version ?? null } : {}),
       })
       .select()
       .single();
@@ -83,9 +89,16 @@ export function AuthProvider({ children }) {
     if (session === undefined) return;
     if (session === null) {
       setAccount(null);
+      setCheckedFor(null);
       return;
     }
-    loadAccount(session.user.id);
+    let cancelled = false;
+    loadAccount(session.user.id).finally(() => {
+      if (!cancelled) setCheckedFor(session.user.id);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [session, loadAccount]);
 
   const registerPendingProfile = (profile) => {
@@ -113,6 +126,31 @@ export function AuthProvider({ children }) {
     return supabase.auth.signOut();
   };
 
+  // Usunięcie konta i wszystkich danych (RODO art. 17). Plik zdjęcia profilowego usuwamy tu, bo SQL nie
+  // czyści Storage; resztę (zawodnicy, wyjazdy, oferty, wiadomości, zgody) robi funkcja bazy
+  // delete_my_account() kaskadowo (0048). Po sukcesie sesja i tak przestaje być ważna.
+  const deleteAccount = async () => {
+    const uid = session?.user?.id;
+    if (!uid) return { error: new Error("Brak zalogowanego konta.") };
+    try {
+      const bucket = supabase.storage.from("avatars");
+      const { data: files } = await bucket.list(uid);
+      if (files?.length) await bucket.remove(files.map((f) => `${uid}/${f.name}`));
+    } catch {
+      // zdjęcie jest dodatkiem: jego błąd nie może blokować usunięcia konta
+    }
+    const { error } = await supabase.rpc("delete_my_account");
+    if (error) return { error };
+    try {
+      localStorage.removeItem(PUSH_TOKEN_KEY);
+      localStorage.removeItem(PENDING_PROFILE_KEY);
+    } catch {
+      // bez znaczenia
+    }
+    await supabase.auth.signOut();
+    return {};
+  };
+
   const updateAccount = async (fields) => {
     if (!account) return { error: new Error("Brak zalogowanego konta.") };
     const { data, error } = await supabase
@@ -130,11 +168,12 @@ export function AuthProvider({ children }) {
     session,
     account,
     user: session?.user ?? null,
-    loading: session === undefined || (session !== null && accountLoading && !account),
+    loading: session === undefined || (session !== null && !account && checkedFor !== session.user.id),
     recovery,
     finishRecovery: () => setRecovery(false),
     registerPendingProfile,
     signOut,
+    deleteAccount,
     updateAccount,
   };
 

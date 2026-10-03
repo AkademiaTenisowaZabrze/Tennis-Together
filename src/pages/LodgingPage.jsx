@@ -175,7 +175,8 @@ function OfferCard({ offer: l, account, trips, joinRequests }) {
   // analogicznym miejscu w RidesPage.jsx.
   const matchingTrips = trips.filter((t) => t.tournament_id === l.trips?.tournament_id);
   const [showPicker, setShowPicker] = useState(false);
-  const [tripId, setTripId] = useState(matchingTrips[0]?.id ?? "");
+  const [pickedTripId, setTripId] = useState("");
+  const tripId = pickedTripId || matchingTrips[0]?.id || "";
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -296,7 +297,8 @@ function OfferCard({ offer: l, account, trips, joinRequests }) {
 
 function AddLodgingForm({ trips, createOffer, onDone }) {
   const [kind, setKind] = useState("shared_booking");
-  const [tripId, setTripId] = useState(trips[0]?.id ?? "");
+  const [pickedTripId, setTripId] = useState("");
+  const tripId = pickedTripId || trips[0]?.id || "";
   const [placeName, setPlaceName] = useState("");
   const [freeSpots, setFreeSpots] = useState(1);
   const [budgetPerNight, setBudgetPerNight] = useState("");
@@ -486,7 +488,8 @@ function IncomingHostRequests({ hostRequests, account }) {
 function HostOfferCard({ offer: o, account, trips, hostRequests }) {
   const matchingTrips = trips.filter((t) => t.tournament_id === o.tournament_id);
   const [showPicker, setShowPicker] = useState(false);
-  const [tripId, setTripId] = useState(matchingTrips[0]?.id ?? "");
+  const [pickedTripId, setTripId] = useState("");
+  const tripId = pickedTripId || matchingTrips[0]?.id || "";
   const [consentChecked, setConsentChecked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);

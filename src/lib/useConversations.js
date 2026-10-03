@@ -24,7 +24,7 @@ export function useConversations(accountId) {
          lodging_offers(trips(departure_city, tournaments(name))),
          ride_pings(tournaments(name)),
          lodging_host_requests(lodging_host_offers(tournaments(name))),
-         conversation_participants(account_id, accounts(full_name))`
+         conversation_participants(account_id, accounts:account_cards(full_name))`
       )
       .order("created_at", { ascending: false });
 
