@@ -685,6 +685,9 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ notified: tokens.length }), { status: 200 });
   } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify({ error: "internal error" }), { status: 500 });
+    // Treść błędu dostają tylko uwierzytelnieni wywołujący (sekret ustawiony i sprawdzony wyżej),
+    // obcym zostaje ogólny komunikat.
+    const detail = WEBHOOK_SECRET ? String(err instanceof Error ? err.message : err).slice(0, 300) : "internal error";
+    return new Response(JSON.stringify({ error: detail }), { status: 500 });
   }
 });
