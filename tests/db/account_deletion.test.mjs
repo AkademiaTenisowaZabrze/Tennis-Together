@@ -19,6 +19,12 @@ describe("delete_my_account()", () => {
     expect(await count(`accounts where id = '${a}'`)).toBe(1);
   });
 
+  it("funkcja nie jest wykonywalna dla anonima, tylko dla zalogowanych", async () => {
+    const r = (await db.sql(`select has_function_privilege('anon', p.oid, 'execute') a, has_function_privilege('authenticated', p.oid, 'execute') u
+      from pg_proc p where p.proname = 'delete_my_account'`)).rows[0];
+    expect(r).toEqual({ a: false, u: true });
+  });
+
   it("zalogowany usuwa własne konto razem ze wszystkimi swoimi danymi", async () => {
     const t = await db.tournament();
     const a = await db.family(t, { name: "Do usunięcia" });

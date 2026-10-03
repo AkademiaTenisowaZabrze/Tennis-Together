@@ -34,7 +34,7 @@ export const MUTATIONS = [
   ["użytkownik może sam zostać trenerem (zmiana roli bez zatwierdzenia)", "0043_accounts_privilege_guard.sql", "      new.role := old.role;\n      new.coach_requested := true;", "      new.coach_requested := true;"],
   ["rejestracja z is_admin = true przechodzi (strażnik INSERT wyłączony)", "0043_accounts_privilege_guard.sql", "    new.is_admin := false;\n    new.verified := false;", "    new.verified := false;"],
   ["zgłoszenia błędów znów czytelne dla każdego (polityka using true)", "0044_close_anon_reads.sql", "  using (is_admin());\n\ndrop policy if exists \"Każdy może zgłosić błąd\"", "  using (true);\n\ndrop policy if exists \"Każdy może zgłosić błąd\""],
-  ["triggery push nie dokładają sekretu wywołań", "0045_notify_webhook_secret.sql", "         || coalesce(", "         || coalesce(null::jsonb, "],
+  ["triggery push nie dokładają sekretu wywołań", "0045_notify_webhook_secret.sql", "jsonb_build_object('x-webhook-secret', value)", "jsonb_build_object('x-webhook-x', value)"],
   ["prośba może powstać od razu jako zaakceptowana (strażnik INSERT wyłączony)", "0046_requests_conversations_consents_guard.sql", "  if tg_op = 'INSERT' then\n    new.status := 'pending';\n    return new;\n  end if;", "  if tg_op = 'INSERT' then\n    return new;\n  end if;"],
   ["oferta w prośbie da się przepiąć (identyfikatory nie są zamrożone)", "0046_requests_conversations_consents_guard.sql", "  foreach k in array tg_argv loop", "  foreach k in array '{}'::text[] loop"],
   ["do cudzej rozmowy można dopisać uczestnika", "0046_requests_conversations_consents_guard.sql", "    conversation_open_for_me(conversation_id)\n    and (", "    true\n    and ("],
