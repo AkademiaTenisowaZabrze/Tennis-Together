@@ -4,6 +4,7 @@ import { useAuth } from "../lib/AuthContext.jsx";
 import ErrorBox from "../components/ErrorBox.jsx";
 import { inputStyle, labelStyle } from "../components/formStyles.js";
 import { APP_VERSION } from "../lib/appVersion.js";
+import Captcha, { captchaEnabled } from "../components/Captcha.jsx";
 import PasswordInput from "../components/PasswordInput.jsx";
 import atzLogo from "../assets/atz-logo.png";
 import pztLogo from "../assets/pzt-logo.png";
@@ -103,12 +104,21 @@ function LoginForm() {
   const [busy, setBusy] = useState(false);
   const [forgot, setForgot] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  // token "nie jestem robotem" (Turnstile); null = brak albo jeszcze nie rozwiązany
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
+  const captchaBlocked = captchaEnabled() && !captchaToken;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+      options: captchaToken ? { captchaToken } : undefined,
+    });
+    setCaptchaReset((n) => n + 1); // token jest jednorazowy
     setBusy(false);
     if (error) setError(translateAuthError(error));
   };
@@ -121,7 +131,11 @@ function LoginForm() {
     // ustawia nowe hasło (SetPasswordPage). Adres musi być na liście
     // Redirect URLs w Supabase (wpis .../Tennis-Together/** go obejmuje).
     const siteUrl = import.meta.env.VITE_SITE_URL || "https://akademiatenisowazabrze.github.io/Tennis-Together";
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${siteUrl}/app/` });
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${siteUrl}/app/`,
+      ...(captchaToken ? { captchaToken } : {}),
+    });
+    setCaptchaReset((n) => n + 1);
     setBusy(false);
     if (error) {
       setError(translateAuthError(error));
@@ -155,8 +169,9 @@ function LoginForm() {
           <label style={labelStyle}>E-mail</label>
           <input style={inputStyle} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
+        <Captcha key="forgot" onToken={setCaptchaToken} resetKey={captchaReset} />
         {error && <ErrorBox>{error}</ErrorBox>}
-        <button className="btn-primary" type="submit" disabled={busy}>
+        <button className="btn-primary" type="submit" disabled={busy || captchaBlocked}>
           {busy ? "Wysyłam…" : "Wyślij link"}
         </button>
         <button type="button" className="btn-ghost" onClick={() => { setForgot(false); setError(null); }}>
@@ -176,8 +191,9 @@ function LoginForm() {
         <label style={labelStyle}>Hasło</label>
         <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
       </div>
+      <Captcha key="login" onToken={setCaptchaToken} resetKey={captchaReset} />
       {error && <ErrorBox>{error}</ErrorBox>}
-      <button className="btn-primary" type="submit" disabled={busy}>
+      <button className="btn-primary" type="submit" disabled={busy || captchaBlocked}>
         {busy ? "Loguję…" : "Zaloguj się"}
       </button>
       <button
@@ -202,6 +218,9 @@ function RegisterForm({ onDone }) {
   const [confirmNotice, setConfirmNotice] = useState(false);
   const [attemptsThisHour, setAttemptsThisHour] = useState(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
+  const captchaBlocked = captchaEnabled() && !captchaToken;
 
   useEffect(() => {
     let cancelled = false;
@@ -262,8 +281,10 @@ function RegisterForm({ onDone }) {
         // mógł się zwrócić po imieniu przez {{ .Data.full_name }} — patrz
         // docs/szablon-maila-potwierdzenie.html.
         data: { full_name: fullName.trim() },
+        ...(captchaToken ? { captchaToken } : {}),
       },
     });
+    setCaptchaReset((n) => n + 1);
     setBusy(false);
 
     if (error) {
@@ -358,13 +379,14 @@ function RegisterForm({ onDone }) {
           <a href={`${SITE_URL}/polityka-prywatnosci.html`} target="_blank" rel="noopener noreferrer">politykę prywatności</a>.
         </span>
       </label>
+      <Captcha key="register" onToken={setCaptchaToken} resetKey={captchaReset} />
       {limitReached && (
         <p style={{ margin: 0, fontSize: 13, color: "var(--color-secondary)" }}>
           Limit rejestracji na tę godzinę prawdopodobnie wyczerpany — możesz spróbować, ale mail może nie dojść.
         </p>
       )}
       {error && <ErrorBox>{error}</ErrorBox>}
-      <button className="btn-primary" type="submit" disabled={busy}>
+      <button className="btn-primary" type="submit" disabled={busy || captchaBlocked}>
         {busy ? "Zakładam konto…" : "Załóż konto"}
       </button>
     </form>

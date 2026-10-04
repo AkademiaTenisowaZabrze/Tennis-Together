@@ -120,6 +120,8 @@ jobs:
           VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://jrabxtiranllayerhutm.supabase.co' }}
           VITE_SITE_URL: ${{ env.SITE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY || 'sb_publishable_8-yxyMhoEEq-kHx2opU0Pg_QylogBur' }}
+          # Klucz witryny Cloudflare Turnstile (publiczny; zmienna Actions TURNSTILE_SITE_KEY). Pusty = bez captchy.
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
           # Ten sam numer co -PappVersionName niżej (Android), żeby wersja
           # widoczna w apce (ekran logowania, profil) zgadzała się z tym,
           # co Android pokazuje w Ustawieniach przy aplikacji.

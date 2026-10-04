@@ -58,6 +58,8 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # Klucz witryny Cloudflare Turnstile (publiczny; zmienna Actions TURNSTILE_SITE_KEY). Pusty = bez captchy.
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
           VITE_SITE_URL: ${{ env.SITE_URL }}
           # Ten sam numer co -PappVersionName niżej (Android), żeby wersja
           # widoczna w apce zgadzała się z tym, co Android pokazuje w

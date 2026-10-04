@@ -52,7 +52,7 @@ describe("kod React: niebezpieczne konstrukcje", () => {
       "akademiatenisowazabrze.github.io", "akademiatenisowazabrze.pl", "www.akademiatenisowazabrze.pl", "www.pzt.pl", "portal.pzt.pl",
       "nominatim.openstreetmap.org", "tile.openstreetmap.org", "www.openstreetmap.org", "openstreetmap.org", "www.google.com", "maps.google.com",
       "supabase.co", "firebase", "googleapis.com", "gstatic.com", "w3.org", "github.com", "unpkg.com", "leafletjs.com", "localhost",
-      "calendar.google.com", "schema.org", "firebaseapp.com", "firebaseio.com", "google.com",
+      "calendar.google.com", "challenges.cloudflare.com", "schema.org", "firebaseapp.com", "firebaseio.com", "google.com",
     ];
     const bad = [];
     for (const f of SRC) {

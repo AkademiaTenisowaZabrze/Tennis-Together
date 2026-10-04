@@ -48,6 +48,8 @@ jobs:
           # Klucz publishable jest z definicji publiczny (jak w android-debug-apk.yml).
           VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://jrabxtiranllayerhutm.supabase.co' }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY || 'sb_publishable_8-yxyMhoEEq-kHx2opU0Pg_QylogBur' }}
+          # Klucz witryny Cloudflare Turnstile (publiczny; zmienna Actions TURNSTILE_SITE_KEY). Pusty = bez captchy.
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
           VITE_APP_VERSION: 0.1.${{ github.run_number }}-web
         run: npm run build
 
