@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import json, urllib.request, urllib.error
+import json, os, urllib.request, urllib.error
 
 U = "https://jrabxtiranllayerhutm.supabase.co"
 K = "sb_publishable_8-yxyMhoEEq-kHx2opU0Pg_QylogBur"
@@ -78,35 +78,48 @@ for fn in ("expire_stale_requests", "trip_arrangements"):
     s, b = call("POST", f"{U}/rest/v1/rpc/{fn}", {})
     check(f"rpc {fn} niedostepne dla anon (albo jeszcze nie wdrozone)", s in (401, 403, 404), f"HTTP {s} {b[:80]}")
 
-# 5. Funkcja powiadomien
-s, b = call("POST", f"{U}/functions/v1/notify-tournament", {"trip_id": Z, "offer_kind": "ride"})
-check("funkcja powiadomien odpowiada", s in (200, 400, 404), f"HTTP {s} {b[:80]}")
-s, b = call("POST", f"{U}/functions/v1/notify-tournament", {"trip_id": "x", "offer_kind": "zle"})
-check("funkcja powiadomien odrzuca bledne dane (wymaga wdrozenia poprawki)", s == 400, f"HTTP {s} {b[:80]}")
+# 5. Funkcja powiadomien (od 0045 wymaga sekretu wywolan w naglowku x-webhook-secret).
+# Bez NOTIFY_WEBHOOK_SECRET w srodowisku sprawdzamy tylko, ze anonim jest odrzucany (401);
+# z sekretem uruchamiamy pelne kontrole logiki funkcji.
+SECRET = os.environ.get("NOTIFY_WEBHOOK_SECRET", "")
+
+
+def ncall(method, url, body=None):
+    return call(method, url, body, {"x-webhook-secret": SECRET} if SECRET else None)
+
+
+def nok(cond, status):
+    return cond if SECRET else status == 401
+
+
+s, b = ncall("POST", f"{U}/functions/v1/notify-tournament", {"trip_id": Z, "offer_kind": "ride"})
+check("funkcja powiadomien odpowiada", nok(s in (200, 400, 404), s), f"HTTP {s} {b[:80]}")
+s, b = ncall("POST", f"{U}/functions/v1/notify-tournament", {"trip_id": "x", "offer_kind": "zle"})
+check("funkcja powiadomien odrzuca bledne dane (wymaga wdrozenia poprawki)", nok(s == 400, s), f"HTTP {s} {b[:80]}")
 
 # Push "prosba zaakceptowana" (0033) - zly rodzaj ma byc odrzucony
-s, b = call("POST", f"{U}/functions/v1/notify-tournament", {"event": "request_accepted", "request_kind": "x", "request_id": "y"})
-check("funkcja powiadomien odrzuca nieznany rodzaj prosby", s == 400, f"HTTP {s} {b[:80]}")
+s, b = ncall("POST", f"{U}/functions/v1/notify-tournament", {"event": "request_accepted", "request_kind": "x", "request_id": "y"})
+check("funkcja powiadomien odrzuca nieznany rodzaj prosby", nok(s == 400, s), f"HTTP {s} {b[:80]}")
 
-s, b = call("POST", f"{U}/functions/v1/notify-tournament", {"event": "meeting_point_set", "request_kind": "lodging", "request_id": "x"})
-check("powiadomienie o pineski odrzuca nieobslugiwany rodzaj", s == 400, f"HTTP {s} {b[:80]}")
+s, b = ncall("POST", f"{U}/functions/v1/notify-tournament", {"event": "meeting_point_set", "request_kind": "lodging", "request_id": "x"})
+check("powiadomienie o pineski odrzuca nieobslugiwany rodzaj", nok(s == 400, s), f"HTTP {s} {b[:80]}")
 
 F = f"{U}/functions/v1/notify-tournament"
-s, b = call("POST", F, {"event": "request_closed", "request_kind": "x", "request_id": "y"})
-check("push: odrzucona prosba - nieznany rodzaj odrzucony", s == 400, f"HTTP {s} {b[:80]}")
-s, b = call("POST", F, {"event": "new_message", "message_id": Z})
-check("push: nowa wiadomosc - brak swiezej wiadomosci pominiety", s == 200 and "skipped" in b, f"HTTP {s} {b[:80]}")
-s, b = call("POST", F, {"event": "selection_published", "tournament_id": Z})
-check("push: lista startowa - brak wpisow pominiety", s == 200 and "skipped" in b, f"HTTP {s} {b[:80]}")
-s, b = call("POST", F, {"event": "trip_reminders", "days": 3})
-check("push: przypomnienia - zle days odrzucone", s == 400, f"HTTP {s} {b[:80]}")
+s, b = ncall("POST", F, {"event": "request_closed", "request_kind": "x", "request_id": "y"})
+check("push: odrzucona prosba - nieznany rodzaj odrzucony", nok(s == 400, s), f"HTTP {s} {b[:80]}")
+s, b = ncall("POST", F, {"event": "new_message", "message_id": Z})
+check("push: nowa wiadomosc - brak swiezej wiadomosci pominiety", nok(s == 200 and "skipped" in b, s), f"HTTP {s} {b[:80]}")
+s, b = ncall("POST", F, {"event": "selection_published", "tournament_id": Z})
+check("push: lista startowa - brak wpisow pominiety", nok(s == 200 and "skipped" in b, s), f"HTTP {s} {b[:80]}")
+s, b = ncall("POST", F, {"event": "trip_reminders", "days": 3})
+check("push: przypomnienia - zle days odrzucone", nok(s == 400, s), f"HTTP {s} {b[:80]}")
 
-s, b = call("POST", F, {"event": "meeting_confirmed", "request_kind": "ride_ping", "request_id": Z})
-check("push: potwierdzenie spotkania - nieobslugiwany rodzaj odrzucony", s == 400, f"HTTP {s} {b[:80]}")
-s, b = call("POST", F, {"event": "club_trip_created", "trip_id": Z})
-check("push: wyjazd w klubie - brak swiezego wyjazdu pominiety", s == 200 and "skipped" in b, f"HTTP {s} {b[:80]}")
-s, b = call("POST", F, {"event": "admin_report", "source": "x"})
-check("push: zgloszenie dla admina - zly rodzaj odrzucony", s == 400, f"HTTP {s} {b[:80]}")
+s, b = ncall("POST", F, {"event": "meeting_confirmed", "request_kind": "ride_ping", "request_id": Z})
+check("push: potwierdzenie spotkania - nieobslugiwany rodzaj odrzucony", nok(s == 400, s), f"HTTP {s} {b[:80]}")
+s, b = ncall("POST", F, {"event": "club_trip_created", "trip_id": Z})
+check("push: wyjazd w klubie - brak swiezego wyjazdu pominiety", nok(s == 200 and "skipped" in b, s), f"HTTP {s} {b[:80]}")
+s, b = ncall("POST", F, {"event": "admin_report", "source": "x"})
+check("push: zgloszenie dla admina - zly rodzaj odrzucony", nok(s == 400, s), f"HTTP {s} {b[:80]}")
 s, b = call("POST", f"{U}/rest/v1/rpc/claim_push_slot", {"p_key": "x", "p_minutes": 1})
 check("rpc claim_push_slot niedostepne dla anon (albo jeszcze nie wdrozone)", s in (401, 403, 404), f"HTTP {s} {b[:80]}")
 

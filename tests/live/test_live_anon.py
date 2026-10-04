@@ -263,7 +263,8 @@ class EdgeFunctions(unittest.TestCase):
                 status = r.status
         except urllib.error.HTTPError as e:
             status = e.code
-        self.assertEqual(status, 400)
+        # bez sekretu wywołań funkcja odpowiada 401 jeszcze przed odczytem JSON-a (0045), z sekretem 400; nigdy 500
+        self.assertIn(status, (400, 401))
 
     def test_notify_nie_ujawnia_sladu_stosu(self):
         _, text, _ = call("POST", self.F, {"event": "new_message", "message_id": ZERO})
