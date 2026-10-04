@@ -34,6 +34,7 @@ TT_SHOW_KNOWN=1 npx vitest run   # prawdziwe powody niepowodzenia znanych luk
 | F21 | Retencja danych: `purge_old_data()` plus workflow tygodniowy | 0050, `retention.yml` |
 | F22 | Zgoda na regulamin zapisywana przy rejestracji (`terms_accepted_at`, `terms_version`) | 0051, `AuthPage`, `AuthContext` |
 | F23 | Limity długości pól (NOT VALID, tylko nowe dane) | 0044, 0050 |
+| F16 | APK dla testerów podpisane prywatnym kluczem z sekretów GitHub (`ANDROID_KEYSTORE_*`), nie publicznym `debug.keystore` | `android-debug-apk.yml`, `build.gradle` |
 | F28 | Zepsuty JSON do `notify-tournament` daje 400 zamiast 500 | funkcja brzegowa |
 | F29 | Korzeń strony ma `index.html` (kod 200) | `docs/index.html` |
 
@@ -41,7 +42,6 @@ TT_SHOW_KNOWN=1 npx vitest run   # prawdziwe powody niepowodzenia znanych luk
 
 | ID | Luka | Test |
 |----|------|------|
-| F16 | APK dla testerów podpisane wspólnym, commitowanym kluczem debug (świadomy kompromis: aktualizacje w miejscu). Docelowo osobny klucz wydawniczy. | `secrets_and_android.test.mjs` |
 | F24–F27 | Pozycje z audytu bez osobnego testu: **opisy do uzupełnienia** z raportu audytu. | – |
 
 ## Co trzeba zrobić na produkcji (kolejność)

@@ -82,7 +82,13 @@ android {
             }
         }
         debug {
-            if (hasFixedDebugKeystore) {
+            // Wersje rozdawane testerom (workflow android-debug-apk.yml) podpisujemy PRYWATNYM kluczem
+            // wydawniczym, gdy CI go odtworzy z sekretów (keystore.properties). Publiczny debug.keystore
+            // z repozytorium zostaje tylko jako zapas dla lokalnych buildów bez klucza: kto zna ten klucz,
+            // mógłby wydać podrobioną "aktualizację", która nadpisze prawdziwą aplikację (audyt F16).
+            if (hasSigningConfig) {
+                signingConfig signingConfigs.release
+            } else if (hasFixedDebugKeystore) {
                 signingConfig signingConfigs.debug
             }
         }

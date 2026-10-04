@@ -1,7 +1,6 @@
 // Sekrety w repozytorium oraz bezpieczeństwo aplikacji na Androida.
 import { describe, it, expect } from "vitest";
 import { read, exists, trackedTextFiles, trackedFiles, lineOf } from "../helpers/repo.mjs";
-import { itKnown } from "../helpers/known.js";
 
 // Wzorce kluczy i haseł. Klucze PUBLICZNE z założenia (publishable, Firebase web) są na liście dozwolonych.
 const SECRET_PATTERNS = [
@@ -168,8 +167,14 @@ describe("Android: manifest i konfiguracja", () => {
     expect(g).toMatch(/signingConfigs\s*{[\s\S]*release/);
   });
 
-  itKnown("F16", "APK rozdawane testerom nie jest podpisane publicznym kluczem debug (każdy mógłby wydać podrobioną aktualizację)", () => {
-    expect(trackedFiles()).not.toContain("android/app/debug.keystore");
+  it("APK rozdawane testerom jest podpisane prywatnym kluczem z sekretów, a nie publicznym debug.keystore (dawniej F16)", () => {
+    const wf = read(".github/workflows/android-debug-apk.yml");
+    expect(wf).toMatch(/ANDROID_KEYSTORE_BASE64/);
+    expect(wf).toMatch(/keystore\.properties/);
+    // krok odtwarzający klucz musi poprzedzać budowanie
+    expect(wf.indexOf("ANDROID_KEYSTORE_BASE64")).toBeLessThan(wf.indexOf("assembleDebug"));
+    const g = read("android/app/build.gradle");
+    expect(g).toMatch(/debug\s*{[^}]*if \(hasSigningConfig\)[^}]*signingConfig signingConfigs\.release/);
   });
 
   it("w repozytorium nie ma klucza produkcyjnego", () => {
