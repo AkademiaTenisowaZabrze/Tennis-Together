@@ -21,9 +21,12 @@ jobs:
           SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://jrabxtiranllayerhutm.supabase.co' }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          curl -fsS -X POST "$SUPABASE_URL/rest/v1/rpc/purge_old_data" \
-            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+          # Sekret mógł zostać wklejony z końcem linii; w nagłówku curl to błąd (kod 43), więc przycinamy.
+          KEY="$(printf '%s' "$SUPABASE_SERVICE_ROLE_KEY" | tr -d '[:space:]')"
+          URL="$(printf '%s' "$SUPABASE_URL" | tr -d '[:space:]')"
+          curl -fsS -X POST "$URL/rest/v1/rpc/purge_old_data" \
+            -H "apikey: $KEY" \
+            -H "Authorization: Bearer $KEY" \
             -H "Content-Type: application/json" \
             -d '{}'
           echo
