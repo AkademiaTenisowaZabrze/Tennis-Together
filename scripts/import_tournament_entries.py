@@ -292,7 +292,13 @@ def fetch_entries(tournament_id: str) -> list[dict]:
 def upsert_entries(tournament_uuid: str, rows: list[dict], supabase_url: str, service_role_key: str) -> None:
     if not rows:
         return
-    payload = [{**r, "tournament_id": tournament_uuid} for r in rows]
+    # Ten sam zawodnik bywa na liście PZT więcej niż raz (np. w dwóch sekcjach). Baza odmawia
+    # aktualizacji tego samego wiersza dwa razy w jednym zapytaniu (błąd 21000), więc zostawiamy
+    # pierwsze wystąpienie każdego loginu.
+    unique: dict[str, dict] = {}
+    for r in rows:
+        unique.setdefault(r["pzt_login"], r)
+    payload = [{**r, "tournament_id": tournament_uuid} for r in unique.values()]
     resp = requests.post(
         f"{supabase_url}/rest/v1/tournament_entries",
         params={"on_conflict": "tournament_id,pzt_login"},

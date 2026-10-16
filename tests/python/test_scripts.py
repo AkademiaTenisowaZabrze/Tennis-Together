@@ -20,6 +20,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import openpyxl  # noqa: E402
 
 import import_tennis_europe as te  # noqa: E402
+import import_tournament_entries as entries  # noqa: E402
 import import_tournaments as otk  # noqa: E402
 import update_fuel_price as fuel  # noqa: E402
 
@@ -381,3 +382,33 @@ class ScriptSafetyTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ImportListyStartowej(unittest.TestCase):
+    def _wyslane(self, rows):
+        odp = mock.Mock(ok=True)
+        odp.raise_for_status = mock.Mock()
+        with mock.patch.object(entries.requests, "post", return_value=odp) as post:
+            entries.upsert_entries("t-1", rows, "https://x.supabase.co", "klucz")
+        return post.call_args.kwargs["json"]
+
+    def test_powtorzony_zawodnik_jest_wysylany_raz(self):
+        # regresja: HTTP 500 "ON CONFLICT DO UPDATE command cannot affect row a second time"
+        rows = [
+            {"pzt_login": "AAA1111111", "full_name": "Anna Nowak"},
+            {"pzt_login": "BBB2222222", "full_name": "Ewa Kot"},
+            {"pzt_login": "AAA1111111", "full_name": "Anna Nowak (drugi raz)"},
+        ]
+        payload = self._wyslane(rows)
+        self.assertEqual([r["pzt_login"] for r in payload], ["AAA1111111", "BBB2222222"])
+        self.assertEqual(payload[0]["full_name"], "Anna Nowak")  # zostaje pierwsze wystąpienie
+        self.assertTrue(all(r["tournament_id"] == "t-1" for r in payload))
+
+    def test_unikalne_wiersze_przechodza_bez_zmian(self):
+        rows = [{"pzt_login": f"L{i:09d}", "full_name": f"Z {i}"} for i in range(5)]
+        self.assertEqual(len(self._wyslane(rows)), 5)
+
+    def test_pusta_lista_nie_wysyla_zapytania(self):
+        with mock.patch.object(entries.requests, "post") as post:
+            entries.upsert_entries("t-1", [], "https://x.supabase.co", "klucz")
+        post.assert_not_called()
