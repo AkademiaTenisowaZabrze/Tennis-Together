@@ -14,9 +14,9 @@ afterEach(() => {
 
 describe("Section i ListItem", () => {
   it("sekcja ma nagłówek z ikoną (ukrytą przed czytnikiem) i treść", () => {
-    render(<Section icon="🧳" title="Zawodnicy"><p>Kuba</p></Section>);
+    render(<Section icon="user" title="Zawodnicy"><p>Kuba</p></Section>);
     const h = screen.getByRole("heading", { name: "Zawodnicy" });
-    expect(h.querySelector("[aria-hidden='true']")).toHaveTextContent("🧳");
+    expect(h.querySelector("[aria-hidden='true']")).toContainElement(h.querySelector("[aria-hidden='true'] svg"));
     expect(screen.getByText("Kuba")).toBeInTheDocument();
   });
 
@@ -29,7 +29,7 @@ describe("Section i ListItem", () => {
 });
 
 describe("Collapsible (sekcja rozwijana)", () => {
-  const mount = (props) => render(<Collapsible id="zgody" icon="✅" title="Zgody" summary="2 udzielone" {...props}><p>Treść sekcji</p></Collapsible>);
+  const mount = (props) => render(<Collapsible id="zgody" icon="check" title="Zgody" summary="2 udzielone" {...props}><p>Treść sekcji</p></Collapsible>);
 
   it("domyślnie jest zwinięta i pokazuje tytuł z podsumowaniem", () => {
     const { container } = mount();

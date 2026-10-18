@@ -52,7 +52,7 @@ export default function MessagesPage() {
             </button>
           ))}
         {!loading && conversations.length === 0 && (
-          <EmptyState icon="💬">
+          <EmptyState icon="chat">
             Nie masz jeszcze żadnej rozmowy. Rozmowa otwiera się automatycznie, gdy zaakceptujesz (albo Tobie
             zaakceptują) prośbę o dołączenie do przejazdu lub noclegu.
           </EmptyState>

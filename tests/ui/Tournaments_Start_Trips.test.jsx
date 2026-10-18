@@ -304,7 +304,7 @@ describe("Moje wyjazdy", () => {
     const user = await open();
     await user.click(screen.getByRole("button", { name: "W trakcie organizacji" }));
     const c = (await screen.findByText("Turniej U12 Warszawa")).closest(".glass-card");
-    expect(await within(c).findByText("Załatwiony ✅")).toBeInTheDocument();
+    expect(await within(c).findByText("Załatwiony")).toBeInTheDocument();
     expect(within(c).getByText("Prośba czeka na odpowiedź")).toBeInTheDocument();
   });
 

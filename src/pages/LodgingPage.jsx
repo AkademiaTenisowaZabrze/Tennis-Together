@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Icon, InlineIcon, TileIcon, renderIcon } from "../components/Icon.jsx";
 import { Link } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useTrips } from "../lib/useTrips.js";
@@ -21,7 +22,7 @@ const KIND_LABELS = {
 
 const STATUS_LABELS = {
   pending: { text: "Prośba wysłana — czeka na odpowiedź", cls: "pending" },
-  accepted: { text: "Zaakceptowano ✅", cls: "ok" },
+  accepted: { text: <><InlineIcon name="check" size={14} />Zaakceptowano</>, cls: "ok" },
   declined: { text: "Odrzucono", cls: "muted" },
   cancelled: { text: "Anulowano", cls: "muted" },
 };
@@ -52,7 +53,7 @@ export default function LodgingPage() {
             <OfferCard key={l.id} offer={l} account={account} trips={trips} joinRequests={joinRequests} />
           ))}
         {!loading && offers.length === 0 && (
-          <EmptyState icon="🏨">Nikt jeszcze nie dodał ogłoszenia noclegowego.</EmptyState>
+          <EmptyState icon="bed">Nikt jeszcze nie dodał ogłoszenia noclegowego.</EmptyState>
         )}
       </div>
 
@@ -62,7 +63,7 @@ export default function LodgingPage() {
 
       {showForm && <AddLodgingForm trips={trips} createOffer={createOffer} onDone={() => setShowForm(false)} />}
 
-      <Section icon="🏠" title="Nocleg u zawodnika" style={{ marginTop: 12 }}>
+      <Section icon="home" title="Nocleg u zawodnika" style={{ marginTop: 12 }}>
         <p className="small-note" style={{ margin: 0 }}>
           Rodzina przyjmuje zawodnika u siebie na czas turnieju, zamiast wspólnej rezerwacji hotelu.
           Zanim wyślesz prośbę, poprosimy o zgodę rodzica/opiekuna — a gospodarz musi ją osobno
@@ -76,7 +77,7 @@ export default function LodgingPage() {
             <HostOfferCard key={o.id} offer={o} account={account} trips={trips} hostRequests={hostRequests} />
           ))}
         {!hostOffers.loading && hostOffers.offers.length === 0 && (
-          <EmptyState icon="🏠">Nikt jeszcze nie zaoferował noclegu u siebie.</EmptyState>
+          <EmptyState icon="home">Nikt jeszcze nie zaoferował noclegu u siebie.</EmptyState>
         )}
         {hostOffers.error && <ErrorBox>Nie udało się wczytać ofert: {hostOffers.error}</ErrorBox>}
       </div>
@@ -136,7 +137,7 @@ function IncomingRequests({ joinRequests, account }) {
                 </div>
               ) : r.status === "accepted" ? (
                 <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                  <span className="status-pill ok">Zaakceptowano ✅</span>
+                  <span className="status-pill ok"><InlineIcon name="check" size={14} />Zaakceptowano</span>
                   <button className="btn-ghost" disabled={busyId === r.id} onClick={() => handle(r.id, "cancelled")}>
                     Zrezygnuj
                   </button>
@@ -459,7 +460,7 @@ function IncomingHostRequests({ hostRequests, account }) {
                 </div>
               ) : r.status === "accepted" ? (
                 <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                  <span className="status-pill ok">Zaakceptowano ✅</span>
+                  <span className="status-pill ok"><InlineIcon name="check" size={14} />Zaakceptowano</span>
                   <button className="btn-ghost" disabled={busyId === r.id} onClick={() => handle(r.id, "cancelled")}>
                     Zrezygnuj
                   </button>

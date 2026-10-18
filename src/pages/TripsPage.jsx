@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Icon, InlineIcon, TileIcon, renderIcon } from "../components/Icon.jsx";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useTrips } from "../lib/useTrips.js";
 import { useTournamentMatches } from "../lib/useTournamentMatches.js";
@@ -75,8 +76,8 @@ export default function TripsPage() {
               </p>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
-                <ArrangementRow label="🚗 Transport" value={byTrip.get(t.id)?.ride} />
-                <ArrangementRow label="🏨 Nocleg" value={byTrip.get(t.id)?.lodging} />
+                <ArrangementRow label={<><InlineIcon name="car" size={16} />Transport</>} value={byTrip.get(t.id)?.ride} />
+                <ArrangementRow label={<><InlineIcon name="bed" size={16} />Nocleg</>} value={byTrip.get(t.id)?.lodging} />
               </div>
 
               <MatchedEntrants trip={t} />
@@ -90,15 +91,15 @@ export default function TripsPage() {
                       if (ics) downloadICS(`wyjazd-${t.tournaments.starts_on}.ics`, ics);
                     }}
                   >
-                    📅 Dodaj do kalendarza
+                    <InlineIcon name="calendar" />Dodaj do kalendarza
                   </button>
                 )}
-                <button className="btn-ghost">💬 Czat grupy (wkrótce)</button>
+                <button className="btn-ghost"><InlineIcon name="chat" />Czat grupy (wkrótce)</button>
               </div>
             </div>
           ))}
           {visible.length === 0 && (
-            <EmptyState icon="🧳">
+            <EmptyState icon="route">
               {trips.length === 0
                 ? 'Nie masz jeszcze żadnego wyjazdu — zacznij od zakładki "Turnieje" i przycisku "Jadę na ten turniej".'
                 : "Brak wyjazdów w tej kategorii."}
@@ -140,7 +141,7 @@ function MatchedEntrants({ trip }) {
   return (
     <div style={{ marginBottom: 12, padding: 12, borderRadius: 12, background: "var(--color-bg-elevated)" }}>
       <p style={{ margin: "0 0 8px", fontSize: 13, fontWeight: 700 }}>
-        🎾 Zgłoszeni na ten turniej (lista PZT), już w Tennis Together
+        <InlineIcon name="ball" />Zgłoszeni na ten turniej (lista PZT), już w Tennis Together
       </p>
       {notice && <ErrorBox>{notice}</ErrorBox>}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -177,7 +178,13 @@ function MatchedEntrants({ trip }) {
 // uczciwie "brak danych" zamiast zmyślonego "nikt się nie zgłosił".
 function ArrangementRow({ label, value }) {
   const info = ARRANGEMENT_LABELS[value];
-  return <Row label={label} text={info?.text ?? "—"} state={info?.cls ?? "muted"} />;
+  return (
+    <Row
+      label={label}
+      text={info ? <>{info.check && <InlineIcon name="check" size={14} />}{info.text}</> : "—"}
+      state={info?.cls ?? "muted"}
+    />
+  );
 }
 
 function Row({ label, text, state }) {

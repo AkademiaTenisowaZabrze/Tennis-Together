@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Icon, InlineIcon, TileIcon, renderIcon } from "./Icon.jsx";
 import { hasRated, submitRating } from "../lib/useRatings.js";
 import { inputStyle } from "./formStyles.js";
 
@@ -32,7 +33,7 @@ export default function RateMatchForm({ joinRequestId, kind, raterAccountId, rat
 
   if (checking) return null;
   if (alreadyRated || done) {
-    return <span className="badge-verified">⭐ Oceniono</span>;
+    return <span className="badge-verified"><InlineIcon name="star" />Oceniono</span>;
   }
 
   const handleSubmit = async () => {
@@ -74,7 +75,7 @@ export default function RateMatchForm({ joinRequestId, kind, raterAccountId, rat
               }}
               aria-label={`${n} gwiazdek`}
             >
-              ⭐
+              <Icon name="star" size={28} style={{ color: "var(--warn)" }} />
             </button>
           ))}
         </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Icon, InlineIcon, TileIcon, renderIcon } from "../components/Icon.jsx";
 import { Link, useSearchParams } from "react-router-dom";
 import { useTournaments, sourceLabel } from "../lib/useTournaments.js";
 import { useTrips } from "../lib/useTrips.js";
@@ -147,7 +148,7 @@ export default function TournamentsPage() {
                 {tripsForTournament.length > 0 && (
                   <p style={{ margin: "12px 0 0", fontSize: 13 }}>
                     <span className="badge-verified">
-                      ✅ Jedziesz: {tripsForTournament.map((tr) => tr.players?.first_name).join(", ")}
+                      <InlineIcon name="check" />Jedziesz: {tripsForTournament.map((tr) => tr.players?.first_name).join(", ")}
                     </span>
                   </p>
                 )}

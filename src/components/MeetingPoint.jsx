@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState } from "react";
+import { Icon, InlineIcon, TileIcon, renderIcon } from "./Icon.jsx";
 import { supabase } from "../lib/supabase.js";
 import { useCityCoordinates, findCityCoords } from "../lib/useCityCoordinates.js";
 import ErrorBox from "./ErrorBox.jsx";
@@ -99,7 +100,7 @@ export default function MeetingPoint({ kind, request, onSaved, centerCity }) {
     const zoom = pin ? 16 : centerHint ? 11 : 6;
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>📍 Gdzie się spotykacie?</p>
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}><InlineIcon name="pin" />Gdzie się spotykacie?</p>
         <div style={{ display: "flex", gap: 6 }}>
           <input
             style={{ ...inputStyle, flex: 1 }}
@@ -152,7 +153,7 @@ export default function MeetingPoint({ kind, request, onSaved, centerCity }) {
   if (!hasPin) {
     return (
       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-        <span style={{ fontSize: 13, color: "var(--color-text-muted)" }}>📍 Miejsce spotkania jeszcze nie ustalone</span>
+        <span style={{ fontSize: 13, color: "var(--color-text-muted)" }}><InlineIcon name="pin" />Miejsce spotkania jeszcze nie ustalone</span>
         <button type="button" className="btn-ghost" onClick={startEdit}>
           Ustaw miejsce spotkania
         </button>
@@ -163,7 +164,7 @@ export default function MeetingPoint({ kind, request, onSaved, centerCity }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>
-        📍 Miejsce spotkania{request.meeting_place ? `: ${request.meeting_place}` : ""}
+        <InlineIcon name="pin" />Miejsce spotkania{request.meeting_place ? `: ${request.meeting_place}` : ""}
       </p>
       <Suspense fallback={<p style={{ margin: 0, fontSize: 13 }}>Ładowanie mapy…</p>}>
         <LeafletMap

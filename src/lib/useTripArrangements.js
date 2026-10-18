@@ -30,7 +30,7 @@ export function useTripArrangements(refreshKey) {
 }
 
 export const ARRANGEMENT_LABELS = {
-  arranged: { text: "Załatwiony ✅", cls: "ok" },
+  arranged: { text: "Załatwiony", cls: "ok", check: true },
   offering: { text: "Oferujesz miejsca", cls: "ok" },
   pending: { text: "Prośba czeka na odpowiedź", cls: "pending" },
   none: { text: "Jeszcze nic nie ustalone", cls: "muted" },

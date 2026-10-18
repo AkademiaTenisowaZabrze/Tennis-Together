@@ -1,4 +1,5 @@
 import { useAccountRating } from "../lib/useRatings.js";
+import { Icon, InlineIcon, TileIcon, renderIcon } from "./Icon.jsx";
 
 // Tylko do wyświetlania — średnia ocena konta (patrz account_rating()
 // w 0022_ratings.sql), jawnie publiczna, więc bezpieczna do pokazania
@@ -10,7 +11,7 @@ export default function StarRating({ accountId }) {
 
   return (
     <span className="status-pill muted" title={`${rating.count} ${rating.count === 1 ? "ocena" : "ocen"}`}>
-      ⭐ {rating.avg_stars} ({rating.count})
+      <InlineIcon name="star" size={15} />{rating.avg_stars} ({rating.count})
     </span>
   );
 }

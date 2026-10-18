@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Icon, InlineIcon, TileIcon, renderIcon } from "./Icon.jsx";
 import { supabase } from "../lib/supabase.js";
 import StarRating from "./StarRating.jsx";
 
@@ -48,7 +49,7 @@ export default function CounterpartCard({ accountId }) {
         </div>
       )}
       <span style={{ fontSize: 13, fontWeight: 600 }}>{profile.full_name ?? "Zawodnik"}</span>
-      {profile.verified && <span title="Parent Verified">🛡️</span>}
+      {profile.verified && <span title="Parent Verified"><Icon name="shield" size={16} style={{ verticalAlign: "-3px" }} /></span>}
       <StarRating accountId={accountId} />
     </div>
   );

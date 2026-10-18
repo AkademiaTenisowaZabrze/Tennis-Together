@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Icon, InlineIcon, TileIcon, renderIcon } from "../components/Icon.jsx";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { usePlayers } from "../lib/usePlayers.js";
 import { useTrips } from "../lib/useTrips.js";
@@ -42,10 +43,10 @@ export default function ProfilePage() {
           a profilem dziecka. */}
       <div className="segmented">
         <button className={view === "parent" ? "is-active" : ""} onClick={() => setView("parent")}>
-          👤 Rodzic
+          <InlineIcon name="user" />Rodzic
         </button>
         <button className={view === "player" ? "is-active" : ""} onClick={() => setView("player")}>
-          🎾 Zawodnik
+          <InlineIcon name="ball" />Zawodnik
         </button>
       </div>
 
@@ -152,7 +153,7 @@ function ParentProfile() {
           <p className="small-note" style={{ margin: 0, fontSize: 13 }}>
             {account ? ROLE_LABELS[account.role] ?? account.role : "…"}
           </p>
-          {account?.verified && <span className="badge-verified">🛡️ Parent Verified</span>}
+          {account?.verified && <span className="badge-verified"><InlineIcon name="shield" size={15} />Parent Verified</span>}
           {account?.coach_requested && account.role !== "coach" && (
             <p className="small-note" style={{ margin: "4px 0 0" }}>
               ⏳ Prośba o rolę trenera czeka na zatwierdzenie przez administratora.
@@ -163,7 +164,7 @@ function ParentProfile() {
       {avatarBusy && <p className="small-note" style={{ margin: 0 }}>Wgrywam zdjęcie…</p>}
       {avatarError && <ErrorBox>{avatarError}</ErrorBox>}
 
-      <Collapsible id="profil-dane" icon="👤" title="Dane konta" summary={user?.email} defaultOpen>
+      <Collapsible id="profil-dane" icon="user" title="Dane konta" summary={user?.email} defaultOpen>
         <p className="small-note" style={{ margin: "0 0 8px" }}>
           Zdjęcie jest opcjonalne: pomaga innym Cię rozpoznać przy spotkaniu, to nie jest weryfikacja tożsamości.
         </p>
@@ -178,7 +179,7 @@ function ParentProfile() {
         </button>
       </Collapsible>
 
-      <Collapsible id="profil-zgody" icon="✅" title="Zgody" summary={consentSummary}>
+      <Collapsible id="profil-zgody" icon="check" title="Zgody" summary={consentSummary}>
         {consentsLoading ? (
           <p className="small-note" style={{ margin: 0 }}>Wczytywanie…</p>
         ) : consents.length === 0 ? (
@@ -218,7 +219,7 @@ function ParentProfile() {
 
       <Collapsible
         id="profil-historia"
-        icon="🧳"
+        icon="route"
         title="Historia wyjazdów"
         summary={completedTrips === 0 ? "brak zakończonych" : `${completedTrips} ${completedTrips === 1 ? "zakończony" : "zakończone"}`}
       >
@@ -487,7 +488,7 @@ function PlayerCard({ player: p, onEdit }) {
       </div>
 
       {p.pzt_verified && (
-        <span className="badge-verified">🎾 Zweryfikowany zawodnik PZT ({p.pzt_login})</span>
+        <span className="badge-verified"><InlineIcon name="ball" size={15} />Zweryfikowany zawodnik PZT ({p.pzt_login})</span>
       )}
 
       {p.club_name && <Field label="Klub / akademia" value={p.club_name} />}
@@ -678,7 +679,7 @@ function PlayerForm({ initial, onSubmit, onDone, onCancel, submitLabel, busyLabe
         </div>
         {pztCheck.status === "ok" && (
           <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--color-verified)" }}>
-            ✅ Zgadza się z PZT{pztCheck.pztName ? ` (${pztCheck.pztName})` : ""}.
+            <InlineIcon name="check" />Zgadza się z PZT{pztCheck.pztName ? ` (${pztCheck.pztName})` : ""}.
           </p>
         )}
         {pztCheck.status === "mismatch" && (

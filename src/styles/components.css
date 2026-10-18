@@ -250,6 +250,19 @@ details.sec > .sec-body {
   color: var(--muted);
 }
 
+/* Ikona w tekście: wyrównana do linii bazowej; w kontenerach flex (znaczniki, chipy, przyciski) odstęp robi gap. */
+.inline-icon {
+  vertical-align: -3px;
+  margin-right: 6px;
+}
+
+.status-pill .inline-icon,
+.pill .inline-icon,
+.badge-verified .inline-icon,
+.chip .inline-icon {
+  margin-right: 0;
+}
+
 .link-btn {
   background: none;
   border: 0;

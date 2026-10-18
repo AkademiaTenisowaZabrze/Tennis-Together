@@ -105,7 +105,7 @@ describe("MeetingPoint: pineska miejsca spotkania", () => {
 
   it("z pineską pokazuje opis, mapę i link do map z bezpiecznym rel", () => {
     show({ ...baseRequest, meeting_lat: 50.3, meeting_lng: 18.7, meeting_place: "dworzec" });
-    expect(screen.getByText("📍 Miejsce spotkania: dworzec")).toBeInTheDocument();
+    expect(screen.getByText("Miejsce spotkania: dworzec")).toBeInTheDocument();
     expect(screen.getByTestId("marker")).toHaveTextContent("50.3,18.7");
     const link = screen.getByRole("link", { name: "Otwórz w mapach" });
     expect(link.getAttribute("href")).toBe("https://www.google.com/maps/search/?api=1&query=50.3,18.7");
@@ -286,7 +286,7 @@ describe("RateMatchForm: ocena po spotkaniu", () => {
   it("jeśli już oceniono, pokazuje tylko odznakę", async () => {
     fake.db.ratings.push({ id: "x", join_request_id: "req-9", join_request_kind: "ride" });
     render(<RateMatchForm {...props} />);
-    expect(await screen.findByText("⭐ Oceniono")).toBeInTheDocument();
+    expect(await screen.findByText("Oceniono")).toBeInTheDocument();
     expect(screen.queryByText("Jak poszło?")).not.toBeInTheDocument();
   });
 
@@ -308,7 +308,7 @@ describe("RateMatchForm: ocena po spotkaniu", () => {
     expect(fake.log.find((l) => l.table === "ratings" && l.op === "insert").payload).toEqual({
       join_request_id: "req-9", join_request_kind: "ride", rater_account_id: ME, rated_account_id: OTHER, stars: 4, comment: "Super jazda",
     });
-    expect(await screen.findByText("⭐ Oceniono")).toBeInTheDocument();
+    expect(await screen.findByText("Oceniono")).toBeInTheDocument();
   });
 
   it("pusty komentarz zapisuje się jako brak (null)", async () => {
@@ -335,7 +335,7 @@ describe("StarRating i CounterpartCard", () => {
   it("średnia ocena pokazuje gwiazdkę, wartość i liczbę ocen", async () => {
     fake.rpcHandlers.account_rating = () => ({ data: { avg_stars: 4.5, count: 2 }, error: null });
     render(<StarRating accountId={OTHER} />);
-    expect(await screen.findByText("⭐ 4.5 (2)")).toBeInTheDocument();
+    expect(await screen.findByText(/^4\.5 \(2\)$/)).toBeInTheDocument();
     expect(screen.getByTitle("2 ocen")).toBeInTheDocument();
   });
 

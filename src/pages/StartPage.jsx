@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Icon, InlineIcon, TileIcon, renderIcon } from "../components/Icon.jsx";
 import { Link } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { usePlayers } from "../lib/usePlayers.js";
@@ -96,7 +97,7 @@ export default function StartPage() {
       {!loading && (
         <>
           {players.length === 0 ? (
-            <Section icon="🎾" title="Zacznij od dodania zawodnika">
+            <Section icon="ball" title="Zacznij od dodania zawodnika">
               <p className="sec-note">
                 Żeby zgłosić wyjazd na turniej i znaleźć dla niego przejazd czy nocleg, najpierw potrzebujemy profilu zawodnika.
               </p>
@@ -106,18 +107,19 @@ export default function StartPage() {
             </Section>
           ) : nextTrip ? (
             <div className="hero-card">
-              <span className="pill">🎾 {daysUntilLabel(nextTrip.tournaments.starts_on)}</span>
+              <span className="pill"><InlineIcon name="ball" size={16} />{daysUntilLabel(nextTrip.tournaments.starts_on)}</span>
               <p className="hero-title">{nextTrip.tournaments.name}</p>
               <p className="hero-meta">
                 {nextTrip.players?.first_name} · {formatRange(nextTrip.tournaments.starts_on, nextTrip.tournaments.ends_on)}
                 {nextTrip.tournaments.city ? ` · ${nextTrip.tournaments.city}` : ""} · wyjazd z {nextTrip.departure_city}
               </p>
               <div className="chips">
-                {[["🚗 Transport", arrangement?.ride], ["🏨 Nocleg", arrangement?.lodging]].map(([label, v]) => {
+                {[["car", "Transport", arrangement?.ride], ["bed", "Nocleg", arrangement?.lodging]].map(([icon, label, v]) => {
                   const info = ARRANGEMENT_LABELS[v];
                   return (
                     <span key={label} className={`status-pill ${info?.cls ?? "muted"}`}>
-                      {label}: {info?.text ?? "brak danych"}
+                      <TileIcon name={icon} size={22} style={{ marginRight: 6, verticalAlign: "-6px" }} />
+                      {label}: {info?.check && <InlineIcon name="check" size={14} />}{info?.text ?? "brak danych"}
                     </span>
                   );
                 })}
@@ -127,7 +129,7 @@ export default function StartPage() {
               </Link>
             </div>
           ) : (
-            <Section icon="🏆" title="Nie masz jeszcze zgłoszonego wyjazdu">
+            <Section icon="trophy" title="Nie masz jeszcze zgłoszonego wyjazdu">
               <p className="sec-note">
                 Przeglądaj kalendarz turniejów i kliknij „Jadę na ten turniej”, żeby zacząć szukać przejazdu i noclegu.
               </p>
@@ -150,7 +152,7 @@ export default function StartPage() {
           )}
 
           {players.length > 0 && !nextTrip && todo.length === 0 && (
-            <EmptyState icon="🧳">Gdy zgłosisz wyjazd, tu pojawi się jego postęp i rzeczy do załatwienia.</EmptyState>
+            <EmptyState icon="route">Gdy zgłosisz wyjazd, tu pojawi się jego postęp i rzeczy do załatwienia.</EmptyState>
           )}
 
           {account?.role === "coach" && account.club_name && (

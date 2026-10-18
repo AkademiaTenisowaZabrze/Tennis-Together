@@ -41,3 +41,9 @@ Dolny pasek (4 cele, kciuk): **Start · Turnieje · Wyjazdy · Wiadomości**.
 - Naprawione: chipy, przełączniki i link „Odśwież teraz” (36/38/32 → 44 px), przycisk oka w haśle, linki partnerów w szufladzie, brak etykiet przy ~30 polach (powiązane `htmlFor`/opakowaniem), listy filtrów turniejów (`aria-label`), grupy chipów (`role="group"`), drobny tekst z `opacity` (kontrast 2,4:1).
 - Pixel 8: paski systemowe nie zlewają się z treścią (jednolite paski o wysokości `--sat`/`--sab`), pasek zakładek chowa się przy klawiaturze ekranowej, poziomo uwzględnione boczne obszary (`--sal`/`--sar`, pasek nawigacji po prawej i po lewej).
 - Testy: `tests/ui/Accessibility.test.jsx` (22) + poprawka `css_vars`.
+
+## Ikony wewnątrz aplikacji (2026-10-18)
+- Zestaw z `PLIKI DO PROJEKTÓW/tennis-together-ikony.md`: koncepcja A „Szew” (pełne bryły) w zakładkach i treści, kafelki C (`TileIcon`) w wierszach Transport/Nocleg na Starcie, koncepcja B „Linia” dostępna jako `variant="B"`.
+- Kod: `src/components/icons.js` (ścieżki, nie edytować ręcznie), `src/components/Icon.jsx` (`Icon`, `InlineIcon`, `TileIcon`, `renderIcon`). Pola `icon` w `Section`/`Collapsible`/`EmptyState` przyjmują klucz ikony lub tekst.
+- Zamienione emoji: 🎾 🚗 🏨 🏠 💬 ✅ 📍 ⭐ 🛡 💰 📅 🧳 🏆 👤 (💚 „bez zwrotu kosztów” → check). Zostawione zgodnie z plikiem: ⚠️ ⏳ 📷 🔒 🤝 📬 📱 🔢 🧪 🔔 oraz 📖 🐞 📄 w szufladzie „Pomoc” (brak ich w zestawie), 🎾 w tytule wydarzenia kalendarza (.ics).
+- Testy: `tests/static/icons_set.test.mjs`, `tests/ui/Icons.test.jsx`.

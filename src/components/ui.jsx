@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState, createContext, useContext } from "react";
+import { Icon, InlineIcon, TileIcon, renderIcon } from "./Icon.jsx";
 
 // Komponenty bazowe nowego wyglądu (STANDARD DESIGNU v1, część 4).
 
-/** Karta z ikoną i tytułem: <Section icon="🧳" title="Zawodnicy">…</Section> */
+/** Karta z ikoną i tytułem: <Section icon="user" title="Zawodnicy">…</Section> */
 export function Section({ icon, title, children, ...rest }) {
   return (
     <section className="sec" {...rest}>
@@ -10,7 +11,7 @@ export function Section({ icon, title, children, ...rest }) {
         <h2 className="sec-h" style={{ margin: "2px 0 8px" }}>
           {icon && (
             <span className="ic" aria-hidden="true">
-              {icon}
+              {renderIcon(icon)}
             </span>
           )}
           <span>{title}</span>
@@ -54,7 +55,7 @@ export function Collapsible({ id, icon, title, summary, defaultOpen = false, chi
       <summary>
         {icon && (
           <span className="ic" aria-hidden="true">
-            {icon}
+            {renderIcon(icon)}
           </span>
         )}
         <span>
@@ -81,11 +82,11 @@ export function ListItem({ title, subtitle, children, ...rest }) {
 }
 
 /** Stan pusty: jedno zdanie i (opcjonalnie) następny krok. */
-export function EmptyState({ icon = "🧳", children, action }) {
+export function EmptyState({ icon = "route", children, action }) {
   return (
     <div className="empty">
       <div className="ic" aria-hidden="true">
-        {icon}
+        {renderIcon(icon)}
       </div>
       <p>{children}</p>
       {action}

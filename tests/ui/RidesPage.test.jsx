@@ -214,7 +214,7 @@ describe("prośba o miejsce i zgoda na kwotę", () => {
   it("zaakceptowany przejazd pozwala zrezygnować i pokazuje kartę kierowcy", async () => {
     fake.db.ride_join_requests.push({ id: "jr-2", ride_offer_id: "ro-1", requester_trip_id: "trip-me-1", status: "accepted", agreed_cost_pln: 95, created_at: new Date().toISOString() });
     await open();
-    expect(await screen.findByText("Zaakceptowano ✅")).toBeInTheDocument();
+    expect(await screen.findByText("Zaakceptowano")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Zrezygnuj z przejazdu" })).toBeInTheDocument();
     expect(screen.getByText(/Uzgodniony koszt: 95 zł od osoby/)).toBeInTheDocument();
   });
@@ -236,7 +236,7 @@ describe("kierowca: prośby do jego przejazdów", () => {
     const user = await open();
     await user.click(await screen.findByRole("button", { name: "Akceptuj" }));
     await waitFor(() => expect(fake.db.ride_join_requests[0].status).toBe("accepted"));
-    expect(await screen.findByText("Zaakceptowano ✅", { selector: ".status-pill" })).toBeInTheDocument();
+    expect(await screen.findByText("Zaakceptowano", { selector: ".status-pill" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Pokaż mój kod/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Ustaw miejsce spotkania/ })).toBeInTheDocument();
   });

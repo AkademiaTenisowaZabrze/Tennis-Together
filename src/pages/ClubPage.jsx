@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Icon, InlineIcon, TileIcon, renderIcon } from "../components/Icon.jsx";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useClubRoster } from "../lib/useClubRoster.js";
 import { useTripArrangements } from "../lib/useTripArrangements.js";
@@ -94,15 +95,15 @@ function ClubRoster({ clubName }) {
                     {tournament.city ?? "Miasto nieznane"} · {formatRange(tournament.starts_on, tournament.ends_on)}
                   </p>
                   <p style={{ margin: "0 0 10px", fontSize: 13 }}>
-                    <span className="badge-verified">🎾 Jedzie {group.length}</span>
+                    <span className="badge-verified"><InlineIcon name="ball" size={15} />Jedzie {group.length}</span>
                     {byTrip.size > 0 && (
                       <>
                         {" "}
                         <span className={`status-pill ${missingRide > 0 ? "pending" : "ok"}`}>
-                          🚗 brakuje: {missingRide}
+                          <InlineIcon name="car" size={15} />brakuje: {missingRide}
                         </span>{" "}
                         <span className={`status-pill ${missingLodging > 0 ? "pending" : "ok"}`}>
-                          🏨 brakuje: {missingLodging}
+                          <InlineIcon name="bed" size={15} />brakuje: {missingLodging}
                         </span>
                       </>
                     )}
@@ -119,10 +120,10 @@ function ClubRoster({ clubName }) {
                           {a ? (
                             <span style={{ display: "flex", gap: 6 }}>
                               <span className={`status-pill ${isCovered(a.ride) ? "ok" : "pending"}`}>
-                                🚗 {RIDE_SHORT[a.ride]}
+                                <InlineIcon name="car" size={15} />{RIDE_SHORT[a.ride]}
                               </span>
                               <span className={`status-pill ${isCovered(a.lodging) ? "ok" : "pending"}`}>
-                                🏨 {RIDE_SHORT[a.lodging]}
+                                <InlineIcon name="bed" size={15} />{RIDE_SHORT[a.lodging]}
                               </span>
                             </span>
                           ) : (

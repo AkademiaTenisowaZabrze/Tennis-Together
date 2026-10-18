@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Icon, renderIcon } from "./Icon.jsx";
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import { useLayer, closeLayersThen } from "../lib/layers.js";
 import { THEME_MODES, THEME_LABELS } from "../lib/theme.js";
@@ -11,22 +12,6 @@ import pztLogo from "../assets/pzt-logo.png";
 // pasek zakładek), reszta w szufladzie. Układ i uzasadnienie: PLAN_NOWY_WYGLAD.md.
 
 export const SITE_URL = import.meta.env.VITE_SITE_URL || "https://akademiatenisowazabrze.github.io/Tennis-Together";
-
-// Ikony zakładek (linie 24x24, kolor dziedziczony z tekstu).
-const ICON_PATHS = {
-  home: <><path d="M3 11l9-8 9 8" /><path d="M5 10v10h5v-6h4v6h5V10" /></>,
-  trophy: <><path d="M8 21h8M12 17v4" /><path d="M7 4h10v5a5 5 0 0 1-10 0V4z" /><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3" /></>,
-  car: <><path d="M5 16l1.5-5a2 2 0 0 1 1.9-1.4h7.2a2 2 0 0 1 1.9 1.4L19 16" /><rect x="3" y="16" width="18" height="4" rx="1.5" /><circle cx="7.5" cy="18" r="0.6" /><circle cx="16.5" cy="18" r="0.6" /></>,
-  chat: <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />,
-};
-
-function TabIcon({ name }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {ICON_PATHS[name]}
-    </svg>
-  );
-}
 
 // Cztery cele pod kciukiem. "Wyjazdy" zbiera dawne zakładki Przejazdy, Noclegi i Moje wyjazdy.
 export const TABS = [
@@ -60,7 +45,7 @@ export function FloatingTabs() {
     <nav className={`tabs glass${typing ? " tabs-typing" : ""}`} aria-label="Główne zakładki">
       {TABS.map((t) => (
         <NavLink key={t.to} to={t.to} end={t.end} className={({ isActive }) => (isActive ? "active" : "")}>
-          <TabIcon name={t.icon} />
+          <Icon name={t.icon} size={24} />
           <span>{t.label}</span>
         </NavLink>
       ))}
@@ -72,8 +57,8 @@ export function FloatingTabs() {
 const showsPlus = (path) => path === "/" || path.startsWith("/wyjazdy");
 
 export const QUICK_ACTIONS = [
-  { id: "trip", icon: "🎾", label: "Dodaj wyjazd na turniej", to: "/turnieje" },
-  { id: "offer", icon: "🚗", label: "Dodaj ofertę przejazdu", to: "/wyjazdy/przejazdy?dodaj=oferta" },
+  { id: "trip", icon: "ball", label: "Dodaj wyjazd na turniej", to: "/turnieje" },
+  { id: "offer", icon: "car", label: "Dodaj ofertę przejazdu", to: "/wyjazdy/przejazdy?dodaj=oferta" },
 ];
 
 export function PlusButton() {
@@ -109,7 +94,7 @@ export function PlusButton() {
               role="menuitem"
               onClick={() => closeLayersThen(() => navigate(a.to))}
             >
-              <span aria-hidden="true">{a.icon}</span>
+              <span aria-hidden="true">{renderIcon(a.icon, 20)}</span>
               {a.label}
             </button>
           ))}
@@ -198,7 +183,12 @@ export function Drawer({ open, onClose, account, mode, setMode, signOut }) {
               <strong>{name}</strong>
               <small>
                 {ROLE_LABELS[account?.role] ?? "Konto"}
-                {account?.verified ? " · 🛡 Parent Verified" : ""}
+                {account?.verified && (
+                  <>
+                    {" · "}
+                    <Icon name="shield" size={13} style={{ verticalAlign: "-2px" }} /> Parent Verified
+                  </>
+                )}
               </small>
             </span>
           </DrawerLink>
@@ -211,7 +201,7 @@ export function Drawer({ open, onClose, account, mode, setMode, signOut }) {
             <div className="tiles">
               {QUICK_ACTIONS.map((a) => (
                 <DrawerLink key={a.id} to={a.to} className="tile">
-                  <i aria-hidden="true">{a.icon}</i>
+                  <i aria-hidden="true">{renderIcon(a.icon, 26)}</i>
                   {a.label}
                 </DrawerLink>
               ))}
@@ -220,11 +210,11 @@ export function Drawer({ open, onClose, account, mode, setMode, signOut }) {
 
           <div>
             <h5>Moje</h5>
-            <DrawerLink to="/wyjazdy/moje" className="dr-link"><span className="ic" aria-hidden="true">🧳</span>Moje wyjazdy</DrawerLink>
-            <DrawerLink to="/profil" className="dr-link"><span className="ic" aria-hidden="true">👤</span>Profil i zawodnicy</DrawerLink>
+            <DrawerLink to="/wyjazdy/moje" className="dr-link"><span className="ic" aria-hidden="true"><Icon name="route" size={20} /></span>Moje wyjazdy</DrawerLink>
+            <DrawerLink to="/profil" className="dr-link"><span className="ic" aria-hidden="true"><Icon name="user" size={20} /></span>Profil i zawodnicy</DrawerLink>
             {account?.role === "coach" && (
               <DrawerLink to="/klub" className="dr-link">
-                <span className="ic" aria-hidden="true">🏆</span>Mój klub
+                <span className="ic" aria-hidden="true"><Icon name="users" size={20} /></span>Mój klub
               </DrawerLink>
             )}
           </div>

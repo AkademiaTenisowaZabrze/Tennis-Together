@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Icon, InlineIcon, TileIcon, renderIcon } from "../components/Icon.jsx";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useTrips } from "../lib/useTrips.js";
@@ -18,7 +19,7 @@ const dateFormatter = new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: 
 
 const STATUS_LABELS = {
   pending: { text: "Prośba wysłana — czeka na odpowiedź", cls: "pending" },
-  accepted: { text: "Zaakceptowano ✅", cls: "ok" },
+  accepted: { text: <><InlineIcon name="check" size={14} />Zaakceptowano</>, cls: "ok" },
   declined: { text: "Odrzucono", cls: "muted" },
   cancelled: { text: "Anulowano", cls: "muted" },
 };
@@ -290,7 +291,7 @@ function IncomingRequests({ joinRequests, account }) {
                 </div>
               ) : r.status === "accepted" ? (
                 <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                  <span className="status-pill ok">Zaakceptowano ✅</span>
+                  <span className="status-pill ok"><InlineIcon name="check" size={14} />Zaakceptowano</span>
                   <button className="btn-ghost" disabled={busyId === r.id} onClick={() => handle(r.id, "cancelled")}>
                     Zrezygnuj
                   </button>
@@ -373,7 +374,7 @@ function OfferCard({ offer: r, account, trips, joinRequests }) {
     <div className="glass-card">
       <p style={{ margin: "0 0 4px", fontWeight: 700 }}>{r.trips?.tournaments?.name ?? "Turniej"}</p>
       <p style={{ margin: "0 0 8px", fontSize: 13, color: "var(--color-text-muted)" }}>
-        🚗 {r.trips?.departure_city ?? "?"} · {r.trips?.players?.first_name ?? "Zawodnik"}
+        <InlineIcon name="car" />{r.trips?.departure_city ?? "?"} · {r.trips?.players?.first_name ?? "Zawodnik"}
         {r.trips?.departure_date ? ` · wyjazd ${dateFormatter.format(new Date(r.trips.departure_date))}` : ""}
       </p>
 
@@ -381,13 +382,13 @@ function OfferCard({ offer: r, account, trips, joinRequests }) {
         <span className="status-pill ok">{r.free_seats} wolne miejsca</span>
         <StarRating accountId={r.trips?.created_by_account_id} />
         {r._distanceKm != null && (
-          <span className="status-pill muted">📍 ~{Math.round(r._distanceKm)} km od Ciebie</span>
+          <span className="status-pill muted"><InlineIcon name="pin" size={14} />~{Math.round(r._distanceKm)} km od Ciebie</span>
         )}
-        {r.luggage_space && <span className="status-pill muted">🧳 {r.luggage_space}</span>}
+        {r.luggage_space && <span className="status-pill muted"><InlineIcon name="luggage" size={14} />{r.luggage_space}</span>}
         {r.cost_refund && r.cost_per_person_pln != null ? (
-          <span className="status-pill muted">💰 zwrot kosztów: {costLabel(r.cost_per_person_pln)}</span>
+          <span className="status-pill muted"><InlineIcon name="wallet" size={14} />zwrot kosztów: {costLabel(r.cost_per_person_pln)}</span>
         ) : (
-          <span className="status-pill muted">💚 bez zwrotu kosztów</span>
+          <span className="status-pill muted"><InlineIcon name="check" size={14} />bez zwrotu kosztów</span>
         )}
         {r.cost_split_suggestion && <span className="status-pill muted">{r.cost_split_suggestion}</span>}
       </div>
@@ -457,7 +458,7 @@ function OfferCard({ offer: r, account, trips, joinRequests }) {
               </div>
               {r.cost_per_person_pln != null && (
                 <p style={{ margin: 0, fontSize: 13 }}>
-                  💰 Kierowca proponuje <strong>{costLabel(r.cost_per_person_pln)}</strong> (dzielenie kosztów paliwa).
+                  <InlineIcon name="wallet" />Kierowca proponuje <strong>{costLabel(r.cost_per_person_pln)}</strong> (dzielenie kosztów paliwa).
                   Wysyłając prośbę zgadzasz się na tę kwotę. Jeśli Ci nie pasuje, nie wysyłaj prośby albo ustal inną
                   kwotę w czacie. Rozliczacie się bezpośrednio.
                 </p>
