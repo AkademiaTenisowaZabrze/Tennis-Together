@@ -18,15 +18,21 @@
     l.replace(m[1] + "?/" + m[2].replace(/&/g, "~and~") + query + l.hash);
   })();
 </script>
+<!-- Adres bezwzględny od korzenia projektu: ta strona jest serwowana pod dowolną ścieżką. -->
+<link rel="stylesheet" href="/Tennis-Together/site.css" />
 <style>
-  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:#0d131e; color:#f4f6fb; font-family:system-ui,sans-serif; text-align:center; padding:24px; }
-  a { color:#d4ff00; }
+  body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); color: var(--text); font-family: var(--font); text-align: center; padding: 24px; }
+  h1 { margin: 12px 0 8px; }
+  p { color: var(--muted); }
+  a { color: var(--accent-ink); }
+  img { width: 72px; height: 72px; border-radius: 20px; }
 </style>
 </head>
 <body>
   <div>
+    <img src="/Tennis-Together/favicon.svg" alt="" />
     <h1>Nie znaleziono strony</h1>
-    <p>Tej strony nie ma. <a href="./">Wróć do początku</a>.</p>
+    <p>Tej strony nie ma. <a href="/Tennis-Together/">Wróć do początku</a>.</p>
   </div>
 </body>
 </html>

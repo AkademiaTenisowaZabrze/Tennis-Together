@@ -1,0 +1,130 @@
+/*
+ * Wspólne tokeny strony (docs/*.html) = te same kolory co w aplikacji (src/styles/tokens.css),
+ * STANDARD DESIGNU v1: mięta #8EE3C8 + grafit #1F2933, jasny/ciemny według ustawień urządzenia,
+ * czcionka systemowa (bez Google Fonts). Strony używają też starych nazw zmiennych
+ * (--primary, --card-border...), które tu są aliasami nowych.
+ */
+:root {
+  --bg: #f3f4f7;
+  --panel: #ffffff;
+  --text: #1f2933;
+  --muted: #5e6a7b;
+  --line: #dfe3e8;
+  --accent: #8ee3c8;
+  --on-accent: #1f2933;
+  --accent-ink: #0f6b57;
+  --ok: #23764a;
+  --warn: #8a5d00;
+  --err: #c0392b;
+  --on-err: #ffffff;
+  --surface-2: color-mix(in srgb, var(--accent) 7%, var(--panel));
+  --glass: color-mix(in srgb, var(--panel) 82%, transparent);
+  --font: system-ui, Roboto, "Segoe UI", sans-serif;
+  --mono: ui-monospace, "SF Mono", Consolas, monospace;
+
+  /* aliasy starych nazw */
+  --bg-elevated: var(--surface-2);
+  --card: var(--panel);
+  --card-border: var(--line);
+  --text-muted: var(--muted);
+  --primary: var(--accent-ink); /* kolor tekstu/obrysu; wypełnienia używają --accent */
+  --primary-text: var(--on-accent);
+  --secondary: var(--err);
+  --secondary-text: var(--on-err);
+  --verified: var(--ok);
+  --font-heading: var(--font);
+  --font-body: var(--font);
+  --font-mono: var(--mono);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12161c;
+    --panel: #1b212a;
+    --text: #e8ecf1;
+    --muted: #97a3b3;
+    --line: #2c3541;
+    --accent-ink: #8ee3c8;
+    --ok: #6fd39b;
+    --warn: #f1c04a;
+    --err: #ff8a7d;
+    --on-err: #12161c;
+    --surface-2: color-mix(in srgb, var(--accent) 6%, var(--panel));
+    color-scheme: dark;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --line: color-mix(in srgb, var(--text) 45%, transparent);
+    --muted: color-mix(in srgb, var(--text) 80%, var(--bg));
+  }
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent-ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Elementy wspólne ───────────────────────────────────────────── */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+}
+.brand img {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: block;
+}
+
+.btn-fill,
+.btn-tonal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 22px;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+.btn-fill {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.btn-tonal {
+  background: color-mix(in srgb, var(--accent) 22%, var(--panel));
+  color: var(--text);
+  border-color: var(--line);
+}
+
+.todo {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+.draft {
+  border: 1px solid var(--warn);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 16px 0;
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
+}

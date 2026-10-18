@@ -1,29 +1,16 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="icon" href="favicon.ico" sizes="any" />
 <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <meta name="theme-color" content="#8ee3c8" />
 <title>Testerzy Tennis Together</title>
 <script src="config.js"></script>
+<link rel="stylesheet" href="site.css" />
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
-
-  :root {
-    --bg: #0d131e;
-    --bg-elevated: #121a28;
-    --card: rgba(22, 32, 50, 0.72);
-    --card-border: rgba(255, 255, 255, 0.09);
-    --text: #f4f6fb;
-    --text-muted: #9aa5b8;
-    --primary: #d4ff00;
-    --primary-text: #0d131e;
-    --secondary: #ff5e3a;
-    --secondary-text: #0d131e;
-    --verified: #10b981;
-    --font-heading: "Plus Jakarta Sans", system-ui, sans-serif;
-    --font-body: "Inter", system-ui, sans-serif;
-    --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
-    color-scheme: dark;
-  }
 
   * { box-sizing: border-box; }
 
@@ -55,7 +42,7 @@
     justify-content: space-between;
     gap: 12px;
     padding: 14px 20px;
-    background: rgba(13, 19, 30, 0.88);
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--card-border);
@@ -206,7 +193,7 @@
     text-decoration: none;
     white-space: nowrap;
   }
-  .btn-primary { background: var(--primary); color: var(--primary-text); }
+  .btn-primary { background: var(--accent); color: var(--primary-text); }
   .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--card-border); }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -298,9 +285,11 @@
     border: 1px solid var(--card-border);
   }
 </style>
+</head>
+<body>
 
 <div class="topbar">
-  <strong>🎾 Tennis Together — testerzy</strong>
+  <strong><img src="favicon.svg" alt="" width="26" height="26" style="vertical-align:-7px;border-radius:7px;margin-right:6px" /> Tennis Together — testerzy</strong>
   <nav>
     <a href="#instrukcja">Instrukcja</a>
     <a href="#pobierz">Pobierz APK</a>
@@ -638,3 +627,5 @@
     }
   });
 </script>
+</body>
+</html>

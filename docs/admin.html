@@ -11,25 +11,8 @@
 <title>Panel administratora Tennis Together</title>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link rel="stylesheet" href="site.css" />
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
-
-  :root {
-    --bg: #0d131e;
-    --bg-elevated: #121a28;
-    --card: rgba(22, 32, 50, 0.72);
-    --card-border: rgba(255, 255, 255, 0.09);
-    --text: #f4f6fb;
-    --text-muted: #9aa5b8;
-    --primary: #d4ff00;
-    --primary-text: #0d131e;
-    --secondary: #ff5e3a;
-    --verified: #10b981;
-    --font-heading: "Plus Jakarta Sans", system-ui, sans-serif;
-    --font-body: "Inter", system-ui, sans-serif;
-    --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
-    color-scheme: dark;
-  }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); line-height: 1.5; }
   h1, h2, h3 { font-family: var(--font-heading); margin: 0; }
@@ -40,7 +23,7 @@
     position: sticky; top: 0; z-index: 10;
     display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
     padding: 14px 20px;
-    background: rgba(13, 19, 30, 0.92);
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--card-border);
   }
@@ -71,9 +54,9 @@
     padding: 10px 18px; font-family: var(--font-heading); font-weight: 700; font-size: 13px;
     cursor: pointer; text-decoration: none; white-space: nowrap;
   }
-  .btn-primary { background: var(--primary); color: var(--primary-text); }
+  .btn-primary { background: var(--accent); color: var(--primary-text); }
   .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--card-border); }
-  .btn-danger { background: var(--secondary); color: #fff; }
+  .btn-danger { background: var(--secondary); color: var(--secondary-text); }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .itf-reminder { border: 1px solid var(--card-border); border-radius: 14px; padding: 12px 14px; margin: 0 0 14px; background: var(--bg-elevated); }
   .itf-reminder.warn { border-color: var(--secondary); }
@@ -108,7 +91,7 @@
 <body>
 
 <div class="topbar">
-  <strong>🎾 Tennis Together — panel administratora</strong>
+  <strong><img src="favicon.svg" alt="" width="26" height="26" style="vertical-align:-7px;border-radius:7px;margin-right:6px" /> Tennis Together — panel administratora</strong>
   <nav id="topnav" style="display:none;">
     <a href="#dashboard">Dashboard</a>
     <a href="#konta">Konta</a>
@@ -396,10 +379,10 @@
     el.style.color = "var(--text-muted)";
     el.textContent = `${src}Cena ustawiona ${when}.`;
     if (!auto && days !== null && days >= 21) {
-      el.style.color = "#c0392b";
+      el.style.color = "var(--err)";
       el.textContent += " Minęło ponad 21 dni. Sprawdź aktualną cenę (np. e-petrol.pl) i zaktualizuj ją ręcznie.";
     } else if (auto && days !== null && days >= 14) {
-      el.style.color = "#c0392b";
+      el.style.color = "var(--err)";
       el.textContent += " Automat nie aktualizuje ceny od ponad 14 dni. Sprawdź zakładkę Actions na GitHubie (Cena paliwa) albo wyłącz automat i wpisz cenę ręcznie.";
     }
   }
@@ -669,7 +652,7 @@ let itfRows = [];
     const msg = error ? `Błąd zapisu: ${error.message}` : `Zapisano turniejów: ${payload.length}. Widać je w zakładce Turnieje w aplikacji.`;
     info.textContent = msg;
     saveInfo.textContent = msg;
-    saveInfo.style.color = error ? "#ff6b6b" : "#7CFC9A";
+    saveInfo.style.color = error ? "var(--err)" : "var(--ok)";
     if (!error) markItfChecked();
   });
 
