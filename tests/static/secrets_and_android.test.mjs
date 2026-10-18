@@ -80,7 +80,8 @@ describe("sekrety w śledzonych plikach", () => {
   });
 
   it("plik .env i pliki z kluczami nie są śledzone przez git", () => {
-    const bad = trackedFiles().filter((f) => /(^|\/)\.env(\.|$)/.test(f) && !f.endsWith(".example"));
+    // .env.demo jest celowo w repozytorium: zawiera wyłącznie atrapy (tryb demo, patrz tests/static/css_vars.test.mjs)
+    const bad = trackedFiles().filter((f) => /(^|\/)\.env(\.|$)/.test(f) && !f.endsWith(".example") && f !== ".env.demo");
     expect(bad).toEqual([]);
     const bad2 = trackedFiles().filter((f) => /google-services\.json$|serviceAccount|\.pem$|\.p12$|keystore\.properties$/i.test(f));
     expect(bad2).toEqual([]);
