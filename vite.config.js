@@ -22,13 +22,13 @@ export default defineConfig({
       // w projekt PZT Rankingi i wymagał naprawy po stronie natywnej
       // (czyszczenie danych WebView) — tu zapobiegamy mu od początku.
       injectRegister: null,
-      includeAssets: ["icon-192.png", "icon-512.png"],
+      includeAssets: ["icon-192.png", "icon-512.png", "favicon.svg", "favicon.ico", "apple-touch-icon.png"],
       manifest: {
         name: "Tennis Together",
         short_name: "Tennis Together",
         description: "Wspólne wyjazdy na turnieje tenisowe — przejazdy, noclegi, grupy.",
-        theme_color: "#0d131e",
-        background_color: "#0d131e",
+        theme_color: "#8ee3c8",
+        background_color: "#f3f4f7",
         display: "standalone",
         icons: [
           { src: "icon-192.png", sizes: "192x192", type: "image/png" },
