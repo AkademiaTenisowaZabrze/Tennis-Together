@@ -115,6 +115,7 @@
       <label for="f-password">Hasło</label>
       <input type="password" id="f-password" required />
     </div>
+    <div id="captchaBox" style="min-height:65px"></div>
     <p class="error" id="loginError" hidden></p>
     <button class="btn btn-primary" type="submit" id="btnLogin">Zaloguj</button>
   </form>
@@ -271,6 +272,32 @@
       .replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
+  // ── Captcha (Cloudflare Turnstile) ───────────────────────────────────────
+  // Supabase wymaga tokenu captchy przy logowaniu hasłem. Token jest jednorazowy: po każdej próbie widżet resetujemy.
+  let captchaToken = null;
+  let captchaWidgetId = null;
+  const captchaKey = window.TT_CONFIG.turnstileSiteKey;
+  function initCaptcha() {
+    if (!captchaKey) return;
+    const s = document.createElement("script");
+    s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    s.async = true;
+    s.onload = () => {
+      captchaWidgetId = window.turnstile.render("#captchaBox", {
+        sitekey: captchaKey,
+        callback: (t) => { captchaToken = t; },
+        "expired-callback": () => { captchaToken = null; },
+        "error-callback": () => { captchaToken = null; },
+      });
+    };
+    document.head.appendChild(s);
+  }
+  function resetCaptcha() {
+    captchaToken = null;
+    if (captchaWidgetId !== null && window.turnstile) window.turnstile.reset(captchaWidgetId);
+  }
+  initCaptcha();
+
   // ── Logowanie ────────────────────────────────────────────────────────────
   document.getElementById("loginForm").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -281,11 +308,27 @@
     errEl.hidden = true;
     btn.disabled = true;
     btn.textContent = "Loguję…";
-    const { error } = await db.auth.signInWithPassword({ email, password });
+    if (captchaKey && !captchaToken) {
+      btn.disabled = false;
+      btn.textContent = "Zaloguj";
+      errEl.textContent = "Najpierw zaznacz „Nie jestem robotem” i poczekaj na zielony znacznik.";
+      errEl.hidden = false;
+      return;
+    }
+    const { error } = await db.auth.signInWithPassword({ email, password, options: captchaToken ? { captchaToken } : undefined });
+    resetCaptcha();
     btn.disabled = false;
     btn.textContent = "Zaloguj";
     if (error) {
-      errEl.textContent = "Błędny e-mail lub hasło.";
+      // Nie wszystkie błędy to złe hasło: captcha, limit prób i problemy z siecią mają własne komunikaty.
+      const msg = String(error.message || "").toLowerCase();
+      errEl.textContent = msg.includes("captcha")
+        ? "Weryfikacja „Nie jestem robotem” nie powiodła się. Spróbuj jeszcze raz."
+        : msg.includes("rate limit") || error.status === 429
+          ? "Zbyt wiele prób logowania. Odczekaj chwilę."
+          : msg.includes("invalid login")
+            ? "Błędny e-mail lub hasło."
+            : "Nie udało się zalogować: " + (error.message || "nieznany błąd");
       errEl.hidden = false;
       return;
     }

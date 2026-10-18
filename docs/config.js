@@ -15,6 +15,9 @@
     supabaseUrl: "https://jrabxtiranllayerhutm.supabase.co",
     supabaseAnonKey: "sb_publishable_8-yxyMhoEEq-kHx2opU0Pg_QylogBur",
     repo: repo,
+    // Klucz witryny Cloudflare Turnstile (publiczny z założenia). Supabase wymaga captchy przy logowaniu hasłem,
+    // więc panel admina musi ją pokazać i dołączyć token. Ten sam klucz co zmienna TURNSTILE_SITE_KEY w GitHubie.
+    turnstileSiteKey: "0x4AAAAAAFad_cu5VUPZtL66",
     apkUrl: "https://github.com/" + repo + "/releases/download/debug-latest/tennis-together-debug-latest.apk",
   };
   document.addEventListener("DOMContentLoaded", function () {
