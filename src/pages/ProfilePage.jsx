@@ -6,6 +6,8 @@ import { useConsents } from "../lib/useConsents.js";
 import { verifyPztLogin } from "../lib/usePztPlayerSearch.js";
 import { supabase } from "../lib/supabase.js";
 import ErrorBox from "../components/ErrorBox.jsx";
+import { Collapsible } from "../components/ui.jsx";
+import { SITE_URL } from "../components/Shell.jsx";
 import { inputStyle, labelStyle } from "../components/formStyles.js";
 import { APP_VERSION } from "../lib/appVersion.js";
 import { useWebPush } from "../lib/useWebPush.js";
@@ -105,20 +107,21 @@ function ParentProfile() {
     );
   }
 
+  const grantedCount = consents.filter((c) => c.granted).length;
+  const consentSummary = consentsLoading
+    ? "wczytywanie…"
+    : consents.length === 0
+      ? "żadna jeszcze nie udzielona"
+      : `${grantedCount} udzielone, ${consents.length - grantedCount} wycofane`;
+
   return (
-    <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ position: "relative", width: 48, height: 48, flexShrink: 0 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "4px 2px 10px" }}>
+        <div style={{ position: "relative", width: 56, height: 56, flexShrink: 0 }}>
           {account?.avatar_url ? (
-            <img
-              src={account.avatar_url}
-              alt=""
-              width={48}
-              height={48}
-              style={{ borderRadius: "50%", objectFit: "cover", display: "block" }}
-            />
+            <img src={account.avatar_url} alt="" width={56} height={56} style={{ borderRadius: "50%", objectFit: "cover", display: "block" }} />
           ) : (
-            <div className="avatar-circle" style={{ width: 48, height: 48, fontSize: 16 }}>
+            <div className="avatar-circle" style={{ width: 56, height: 56, fontSize: 20 }}>
               {displayName[0]?.toUpperCase()}
             </div>
           )}
@@ -128,129 +131,113 @@ function ParentProfile() {
               position: "absolute",
               bottom: -2,
               right: -2,
-              width: 22,
-              height: 22,
+              width: 24,
+              height: 24,
               borderRadius: "50%",
-              background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-card-border)",
+              background: "var(--panel)",
+              border: "1px solid var(--line)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 11,
+              fontSize: 12,
               cursor: avatarBusy ? "default" : "pointer",
             }}
           >
             📷
-            <input
-              type="file"
-              accept="image/*"
-              capture="user"
-              onChange={handleAvatarChange}
-              disabled={avatarBusy}
-              style={{ display: "none" }}
-            />
+            <input type="file" accept="image/*" capture="user" onChange={handleAvatarChange} disabled={avatarBusy} style={{ display: "none" }} />
           </label>
         </div>
-        <div>
-          <p style={{ margin: 0, fontWeight: 700 }}>{displayName}</p>
-          <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)" }}>
+        <div style={{ minWidth: 0 }}>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 18 }}>{displayName}</p>
+          <p className="small-note" style={{ margin: 0, fontSize: 13 }}>
             {account ? ROLE_LABELS[account.role] ?? account.role : "…"}
           </p>
           {account?.verified && <span className="badge-verified">🛡️ Parent Verified</span>}
           {account?.coach_requested && account.role !== "coach" && (
-            <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--color-text-muted)" }}>
+            <p className="small-note" style={{ margin: "4px 0 0" }}>
               ⏳ Prośba o rolę trenera czeka na zatwierdzenie przez administratora.
             </p>
           )}
         </div>
       </div>
-      {avatarBusy && <p style={{ margin: 0, fontSize: 12, color: "var(--color-text-muted)" }}>Wgrywam zdjęcie…</p>}
+      {avatarBusy && <p className="small-note" style={{ margin: 0 }}>Wgrywam zdjęcie…</p>}
       {avatarError && <ErrorBox>{avatarError}</ErrorBox>}
-      <p style={{ margin: 0, fontSize: 12, color: "var(--color-text-muted)" }}>
-        Zdjęcie jest opcjonalne — pomaga innym Cię rozpoznać przy spotkaniu, to nie jest weryfikacja tożsamości.
-      </p>
 
-      <div>
-        <p style={{ margin: "0 0 6px", fontSize: 13, color: "var(--color-text-muted)" }}>E-mail</p>
-        <p style={{ margin: 0 }}>{user?.email}</p>
-      </div>
-
-      {account?.phone && (
-        <div>
-          <p style={{ margin: "0 0 6px", fontSize: 13, color: "var(--color-text-muted)" }}>Telefon</p>
-          <p style={{ margin: 0 }}>{account.phone}</p>
-        </div>
-      )}
-
-      {(account?.city || account?.club_name) && (
-        <div style={{ display: "flex", gap: 24 }}>
+      <Collapsible id="profil-dane" icon="👤" title="Dane konta" summary={user?.email} defaultOpen>
+        <p className="small-note" style={{ margin: "0 0 8px" }}>
+          Zdjęcie jest opcjonalne: pomaga innym Cię rozpoznać przy spotkaniu, to nie jest weryfikacja tożsamości.
+        </p>
+        <Field label="E-mail" value={user?.email} />
+        {account?.phone && <Field label="Telefon" value={account.phone} />}
+        <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
           {account?.city && <Field label="Miasto" value={account.city} />}
           {account?.club_name && <Field label="Klub / akademia" value={account.club_name} />}
         </div>
-      )}
+        <button type="button" className="btn-ghost btn-block" onClick={() => setEditing(true)}>
+          Edytuj profil
+        </button>
+      </Collapsible>
 
-      <div>
-        <p style={{ margin: "0 0 6px", fontSize: 13, color: "var(--color-text-muted)" }}>Zgody</p>
+      <Collapsible id="profil-zgody" icon="✅" title="Zgody" summary={consentSummary}>
         {consentsLoading ? (
-          <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)" }}>Wczytywanie…</p>
+          <p className="small-note" style={{ margin: 0 }}>Wczytywanie…</p>
         ) : consents.length === 0 ? (
-          <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)" }}>
-            Żadna zgoda nie została jeszcze udzielona.
-          </p>
+          <p className="small-note" style={{ margin: 0 }}>Żadna zgoda nie została jeszcze udzielona.</p>
         ) : (
           consents.map((c) => (
-            <div key={c.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4, gap: 8 }}>
-              <span>
+            <div key={c.id} className="item" style={{ flexWrap: "wrap", rowGap: 6 }}>
+              <div className="name">
                 {CONSENT_TYPE_LABELS[c.consent_type] ?? c.consent_type}
-                {c.players?.first_name ? ` — ${c.players.first_name}` : ""}
+                {c.players?.first_name && <small>{c.players.first_name}</small>}
+              </div>
+              <span className={`status-pill ${c.granted ? "ok" : "muted"}`}>
+                {c.granted ? "udzielona" : "wycofana"} {dateFormatter.format(new Date(c.created_at))}
               </span>
-              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span className={`status-pill ${c.granted ? "ok" : "muted"}`}>
-                  {c.granted ? "udzielona" : "wycofana"} {dateFormatter.format(new Date(c.created_at))}
-                </span>
-                {c.granted && (
-                  <button
-                    type="button"
-                    className="btn-ghost"
-                    style={{ padding: "2px 8px", fontSize: 12 }}
-                    onClick={async () => {
-                      if (!window.confirm("Wycofać tę zgodę? Nowe prośby wymagające zgody będą wtedy blokowane.")) return;
-                      setConsentError(null);
-                      const { error } = await withdrawConsent(c.id);
-                      if (error) setConsentError("Nie udało się wycofać zgody. Spróbuj ponownie.");
-                    }}
-                  >
-                    Wycofaj
-                  </button>
-                )}
-              </span>
+              {c.granted && (
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  style={{ minHeight: 36, padding: "4px 12px", fontSize: 13 }}
+                  onClick={async () => {
+                    if (!window.confirm("Wycofać tę zgodę? Nowe prośby wymagające zgody będą wtedy blokowane.")) return;
+                    setConsentError(null);
+                    const { error } = await withdrawConsent(c.id);
+                    if (error) setConsentError("Nie udało się wycofać zgody. Spróbuj ponownie.");
+                  }}
+                >
+                  Wycofaj
+                </button>
+              )}
             </div>
           ))
         )}
         {consentError && <ErrorBox>{consentError}</ErrorBox>}
-      </div>
+      </Collapsible>
 
-      <div>
-        <p style={{ margin: "0 0 6px", fontSize: 13, color: "var(--color-text-muted)" }}>Historia wyjazdów</p>
+      <WebPushSection accountId={account?.id} />
+
+      <Collapsible
+        id="profil-historia"
+        icon="🧳"
+        title="Historia wyjazdów"
+        summary={completedTrips === 0 ? "brak zakończonych" : `${completedTrips} ${completedTrips === 1 ? "zakończony" : "zakończone"}`}
+      >
         <p style={{ margin: 0 }}>
           {completedTrips === 0
             ? "Brak jeszcze zakończonych wyjazdów."
             : `${completedTrips} ${completedTrips === 1 ? "zakończony wyjazd" : "zakończone wyjazdy"}`}
         </p>
-      </div>
+      </Collapsible>
 
-      <WebPushSection accountId={account?.id} />
+      <Collapsible id="profil-prywatnosc" icon="🔒" title="Dane i prywatność" summary="regulamin, polityka, usunięcie konta">
+        <a className="dr-link" href={`${SITE_URL}/regulamin.html`} target="_blank" rel="noopener noreferrer">📄 Regulamin</a>
+        <a className="dr-link" href={`${SITE_URL}/polityka-prywatnosci.html`} target="_blank" rel="noopener noreferrer">🔒 Polityka prywatności</a>
+        <DeleteAccountSection />
+      </Collapsible>
 
-      <div style={{ display: "flex", gap: 8 }}>
-        <button className="btn-ghost" onClick={() => setEditing(true)}>
-          Edytuj profil
-        </button>
-        <button className="btn-ghost" onClick={signOut}>
-          Wyloguj
-        </button>
-      </div>
-
-      <DeleteAccountSection />
+      <button type="button" className="btn-danger btn-block" onClick={signOut}>
+        Wyloguj
+      </button>
     </div>
   );
 }
@@ -265,7 +252,7 @@ function DeleteAccountSection() {
 
   if (!open) {
     return (
-      <button type="button" className="btn-ghost" style={{ alignSelf: "flex-start", color: "var(--color-secondary)" }} onClick={() => setOpen(true)}>
+      <button type="button" className="btn-danger" style={{ marginTop: 8 }} onClick={() => setOpen(true)}>
         Usuń konto
       </button>
     );
@@ -289,7 +276,7 @@ function DeleteAccountSection() {
       <input style={inputStyle} value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="USUŃ" aria-label="Potwierdzenie usunięcia konta" />
       {error && <ErrorBox>{error}</ErrorBox>}
       <div style={{ display: "flex", gap: 8 }}>
-        <button type="button" className="btn-primary" disabled={busy || typed.trim().toUpperCase() !== "USUŃ"} onClick={confirm}>
+        <button type="button" className="btn-danger" disabled={busy || typed.trim().toUpperCase() !== "USUŃ"} onClick={confirm}>
           {busy ? "Usuwam…" : "Usuń konto na zawsze"}
         </button>
         <button type="button" className="btn-ghost" disabled={busy} onClick={() => { setOpen(false); setTyped(""); setError(null); }}>
@@ -710,8 +697,8 @@ function PlayerForm({ initial, onSubmit, onDone, onCancel, submitLabel, busyLabe
 
 function Field({ label, value }) {
   return (
-    <div>
-      <p style={{ margin: "0 0 4px", fontSize: 13, color: "var(--color-text-muted)" }}>{label}</p>
+    <div style={{ marginBottom: 10 }}>
+      <p style={{ margin: "0 0 2px", fontSize: 12, fontWeight: 600, color: "var(--muted)" }}>{label}</p>
       <p style={{ margin: 0 }}>{value}</p>
     </div>
   );

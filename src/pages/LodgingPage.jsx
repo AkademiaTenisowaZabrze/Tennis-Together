@@ -7,6 +7,7 @@ import { useLodgingOffers } from "../lib/useLodging.js";
 import { useJoinRequests } from "../lib/useJoinRequests.js";
 import { useHostOffers, useHostRequests } from "../lib/useHostLodging.js";
 import ErrorBox from "../components/ErrorBox.jsx";
+import { Section, EmptyState } from "../components/ui.jsx";
 import MeetingConfirmation from "../components/MeetingConfirmation.jsx";
 import CounterpartCard from "../components/CounterpartCard.jsx";
 import RateMatchForm from "../components/RateMatchForm.jsx";
@@ -43,7 +44,7 @@ export default function LodgingPage() {
       <IncomingHostRequests hostRequests={hostRequests} account={account} />
 
       {error && <ErrorBox>Nie udało się wczytać ofert noclegowych: {error}</ErrorBox>}
-      {loading && <p style={{ color: "var(--color-text-muted)" }}>Wczytywanie…</p>}
+      {loading && <p className="small-note">Wczytywanie…</p>}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {!loading &&
@@ -51,26 +52,23 @@ export default function LodgingPage() {
             <OfferCard key={l.id} offer={l} account={account} trips={trips} joinRequests={joinRequests} />
           ))}
         {!loading && offers.length === 0 && (
-          <p style={{ color: "var(--color-text-muted)" }}>Nikt jeszcze nie dodał ogłoszenia noclegowego.</p>
+          <EmptyState icon="🏨">Nikt jeszcze nie dodał ogłoszenia noclegowego.</EmptyState>
         )}
       </div>
 
-      <button className="btn-primary" style={{ alignSelf: "flex-start" }} onClick={() => setShowForm((v) => !v)}>
+      <button className="btn-primary btn-block" onClick={() => setShowForm((v) => !v)}>
         {showForm ? "Anuluj" : "+ Dodaj ogłoszenie noclegowe"}
       </button>
 
       {showForm && <AddLodgingForm trips={trips} createOffer={createOffer} onDone={() => setShowForm(false)} />}
 
-      <hr style={{ border: "none", borderTop: "1px solid var(--color-card-border)", margin: "8px 0" }} />
-
-      <div>
-        <h2 style={{ fontSize: 16, margin: "0 0 4px" }}>Nocleg u zawodnika</h2>
-        <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--color-text-muted)" }}>
+      <Section icon="🏠" title="Nocleg u zawodnika" style={{ marginTop: 12 }}>
+        <p className="small-note" style={{ margin: 0 }}>
           Rodzina przyjmuje zawodnika u siebie na czas turnieju, zamiast wspólnej rezerwacji hotelu.
           Zanim wyślesz prośbę, poprosimy o zgodę rodzica/opiekuna — a gospodarz musi ją osobno
           zaakceptować, zanim zobaczycie swoje dane.
         </p>
-      </div>
+      </Section>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {!hostOffers.loading &&
@@ -78,12 +76,12 @@ export default function LodgingPage() {
             <HostOfferCard key={o.id} offer={o} account={account} trips={trips} hostRequests={hostRequests} />
           ))}
         {!hostOffers.loading && hostOffers.offers.length === 0 && (
-          <p style={{ color: "var(--color-text-muted)" }}>Nikt jeszcze nie zaoferował noclegu u siebie.</p>
+          <EmptyState icon="🏠">Nikt jeszcze nie zaoferował noclegu u siebie.</EmptyState>
         )}
         {hostOffers.error && <ErrorBox>Nie udało się wczytać ofert: {hostOffers.error}</ErrorBox>}
       </div>
 
-      <button className="btn-primary" style={{ alignSelf: "flex-start" }} onClick={() => setShowHostForm((v) => !v)}>
+      <button className="btn-secondary btn-block" onClick={() => setShowHostForm((v) => !v)}>
         {showHostForm ? "Anuluj" : "+ Zaproponuj nocleg u siebie"}
       </button>
 

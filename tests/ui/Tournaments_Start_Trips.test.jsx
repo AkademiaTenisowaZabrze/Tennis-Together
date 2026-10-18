@@ -142,11 +142,25 @@ describe("Start", () => {
     expect(await screen.findByRole("heading", { name: /Cześć, Test!/ })).toBeInTheDocument();
   });
 
-  it("pokazuje najbliższy wyjazd z miastem wyjazdu", async () => {
+  it("pokazuje najbliższy wyjazd: odliczanie, turniej, zawodnika, miasto i wyjazd z", async () => {
     await open();
-    expect(await screen.findByText(/Najbliższy wyjazd/)).toBeInTheDocument();
-    expect(screen.getByText("Turniej U12 Warszawa", { exact: false })).toBeInTheDocument();
-    expect(screen.getByText(/Wyjazd z: Zabrze/)).toBeInTheDocument();
+    expect(await screen.findByText("Turniej U12 Warszawa", { exact: false })).toBeInTheDocument();
+    expect(screen.getByText(/Kuba/)).toBeInTheDocument();
+    expect(screen.getByText(/wyjazd z Zabrze/)).toBeInTheDocument();
+    expect(screen.getByText(/Za \d+ dni|Dziś|Jutro/)).toBeInTheDocument();
+  });
+
+  it("karta wyjazdu pokazuje stan transportu i noclegu oraz prowadzi do Moich wyjazdów", async () => {
+    fake.rpcHandlers.trip_arrangements = () => ({ data: [{ trip_id: "trip-me-1", ride_status: "arranged", lodging_status: "none" }], error: null });
+    await open();
+    expect(await screen.findByText(/Transport: Załatwiony/)).toBeInTheDocument();
+    expect(screen.getByText(/Nocleg: Jeszcze nic nie ustalone/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Zobacz wyjazd" })).toHaveAttribute("href", "/wyjazdy/moje");
+  });
+
+  it("bez danych o stanie transportu pokazuje 'brak danych' zamiast zgadywać", async () => {
+    await open();
+    expect(await screen.findByText(/Transport: brak danych/)).toBeInTheDocument();
   });
 
   it("bez zawodnika podpowiada pierwszy krok", async () => {
@@ -157,15 +171,38 @@ describe("Start", () => {
     expect(screen.getByRole("link", { name: "Dodaj zawodnika" })).toHaveAttribute("href", "/profil");
   });
 
-  it("ma skróty do czterech głównych zakładek", async () => {
+  it("z zawodnikiem, ale bez wyjazdu, prowadzi do kalendarza turniejów", async () => {
+    fake.db.trips = [];
     await open();
-    await screen.findByText("Skróty");
-    for (const [name, href] of [["Turnieje", "/turnieje"], ["Przejazdy", "/przejazdy"], ["Noclegi", "/noclegi"], ["Wiadomości", "/wiadomosci"]]) {
-      expect(screen.getByRole("link", { name: new RegExp(name) })).toHaveAttribute("href", href);
-    }
+    expect(await screen.findByText(/Nie masz jeszcze zgłoszonego wyjazdu/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Znajdź turniej" })).toHaveAttribute("href", "/turnieje");
   });
 
-  it("pokazuje baner z godziną ostatniej synchronizacji danych", async () => {
+  it("nie ma już kafelków skrótów ani banera (czysty ekran, nawigacja jest na pasku i w szufladzie)", async () => {
+    await open();
+    await screen.findByText("Turniej U12 Warszawa", { exact: false });
+    expect(screen.queryByText("Skróty")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Zamknij" })).not.toBeInTheDocument();
+  });
+
+  it("sekcja 'Do zrobienia' pokazuje oczekujące prośby i prowadzi do właściwego ekranu", async () => {
+    fake.db.ride_join_requests = [
+      { id: "rjr-1", ride_offer_id: "ro-1", requester_trip_id: "trip-other-1", status: "pending", created_at: new Date().toISOString() },
+    ];
+    fake.db.ride_offers.find((o) => o.id === "ro-1").trip_id = "trip-me-1";
+    await open();
+    const link = await screen.findByRole("link", { name: /Prośby o miejsce w aucie: 1/ });
+    expect(link).toHaveAttribute("href", "/wyjazdy/przejazdy");
+    expect(screen.getByText("Do zrobienia")).toBeInTheDocument();
+  });
+
+  it("bez oczekujących próśb nie ma sekcji 'Do zrobienia'", async () => {
+    await open();
+    await screen.findByText("Turniej U12 Warszawa", { exact: false });
+    expect(screen.queryByText("Do zrobienia")).not.toBeInTheDocument();
+  });
+
+  it("pokazuje podpis z godziną ostatniej synchronizacji danych", async () => {
     await open();
     expect(await screen.findByText(/Dane turniejów zaktualizowano dziś o \d{2}:\d{2}/)).toBeInTheDocument();
   });
@@ -173,39 +210,40 @@ describe("Start", () => {
   it("starsza synchronizacja pokazuje datę zamiast 'dziś'", async () => {
     fake.db.data_sync_status = [{ key: "tournaments", last_synced_at: new Date(Date.now() - 3 * 864e5).toISOString(), last_count: 3 }];
     await open();
-    const banner = await screen.findByText(/Dane turniejów zaktualizowano/);
-    expect(banner.textContent).not.toMatch(/dziś/);
-    expect(banner.textContent).toMatch(/\d{2}:\d{2}/);
+    const caption = await screen.findByText(/Dane turniejów zaktualizowano/);
+    expect(caption.textContent).not.toMatch(/dziś/);
+    expect(caption.textContent).toMatch(/\d{2}:\d{2}/);
   });
 
-  it("zamknięcie banera ukrywa go do końca dnia (zapamiętane w sesji)", async () => {
+  it("'Odśwież teraz' odświeża dane (zapytania do bazy po raz kolejny)", async () => {
     const user = await open();
-    await user.click(await screen.findByRole("button", { name: "Zamknij" }));
-    expect(screen.queryByText(/Dane turniejów zaktualizowano/)).not.toBeInTheDocument();
-    cleanup();
-    await open();
-    await screen.findByText("Skróty");
-    expect(screen.queryByText(/Dane turniejów zaktualizowano/)).not.toBeInTheDocument();
-  });
-
-  it("'Odśwież teraz' odświeża dane i zamyka baner", async () => {
-    const user = await open();
+    await screen.findByText("Turniej U12 Warszawa", { exact: false });
+    const before = fake.log.filter((l) => l.table === "trips" && l.op === "select").length;
     await user.click(await screen.findByRole("button", { name: "Odśwież teraz" }));
-    await waitFor(() => expect(screen.queryByText(/Dane turniejów zaktualizowano/)).not.toBeInTheDocument());
-    expect(sessionStorage.getItem("tennis-together-sync-banner-dismissed-on")).toBe(new Date().toDateString());
+    await waitFor(() => expect(fake.log.filter((l) => l.table === "trips" && l.op === "select").length).toBeGreaterThan(before));
   });
 
-  it("bez wiersza statusu synchronizacji baner się nie pokazuje", async () => {
+  it("bez wiersza statusu synchronizacji podpis się nie pokazuje", async () => {
     fake.db.data_sync_status = [];
     await open();
-    await screen.findByText("Skróty");
+    await screen.findByText("Turniej U12 Warszawa", { exact: false });
     expect(screen.queryByText(/Dane turniejów zaktualizowano/)).not.toBeInTheDocument();
   });
 
-  it("trener widzi liczbę wyjazdów klubu", async () => {
+  it("trener widzi wiersz klubu z liczbą zawodników i wyjazdów", async () => {
     fake.db.accounts[0].role = "coach";
     await open();
-    expect(await screen.findByText(/Klub|klub/)).toBeInTheDocument();
+    expect(await screen.findByText(/Klub: ATZ/)).toBeInTheDocument();
+    expect(screen.getByText(/zawodników · \d+ zgłoszonych wyjazdów/)).toBeInTheDocument();
+  });
+
+  it("odliczanie: dziś, jutro, za N dni", async () => {
+    const { daysUntilLabel } = await import("../../src/pages/StartPage.jsx");
+    const now = new Date("2026-10-18T10:00:00");
+    expect(daysUntilLabel("2026-10-18", now)).toBe("Dziś");
+    expect(daysUntilLabel("2026-10-19", now)).toBe("Jutro");
+    expect(daysUntilLabel("2026-10-22", now)).toBe("Za 4 dni");
+    expect(daysUntilLabel("2026-11-18", now)).toBe("Za 31 dni");
   });
 });
 

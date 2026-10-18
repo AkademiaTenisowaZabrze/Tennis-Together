@@ -6,6 +6,7 @@ import { useRidePings } from "../lib/useRidePings.js";
 import { useTripArrangements, ARRANGEMENT_LABELS } from "../lib/useTripArrangements.js";
 import { buildTripICS, downloadICS } from "../lib/calendarExport.js";
 import ErrorBox from "../components/ErrorBox.jsx";
+import { EmptyState } from "../components/ui.jsx";
 
 const FILTERS = [
   { key: "upcoming", label: "Nadchodzące" },
@@ -59,7 +60,7 @@ export default function TripsPage() {
       </div>
 
       {error && <ErrorBox>Nie udało się wczytać wyjazdów: {error}</ErrorBox>}
-      {loading && <p style={{ color: "var(--color-text-muted)" }}>Wczytywanie…</p>}
+      {loading && <p className="small-note">Wczytywanie…</p>}
 
       {!loading && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -68,7 +69,7 @@ export default function TripsPage() {
               <p style={{ margin: "0 0 4px", fontWeight: 700, fontSize: 16 }}>
                 {t.tournaments?.name ?? "Turniej"}
               </p>
-              <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--color-text-muted)" }}>
+              <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--muted)" }}>
                 {formatRange(t.tournaments?.starts_on, t.tournaments?.ends_on)} ·{" "}
                 {t.players?.first_name} {t.players?.last_name} · wyjazd z {t.departure_city}
               </p>
@@ -97,11 +98,11 @@ export default function TripsPage() {
             </div>
           ))}
           {visible.length === 0 && (
-            <p style={{ color: "var(--color-text-muted)" }}>
+            <EmptyState icon="🧳">
               {trips.length === 0
                 ? 'Nie masz jeszcze żadnego wyjazdu — zacznij od zakładki "Turnieje" i przycisku "Jadę na ten turniej".'
                 : "Brak wyjazdów w tej kategorii."}
-            </p>
+            </EmptyState>
           )}
         </div>
       )}

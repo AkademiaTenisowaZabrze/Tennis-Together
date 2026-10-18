@@ -5,6 +5,10 @@ import { usePlayers } from "../lib/usePlayers.js";
 import { useTrips } from "../lib/useTrips.js";
 import { useClubRoster } from "../lib/useClubRoster.js";
 import { useDataSyncStatus } from "../lib/useDataSyncStatus.js";
+import { useTripArrangements, ARRANGEMENT_LABELS } from "../lib/useTripArrangements.js";
+import { useJoinRequests } from "../lib/useJoinRequests.js";
+import { useRidePings } from "../lib/useRidePings.js";
+import { Section, ListItem, EmptyState } from "../components/ui.jsx";
 
 const dateFormatter = new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "long" });
 
@@ -16,90 +20,51 @@ function formatRange(startsOn, endsOn) {
 
 const FIRST_NAME_GREETING = (fullName) => (fullName ?? "").trim().split(/\s+/)[0] || null;
 
-const SYNC_BANNER_DISMISS_KEY = "tennis-together-sync-banner-dismissed-on";
 const timeFormatter = new Intl.DateTimeFormat("pl-PL", { hour: "2-digit", minute: "2-digit" });
-const dayFormatter = new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "long" });
 
 function formatSyncTime(date) {
   const isToday = date.toDateString() === new Date().toDateString();
-  return isToday ? `dziś o ${timeFormatter.format(date)}` : `${dayFormatter.format(date)} o ${timeFormatter.format(date)}`;
+  return isToday ? `dziś o ${timeFormatter.format(date)}` : `${dateFormatter.format(date)} o ${timeFormatter.format(date)}`;
 }
 
-// Baner "dane zaktualizowano dziś o HH:MM" — informacyjny, do zamknięcia,
-// pokazuje się raz na dzień kalendarzowy (nie na każde wejście na Start).
-function SyncBanner({ onRefresh }) {
+// "Za 4 dni", "Jutro", "Dziś": ile zostało do turnieju (liczone w dniach kalendarzowych).
+export function daysUntilLabel(startsOn, now = new Date()) {
+  const start = new Date(startsOn);
+  const days = Math.round((new Date(start.toDateString()) - new Date(now.toDateString())) / 86400000);
+  if (days <= 0) return "Dziś";
+  if (days === 1) return "Jutro";
+  return `Za ${days} dni`;
+}
+
+// Mały podpis zamiast banera: kiedy zaktualizowano dane turniejów, z ręcznym odświeżeniem.
+function SyncCaption({ onRefresh }) {
   const { lastSyncedAt, refresh: refreshStatus } = useDataSyncStatus();
-  const todayKey = new Date().toDateString();
-  const [dismissed, setDismissed] = useState(() => {
-    try {
-      return sessionStorage.getItem(SYNC_BANNER_DISMISS_KEY) === todayKey;
-    } catch {
-      return false;
-    }
-  });
   const [refreshing, setRefreshing] = useState(false);
-
-  if (!lastSyncedAt || dismissed) return null;
-
-  const dismiss = () => {
-    setDismissed(true);
-    try {
-      sessionStorage.setItem(SYNC_BANNER_DISMISS_KEY, todayKey);
-    } catch {
-      // brak dostępu do sessionStorage (np. tryb prywatny) — nic się nie stanie,
-      // baner po prostu wróci przy kolejnym wejściu, co jest bezpiecznym fallbackiem.
-    }
-  };
-
+  if (!lastSyncedAt) return null;
   const handleRefresh = async () => {
     setRefreshing(true);
     await Promise.all([refreshStatus(), onRefresh()]);
     setRefreshing(false);
-    dismiss();
   };
-
   return (
-    <div
-      className="glass-card"
-      style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "10px 14px", fontSize: 12.5 }}
-    >
-      <span style={{ color: "var(--color-text-muted)" }}>
-        Dane turniejów zaktualizowano {formatSyncTime(lastSyncedAt)}.
-      </span>
-      <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
-        <button className="btn-ghost" style={{ fontSize: 12, padding: "4px 10px" }} onClick={handleRefresh} disabled={refreshing}>
-          {refreshing ? "Odświeżam…" : "Odśwież teraz"}
-        </button>
-        <button
-          onClick={dismiss}
-          aria-label="Zamknij"
-          style={{ background: "none", border: "none", color: "var(--color-text-muted)", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 2 }}
-        >
-          ✕
-        </button>
-      </div>
-    </div>
+    <p className="small-note" style={{ textAlign: "center", margin: "14px 0 0" }}>
+      Dane turniejów zaktualizowano {formatSyncTime(lastSyncedAt)}.{" "}
+      <button type="button" className="link-btn" onClick={handleRefresh} disabled={refreshing}>
+        {refreshing ? "Odświeżam…" : "Odśwież teraz"}
+      </button>
+    </p>
   );
 }
 
-const QUICK_LINKS = [
-  { to: "/turnieje", icon: "🎾", label: "Turnieje" },
-  { to: "/przejazdy", icon: "🚗", label: "Przejazdy" },
-  { to: "/noclegi", icon: "🏨", label: "Noclegi" },
-  { to: "/wiadomosci", icon: "💬", label: "Wiadomości" },
-];
-
-// Ekran Start jako prawdziwy dashboard (wcześniej: podgląd stylu na
-// przykładowych danych, patrz git history) — powitanie, najbliższy
-// prawdziwy wyjazd (albo podpowiedź kolejnego kroku, gdy go jeszcze nie ma)
-// i skróty do głównych zakładek.
 export default function StartPage() {
   const { account } = useAuth();
   const { players, loading: playersLoading, refresh: refreshPlayers } = usePlayers(account?.id);
   const { trips, loading: tripsLoading, refresh: refreshTrips } = useTrips(account?.id);
-  const { players: clubPlayers, trips: clubTrips } = useClubRoster(
-    account?.role === "coach" ? account.club_name : null
-  );
+  const { byTrip } = useTripArrangements();
+  const { players: clubPlayers, trips: clubTrips } = useClubRoster(account?.role === "coach" ? account.club_name : null);
+  const rideRequests = useJoinRequests("ride", account?.id);
+  const lodgingRequests = useJoinRequests("lodging", account?.id);
+  const pings = useRidePings(account?.id);
 
   const loading = playersLoading || tripsLoading;
   const today = new Date().toISOString().slice(0, 10);
@@ -111,91 +76,94 @@ export default function StartPage() {
   const firstName = FIRST_NAME_GREETING(account?.full_name);
   const clubUpcomingCount = clubTrips.filter((t) => t.tournaments && t.tournaments.starts_on >= today).length;
 
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div>
-        <h1 style={{ margin: 0 }}>{firstName ? `Cześć, ${firstName}! 👋` : "Cześć! 👋"}</h1>
-        <p style={{ margin: "4px 0 0", color: "var(--color-text-muted)", fontSize: 13 }}>
-          Tu znajdziesz swój najbliższy wyjazd i szybkie skróty do całej aplikacji.
-        </p>
-      </div>
+  // "Do zrobienia": cudze prośby, które czekają na Twoją odpowiedź
+  const pendingRide = (rideRequests.incoming ?? []).filter((r) => r.status === "pending").length;
+  const pendingLodging = (lodgingRequests.incoming ?? []).filter((r) => r.status === "pending").length;
+  const pendingPings = (pings.incoming ?? []).filter((r) => r.status === "pending").length;
+  const todo = [
+    pendingRide > 0 && { key: "ride", to: "/wyjazdy/przejazdy", title: `Prośby o miejsce w aucie: ${pendingRide}`, sub: "Odpowiedz, żeby rodzina mogła zaplanować wyjazd" },
+    pendingPings > 0 && { key: "ping", to: "/wyjazdy/moje", title: `Zapytania o podwiezienie: ${pendingPings}`, sub: "Ktoś z listy startowej pyta o wspólny przejazd" },
+    pendingLodging > 0 && { key: "lodging", to: "/wyjazdy/noclegi", title: `Prośby o nocleg: ${pendingLodging}`, sub: "Czekają na Twoją odpowiedź" },
+  ].filter(Boolean);
 
-      <SyncBanner onRefresh={() => Promise.all([refreshPlayers(), refreshTrips()])} />
+  const arrangement = nextTrip ? byTrip.get(nextTrip.id) : null;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <h1 className="ttl">{firstName ? `Cześć, ${firstName}!` : "Cześć!"}</h1>
+      <p className="sub">Twój najbliższy wyjazd i to, co wymaga uwagi.</p>
 
       {!loading && (
         <>
           {players.length === 0 ? (
-            <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <p style={{ margin: 0, fontWeight: 700 }}>Zacznij od dodania zawodnika</p>
-              <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)" }}>
-                Żeby zgłosić wyjazd na turniej i znaleźć dla niego przejazd czy nocleg, najpierw
-                potrzebujemy profilu zawodnika.
+            <Section icon="🎾" title="Zacznij od dodania zawodnika">
+              <p className="sec-note">
+                Żeby zgłosić wyjazd na turniej i znaleźć dla niego przejazd czy nocleg, najpierw potrzebujemy profilu zawodnika.
               </p>
-              <Link className="btn-primary" to="/profil" style={{ alignSelf: "flex-start" }}>
+              <Link className="btn-primary btn-block" to="/profil">
                 Dodaj zawodnika
               </Link>
-            </div>
+            </Section>
           ) : nextTrip ? (
-            <div className="glass-card">
-              <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: 13 }}>
-                Najbliższy wyjazd — {nextTrip.players?.first_name}
+            <div className="hero-card">
+              <span className="pill">🎾 {daysUntilLabel(nextTrip.tournaments.starts_on)}</span>
+              <p className="hero-title">{nextTrip.tournaments.name}</p>
+              <p className="hero-meta">
+                {nextTrip.players?.first_name} · {formatRange(nextTrip.tournaments.starts_on, nextTrip.tournaments.ends_on)}
+                {nextTrip.tournaments.city ? ` · ${nextTrip.tournaments.city}` : ""} · wyjazd z {nextTrip.departure_city}
               </p>
-              <p style={{ margin: "4px 0 12px", fontWeight: 700 }}>
-                {nextTrip.tournaments.name} — {nextTrip.tournaments.city ?? "miasto nieznane"},{" "}
-                {formatRange(nextTrip.tournaments.starts_on, nextTrip.tournaments.ends_on)}
-              </p>
-              <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--color-text-muted)" }}>
-                Wyjazd z: {nextTrip.departure_city}
-              </p>
-              <Link className="btn-primary" to="/moje-wyjazdy">
-                Zobacz w Moich wyjazdach
+              <div className="chips">
+                {[["🚗 Transport", arrangement?.ride], ["🏨 Nocleg", arrangement?.lodging]].map(([label, v]) => {
+                  const info = ARRANGEMENT_LABELS[v];
+                  return (
+                    <span key={label} className={`status-pill ${info?.cls ?? "muted"}`}>
+                      {label}: {info?.text ?? "brak danych"}
+                    </span>
+                  );
+                })}
+              </div>
+              <Link className="btn-primary btn-block" to="/wyjazdy/moje">
+                Zobacz wyjazd
               </Link>
             </div>
           ) : (
-            <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <p style={{ margin: 0, fontWeight: 700 }}>Nie masz jeszcze zgłoszonego wyjazdu</p>
-              <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)" }}>
-                Przeglądaj kalendarz turniejów i kliknij „Jadę na ten turniej”, żeby zacząć szukać
-                przejazdu i noclegu.
+            <Section icon="🏆" title="Nie masz jeszcze zgłoszonego wyjazdu">
+              <p className="sec-note">
+                Przeglądaj kalendarz turniejów i kliknij „Jadę na ten turniej”, żeby zacząć szukać przejazdu i noclegu.
               </p>
-              <Link className="btn-primary" to="/turnieje" style={{ alignSelf: "flex-start" }}>
+              <Link className="btn-primary btn-block" to="/turnieje">
                 Znajdź turniej
               </Link>
-            </div>
+            </Section>
+          )}
+
+          {todo.length > 0 && (
+            <Section icon="🔔" title="Do zrobienia">
+              {todo.map((t) => (
+                <Link key={t.key} to={t.to} style={{ textDecoration: "none", color: "inherit" }}>
+                  <ListItem title={t.title} subtitle={t.sub}>
+                    <span aria-hidden="true" style={{ padding: "0 8px", fontSize: 22, color: "var(--muted)" }}>›</span>
+                  </ListItem>
+                </Link>
+              ))}
+            </Section>
+          )}
+
+          {players.length > 0 && !nextTrip && todo.length === 0 && (
+            <EmptyState icon="🧳">Gdy zgłosisz wyjazd, tu pojawi się jego postęp i rzeczy do załatwienia.</EmptyState>
           )}
 
           {account?.role === "coach" && account.club_name && (
-            <Link to="/klub" className="glass-card" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
-              <div className="avatar-circle" style={{ width: 40, height: 40, fontSize: 18 }}>
-                🏆
-              </div>
-              <div>
-                <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>Klub — {account.club_name}</p>
-                <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-muted)" }}>
-                  {clubPlayers.length} zawodników · {clubUpcomingCount} zgłoszonych wyjazdów
-                </p>
-              </div>
+            <Link to="/klub" style={{ textDecoration: "none", color: "inherit" }}>
+              <ListItem title={`Klub: ${account.club_name}`} subtitle={`${clubPlayers.length} zawodników · ${clubUpcomingCount} zgłoszonych wyjazdów`}>
+                <span aria-hidden="true" style={{ padding: "0 8px", fontSize: 22, color: "var(--muted)" }}>›</span>
+              </ListItem>
             </Link>
           )}
         </>
       )}
 
-      <div>
-        <p style={{ margin: "0 0 8px", fontSize: 13, color: "var(--color-text-muted)" }}>Skróty</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          {QUICK_LINKS.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className="glass-card"
-              style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}
-            >
-              <span style={{ fontSize: 20 }}>{link.icon}</span>
-              <span style={{ fontWeight: 700, fontSize: 14 }}>{link.label}</span>
-            </Link>
-          ))}
-        </div>
-      </div>
+      <SyncCaption onRefresh={() => Promise.all([refreshPlayers(), refreshTrips()])} />
     </div>
   );
 }

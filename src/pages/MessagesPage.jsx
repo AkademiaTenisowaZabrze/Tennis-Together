@@ -3,6 +3,7 @@ import { useAuth } from "../lib/AuthContext.jsx";
 import { useConversations } from "../lib/useConversations.js";
 import { useMessages } from "../lib/useMessages.js";
 import ErrorBox from "../components/ErrorBox.jsx";
+import { EmptyState } from "../components/ui.jsx";
 
 const KIND_LABELS = { ride: "Przejazd", lodging: "Nocleg", direct: "Podwiezienie" };
 
@@ -21,7 +22,7 @@ export default function MessagesPage() {
       <h1>Wiadomości</h1>
 
       {error && <ErrorBox>Nie udało się wczytać rozmów: {error}</ErrorBox>}
-      {loading && <p style={{ color: "var(--color-text-muted)" }}>Wczytywanie…</p>}
+      {loading && <p className="small-note">Wczytywanie…</p>}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {!loading &&
@@ -39,7 +40,7 @@ export default function MessagesPage() {
                   style={{
                     margin: "2px 0 0",
                     fontSize: 13,
-                    color: "var(--color-text-muted)",
+                    color: "var(--muted)",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -51,10 +52,10 @@ export default function MessagesPage() {
             </button>
           ))}
         {!loading && conversations.length === 0 && (
-          <p style={{ color: "var(--color-text-muted)" }}>
+          <EmptyState icon="💬">
             Nie masz jeszcze żadnej rozmowy. Rozmowa otwiera się automatycznie, gdy zaakceptujesz (albo Tobie
             zaakceptują) prośbę o dołączenie do przejazdu lub noclegu.
-          </p>
+          </EmptyState>
         )}
       </div>
     </div>
@@ -79,21 +80,21 @@ function ChatView({ conversation, account, onBack }) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 160px)" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100dvh - 190px - var(--sat) - var(--sab))", minHeight: 320 }}>
       <button className="btn-ghost" style={{ alignSelf: "flex-start", marginBottom: 12 }} onClick={onBack}>
         ← Wiadomości
       </button>
       <h2 style={{ margin: "0 0 4px" }}>{conversation.otherName}</h2>
-      <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--color-text-muted)" }}>
+      <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--muted)" }}>
         {KIND_LABELS[conversation.kind] ?? conversation.kind} · {conversation.title}
       </p>
 
       {error && <ErrorBox>Nie udało się wczytać wiadomości: {error}</ErrorBox>}
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }}>
-        {loading && <p style={{ color: "var(--color-text-muted)" }}>Wczytywanie…</p>}
+        {loading && <p className="small-note">Wczytywanie…</p>}
         {!loading && messages.length === 0 && (
-          <p style={{ color: "var(--color-text-muted)", fontSize: 13 }}>
+          <p className="small-note">
             Brak wiadomości — napisz pierwszą.
           </p>
         )}
@@ -121,9 +122,10 @@ function ChatView({ conversation, account, onBack }) {
             flex: 1,
             padding: "10px 14px",
             borderRadius: 999,
-            border: "1px solid var(--color-card-border)",
-            background: "var(--color-bg-elevated)",
-            color: "var(--color-text)",
+            border: "1px solid var(--line)",
+            background: "var(--panel)",
+            color: "var(--text)",
+            minHeight: 44,
           }}
         />
         <button className="btn-primary" type="submit" disabled={sending}>
