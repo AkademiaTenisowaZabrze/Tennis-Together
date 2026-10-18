@@ -1,0 +1,194 @@
+/* Komponenty bazowe wg STANDARDU DESIGNU v1 (część 4). Tokeny: tokens.css. */
+
+/* ── Karty i sekcje ── */
+.sec {
+  background: var(--surface-2);
+  border: 1px solid var(--glass-line);
+  border-radius: var(--r-card);
+  padding: 12px 14px 14px;
+  margin: 10px 0;
+}
+
+.sec-h {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 0 8px;
+  font: 650 16px/1.25 var(--font);
+}
+
+.sec-h .ic,
+.ic {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  background: var(--tonal);
+  font-style: normal;
+  font-size: 16px;
+}
+
+.sec-note {
+  margin: 0 0 8px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+/* Sekcja rozwijana: ikona + tytuł + jednolinijkowe podsumowanie; strzałka obraca się po otwarciu. */
+details.sec {
+  padding: 0;
+}
+
+details.sec > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  min-height: var(--touch);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+details.sec > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.sec > summary::after {
+  content: "›";
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 24px;
+  line-height: 1;
+  transform: rotate(90deg);
+  transition: transform 0.2s var(--ease);
+}
+
+details.sec[open] > summary::after {
+  transform: rotate(-90deg);
+}
+
+details.sec > summary .st {
+  display: block;
+  margin-top: 1px;
+  font-weight: 400;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+details.sec > .sec-body {
+  padding: 0 14px 14px;
+}
+
+/* ── Wiersz listy ── */
+.item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--glass-line);
+  border-radius: 14px;
+  padding: 8px 8px 8px 12px;
+  margin: 8px 0;
+}
+
+.item .name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 14.5px;
+}
+
+.item small {
+  display: block;
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 12.5px;
+}
+
+.item .ico {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 12px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* ── Przyciski pełnej szerokości ── */
+.btn-block {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.btn-block.btn-primary {
+  min-height: 48px;
+}
+
+/* ── Pola formularza: etykieta ZAWSZE nad polem ── */
+.field > label {
+  display: block;
+  margin: 12px 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* ── Powiadomienie (toast): ciemna pigułka nad paskiem zakładek, 7 s ── */
+.toast {
+  position: fixed;
+  z-index: 1500;
+  left: 50%;
+  bottom: calc(92px + var(--sab));
+  transform: translateX(-50%);
+  max-width: min(92vw, 420px);
+  background: #1f2933;
+  color: #e8ecf1;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font: 600 13.5px/1.3 var(--font);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+  animation: toast-in 0.25s var(--ease);
+}
+
+.toast.ok {
+  color: #8fe0ae;
+}
+
+.toast.err {
+  color: #ff9c91;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* ── Stan pusty: jedno zdanie i wskazanie następnego kroku ── */
+.empty {
+  text-align: center;
+  padding: 28px 18px;
+  color: var(--muted);
+}
+
+.empty .ic {
+  margin: 0 auto 10px;
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+}
+
+.empty p {
+  margin: 0 0 12px;
+  font-size: 14px;
+}

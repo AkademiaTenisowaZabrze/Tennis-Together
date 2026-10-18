@@ -31,7 +31,13 @@ android {
     namespace = "pl.tennistogether.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "pl.tennistogether.app"
+        // Build demo (-PdemoBuild, patrz src/demo): osobna aplikacja obok prawdziwej, żeby nie
+        // nadpisać jej ani nie kolidować podpisem. Prawdziwy identyfikator zostaje dla wszystkich innych buildów.
+        applicationId project.hasProperty('demoBuild') ? "pl.tennistogether.app.demo" : "pl.tennistogether.app"
+        if (project.hasProperty('demoBuild')) {
+            resValue "string", "app_name", "Tennis Together DEMO"
+            resValue "string", "title_activity_main", "Tennis Together DEMO"
+        }
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode appVersionCode
@@ -117,7 +123,8 @@ apply from: 'capacitor.build.gradle'
 
 try {
     def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
+    // build demo nie ma klienta Firebase dla swojego identyfikatora, więc pomijamy wtyczkę (bez push)
+    if (servicesJSON.text && !project.hasProperty('demoBuild')) {
         apply plugin: 'com.google.gms.google-services'
     }
 } catch(Exception e) {

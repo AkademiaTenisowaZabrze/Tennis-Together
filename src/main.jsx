@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import { AuthProvider } from "./lib/AuthContext.jsx";
+import { ToastProvider } from "./components/ui.jsx";
 import "./index.css";
 
 // Powrót ze strony docs/404.html: adres /app/turnieje trafia tu jako
@@ -20,7 +21,9 @@ createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <AuthProvider>
       <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <App />
+        <ToastProvider>
+          <App />
+        </ToastProvider>
       </BrowserRouter>
     </AuthProvider>
   </React.StrictMode>

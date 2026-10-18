@@ -8,6 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "build:demo": "vite build --mode demo",
+    "dev:demo": "vite --mode demo",
     "test:watch": "vitest",
     "test:db": "vitest run tests/db",
     "test:static": "vitest run tests/static",

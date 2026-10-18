@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+import path from "node:path";
 
 // Tennis Together — konfiguracja Vite.
 // PWA działa równolegle z Androidem od startu (patrz PLAN.md), dlatego
@@ -8,8 +9,15 @@ import { VitePWA } from "vite-plugin-pwa";
 // trzeba podmienić, gdy będzie gotowa identyfikacja wizualna marki.
 // VITE_BASE ustawia workflow wersji webowej na GitHub Pages (podkatalog
 // /Tennis-Together/app/); APK i dev zostają na "/".
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   base: process.env.VITE_BASE || "/",
+  // Tryb demo (vite build --mode demo, patrz src/demo): klient Supabase zastępuje atrapa z przykładowymi danymi.
+  resolve: {
+    alias:
+      mode === "demo"
+        ? [{ find: /^(\.{1,2}\/)+(lib\/)?supabase\.js$/, replacement: path.resolve(__dirname, "src/demo/demoSupabase.js") }]
+        : [],
+  },
   plugins: [
     react(),
     VitePWA({
@@ -60,4 +68,4 @@ export default defineConfig({
     outDir: "dist",
     sourcemap: false,
   },
-});
+}));
