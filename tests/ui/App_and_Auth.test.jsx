@@ -7,6 +7,7 @@ vi.mock("../../src/lib/supabase.js", async () => await import("../helpers/fakeSu
 import { fake, ME } from "../helpers/fakeSupabase.js";
 import App from "../../src/App.jsx";
 import { renderWithApp } from "../helpers/render.jsx";
+import { tabsNav, openDrawer, goProfile } from "../helpers/nav.js";
 
 beforeEach(() => {
   fake.reset();
@@ -16,72 +17,89 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe("szkielet aplikacji po zalogowaniu", () => {
-  it("pokazuje nagłówek z logotypami ATZ i PZT jako linki w nowej karcie", async () => {
+  it("logotypy ATZ i PZT są w szufladzie jako linki w nowej karcie, razem ze znakiem aplikacji", async () => {
+    const user = userEvent.setup();
     renderWithApp(<App />);
-    const atz = await screen.findByAltText("Akademia Tenisowa Zabrze");
-    const pzt = screen.getByAltText("Polski Związek Tenisowy");
+    const drawer = await openDrawer(user);
+    const atz = within(drawer).getByAltText("Akademia Tenisowa Zabrze");
+    const pzt = within(drawer).getByAltText("Polski Związek Tenisowy");
     expect(atz.closest("a")).toHaveAttribute("href", "https://www.akademiatenisowazabrze.pl/");
     expect(pzt.closest("a")).toHaveAttribute("href", "https://www.pzt.pl/");
     for (const a of [atz.closest("a"), pzt.closest("a")]) {
       expect(a).toHaveAttribute("target", "_blank");
       expect(a.getAttribute("rel")).toMatch(/noopener/);
     }
+    expect(within(drawer).getByText(/Tennis Together · wersja/)).toBeInTheDocument();
   });
 
-  it("logotypy stoją po prawej stronie nazwy aplikacji i mają ten sam rozmiar", async () => {
+  it("pływający pasek ma 4 zakładki: Start, Turnieje, Wyjazdy, Wiadomości", async () => {
     renderWithApp(<App />);
-    const atz = await screen.findByAltText("Akademia Tenisowa Zabrze");
-    const pzt = screen.getByAltText("Polski Związek Tenisowy");
-    const brand = screen.getByText(/Tennis Together/, { selector: "strong" });
-    const order = [brand, atz, pzt].map((el) => el.compareDocumentPosition(document.body));
-    expect(brand.compareDocumentPosition(atz) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(atz.compareDocumentPosition(pzt) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(atz.style.height).toBe(pzt.style.height);
-    expect(order).toHaveLength(3);
-  });
-
-  it("dolna nawigacja ma 7 zakładek dla rodzica (bez Klub)", async () => {
-    renderWithApp(<App />);
-    const nav = await screen.findByRole("navigation");
+    const nav = await tabsNav();
     const links = within(nav).getAllByRole("link").map((a) => a.textContent.trim());
-    expect(links).toEqual(["Start", "Turnieje", "Przejazdy", "Noclegi", "Moje wyjazdy", "Wiadomości", "Profil"]);
+    expect(links).toEqual(["Start", "Turnieje", "Wyjazdy", "Wiadomości"]);
   });
 
-  it("trener widzi dodatkową zakładkę Klub", async () => {
+  it("trener widzi Klub w szufladzie, rodzic nie", async () => {
     fake.db.accounts[0].role = "coach";
-    renderWithApp(<App />);
-    const nav = await screen.findByRole("navigation");
-    expect(within(nav).getByRole("link", { name: "Klub" })).toHaveAttribute("href", "/klub");
-  });
-
-  it("przejście przez zakładki pokazuje właściwe ekrany", async () => {
     const user = userEvent.setup();
     renderWithApp(<App />);
-    const nav = await screen.findByRole("navigation");
-    const go = async (name, heading) => {
-      await user.click(within(nav).getByRole("link", { name }));
+    const drawer = await openDrawer(user);
+    expect(within(drawer).getByRole("link", { name: /Mój klub/ })).toHaveAttribute("href", "/klub");
+  });
+
+  it("rodzic nie ma w szufladzie linku do klubu", async () => {
+    const user = userEvent.setup();
+    renderWithApp(<App />);
+    const drawer = await openDrawer(user);
+    expect(within(drawer).queryByRole("link", { name: /Mój klub/ })).not.toBeInTheDocument();
+  });
+
+  it("przejście przez zakładki pokazuje właściwe ekrany, a Wyjazdy mają chipy Przejazdy, Noclegi i Moje wyjazdy", async () => {
+    const user = userEvent.setup();
+    renderWithApp(<App />);
+    const nav = await tabsNav();
+    await user.click(within(nav).getByRole("link", { name: "Turnieje" }));
+    expect(await screen.findByRole("heading", { name: "Turnieje" })).toBeInTheDocument();
+    await user.click(within(nav).getByRole("link", { name: "Wyjazdy" }));
+    expect(await screen.findByRole("heading", { name: "Przejazdy" })).toBeInTheDocument();
+    const hub = screen.getByRole("navigation", { name: "Wyjazdy" });
+    await user.click(within(hub).getByRole("link", { name: /Noclegi/ }));
+    expect(await screen.findByRole("heading", { name: "Noclegi" })).toBeInTheDocument();
+    await user.click(within(hub).getByRole("link", { name: /Moje wyjazdy/ }));
+    expect(await screen.findByRole("heading", { name: "Moje wyjazdy" })).toBeInTheDocument();
+    await user.click(within(nav).getByRole("link", { name: "Wiadomości" }));
+    expect(await screen.findByRole("heading", { name: "Wiadomości" })).toBeInTheDocument();
+    await goProfile(user);
+  });
+
+  it("zakładka Wyjazdy jest aktywna na każdym z trzech podekranów", async () => {
+    renderWithApp(<App />, { route: "/wyjazdy/noclegi" });
+    const nav = await tabsNav();
+    expect(within(nav).getByRole("link", { name: "Wyjazdy" })).toHaveClass("active");
+    expect(within(nav).getByRole("link", { name: "Start" })).not.toHaveClass("active");
+  });
+
+  it("stare adresy (/przejazdy, /noclegi, /moje-wyjazdy) przekierowują do Wyjazdów", async () => {
+    for (const [old, heading] of [["/przejazdy", "Przejazdy"], ["/noclegi", "Noclegi"], ["/moje-wyjazdy", "Moje wyjazdy"]]) {
+      const { unmount } = renderWithApp(<App />, { route: old });
       expect(await screen.findByRole("heading", { name: heading })).toBeInTheDocument();
-    };
-    await go("Turnieje", "Turnieje");
-    await go("Przejazdy", "Przejazdy");
-    await go("Noclegi", "Noclegi");
-    await go("Moje wyjazdy", "Moje wyjazdy");
-    await go("Wiadomości", "Wiadomości");
-    await go("Profil", "Profil");
+      expect(screen.getByRole("navigation", { name: "Wyjazdy" })).toBeInTheDocument();
+      unmount();
+    }
   });
 
-  it("domyślny motyw wynika z telefonu (brak wymuszenia), a przełącznik przechodzi auto, jasny, ciemny i zapamiętuje wybór", async () => {
+  it("domyślny motyw wynika z telefonu (brak wymuszenia), a wybór w szufladzie (Auto, Jasny, Ciemny) jest zapamiętywany", async () => {
     const user = userEvent.setup();
     renderWithApp(<App />);
-    const toggle = await screen.findByRole("button", { name: /Przełącz tryb jasny\/ciemny/ });
+    const drawer = await openDrawer(user);
     expect(document.documentElement.dataset.theme).toBeUndefined();
-    expect(toggle).toHaveTextContent("Auto");
-    await user.click(toggle);
+    expect(within(drawer).getByRole("button", { name: "Auto" })).toHaveAttribute("aria-pressed", "true");
+    await user.click(within(drawer).getByRole("button", { name: "Jasny" }));
     expect(document.documentElement.dataset.theme).toBe("light");
     expect(localStorage.getItem("tennis-together-theme-v2")).toBe("light");
-    await user.click(toggle);
+    await user.click(within(drawer).getByRole("button", { name: "Ciemny" }));
     expect(document.documentElement.dataset.theme).toBe("dark");
-    await user.click(toggle);
+    await user.click(within(drawer).getByRole("button", { name: "Auto" }));
     expect(document.documentElement.dataset.theme).toBeUndefined();
     expect(localStorage.getItem("tennis-together-theme-v2")).toBe("auto");
   });
@@ -89,14 +107,14 @@ describe("szkielet aplikacji po zalogowaniu", () => {
   it("zapamiętany motyw jasny jest przywracany po ponownym otwarciu", async () => {
     localStorage.setItem("tennis-together-theme-v2", "light");
     renderWithApp(<App />);
-    await screen.findByRole("navigation");
+    await tabsNav();
     expect(document.documentElement.dataset.theme).toBe("light");
   });
 
   it("stary klucz motywu (zapisywany automatycznie jako ciemny) nie wymusza już motywu", async () => {
     localStorage.setItem("tennis-together-theme", "dark");
     renderWithApp(<App />);
-    await screen.findByRole("navigation");
+    await tabsNav();
     expect(document.documentElement.dataset.theme).toBeUndefined();
   });
 
@@ -131,7 +149,7 @@ describe("szkielet aplikacji po zalogowaniu", () => {
 // Zapisuje kolejne stany ekranu: "shell" (aplikacja), "loading" (Wczytywanie), "other".
 function watchScreens() {
   const states = [];
-  const read = () => (document.querySelector("header") ? "shell" : /Wczytywanie/.test(document.body.textContent) ? "loading" : "other");
+  const read = () => (document.querySelector(".app-main") ? "shell" : /Wczytywanie/.test(document.body.textContent) ? "loading" : "other");
   const push = () => {
     const s = read();
     if (states.at(-1) !== s) states.push(s);
@@ -146,7 +164,7 @@ describe("wczytywanie konta po zalogowaniu (bez mignięć ekranu)", () => {
   it("aplikacja nie pojawia się przed wczytaniem konta: ekran główny wyświetla się dokładnie raz", async () => {
     const w = watchScreens();
     renderWithApp(<App />);
-    await screen.findByRole("navigation");
+    await tabsNav();
     await new Promise((r) => setTimeout(r, 60));
     w.stop();
     expect(w.states.filter((s) => s === "shell")).toHaveLength(1);
@@ -155,7 +173,7 @@ describe("wczytywanie konta po zalogowaniu (bez mignięć ekranu)", () => {
 
   it("odświeżenie tokenu (nowy obiekt sesji tego samego użytkownika) nie zasłania aplikacji ekranem ładowania", async () => {
     renderWithApp(<App />);
-    await screen.findByRole("navigation");
+    await tabsNav();
     await new Promise((r) => setTimeout(r, 60));
     const w = watchScreens();
     await act(async () => {
@@ -389,17 +407,14 @@ describe("prośba o rolę trenera (profil)", () => {
     fake.db.accounts.find((a) => a.id === ME).coach_requested = true;
     const user = userEvent.setup();
     renderWithApp(<App />);
-    const nav = await screen.findByRole("navigation");
-    await user.click(within(nav).getByRole("link", { name: "Profil" }));
+    await goProfile(user);
     expect(await screen.findByText(/Prośba o rolę trenera czeka na zatwierdzenie/)).toBeInTheDocument();
   });
 
   it("zwykłe konto nie widzi takiej informacji", async () => {
     const user = userEvent.setup();
     renderWithApp(<App />);
-    const nav = await screen.findByRole("navigation");
-    await user.click(within(nav).getByRole("link", { name: "Profil" }));
-    await screen.findByRole("heading", { name: "Profil" });
+    await goProfile(user);
     expect(screen.queryByText(/czeka na zatwierdzenie/)).not.toBeInTheDocument();
   });
 });

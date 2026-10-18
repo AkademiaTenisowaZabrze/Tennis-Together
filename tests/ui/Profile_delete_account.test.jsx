@@ -8,6 +8,7 @@ vi.mock("../../src/lib/supabase.js", async () => await import("../helpers/fakeSu
 import { fake, ME } from "../helpers/fakeSupabase.js";
 import App from "../../src/App.jsx";
 import { renderWithApp } from "../helpers/render.jsx";
+import { goProfile } from "../helpers/nav.js";
 
 beforeEach(() => fake.reset());
 afterEach(cleanup);
@@ -15,9 +16,7 @@ afterEach(cleanup);
 async function openProfile() {
   const user = userEvent.setup();
   renderWithApp(<App />);
-  const nav = await screen.findByRole("navigation");
-  await user.click(within(nav).getByRole("link", { name: "Profil" }));
-  await screen.findByRole("heading", { name: "Profil" });
+  await goProfile(user);
   return user;
 }
 

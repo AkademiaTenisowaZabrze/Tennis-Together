@@ -7,6 +7,7 @@ vi.mock("../../src/lib/supabase.js", async () => await import("../helpers/fakeSu
 import { fake } from "../helpers/fakeSupabase.js";
 import App from "../../src/App.jsx";
 import { renderWithApp } from "../helpers/render.jsx";
+import { tabsNav } from "../helpers/nav.js";
 
 beforeEach(() => fake.reset());
 afterEach(cleanup);
@@ -24,7 +25,7 @@ async function openTournaments(urls) {
   }));
   const user = userEvent.setup();
   renderWithApp(<App />);
-  const nav = await screen.findByRole("navigation");
+  const nav = await tabsNav();
   await user.click(within(nav).getByRole("link", { name: "Turnieje" }));
   await screen.findByText("Turniej 0");
   return user;

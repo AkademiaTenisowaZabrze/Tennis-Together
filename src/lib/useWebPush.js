@@ -57,7 +57,7 @@ export function useWebPush(accountId) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!accountId || !webPushSupported || !webPushConfigured) return;
+    if (!accountId || !webPushSupported || !webPushConfigured || import.meta.env.MODE === "demo") return;
     if (Notification.permission !== "granted") return;
     registerToken(accountId).catch((e) => console.error("[web-push]", e));
   }, [accountId]);

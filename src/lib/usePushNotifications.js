@@ -11,7 +11,8 @@ import { supabase } from "./supabase.js";
 // powiedzie — apka działa dalej normalnie, po prostu bez push.
 export function usePushNotifications(accountId) {
   useEffect(() => {
-    if (!accountId || !Capacitor.isNativePlatform()) return;
+    // tryb demo (src/demo) nie ma konfiguracji Firebase: rejestracja push wywaliłaby aplikację
+    if (!accountId || !Capacitor.isNativePlatform() || import.meta.env.MODE === "demo") return;
 
     let registrationListener;
     let errorListener;

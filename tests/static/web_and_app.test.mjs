@@ -142,8 +142,8 @@ describe("strony pomocnicze (docs): wstrzykiwanie HTML", () => {
 });
 
 describe("kontrakty aplikacji (regresje z wcześniejszych poprawek)", () => {
-  it("nagłówek aplikacji ma logotypy ATZ i PZT jako linki do ich stron", () => {
-    const t = read("src/App.jsx");
+  it("szuflada aplikacji ma logotypy ATZ i PZT jako linki do ich stron", () => {
+    const t = read("src/components/Shell.jsx");
     expect(t).toMatch(/href="https:\/\/www\.akademiatenisowazabrze\.pl\/"/);
     expect(t).toMatch(/href="https:\/\/www\.pzt\.pl\/"/);
     expect(t).toMatch(/atz-logo\.png/);
@@ -208,11 +208,12 @@ describe("kontrakty aplikacji (regresje z wcześniejszych poprawek)", () => {
   });
 
   it("pasek nawigacji uwzględnia bezpieczne obszary Androida", () => {
-    expect(read("src/App.jsx")).toMatch(/safe-area-inset-bottom/);
+    expect(read("src/styles/tokens.css")).toMatch(/--sab: var\(--safe-area-inset-bottom, env\(safe-area-inset-bottom/);
+    expect(read("src/styles/shell.css")).toMatch(/bottom: calc\(10px \+ var\(--sab\)\)/);
   });
 
   it("zakładka Klub jest dodawana wyłącznie dla roli coach", () => {
-    const t = read("src/App.jsx");
+    const t = read("src/components/Shell.jsx");
     expect(t).toMatch(/account\?\.role === "coach"/);
   });
 

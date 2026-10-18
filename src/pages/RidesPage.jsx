@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useTrips } from "../lib/useTrips.js";
 import { useRideOffers, useRideRequests, useRideCostSuggestion } from "../lib/useRides.js";
@@ -36,7 +36,9 @@ function costLabel(amount) {
 
 export default function RidesPage() {
   const [tab, setTab] = useState("offers"); // "offers" | "requests"
-  const [showForm, setShowForm] = useState(false);
+  // skrót "Dodaj ofertę przejazdu" z szuflady/okienka ＋ otwiera od razu formularz oferty (?dodaj=oferta)
+  const [searchParams] = useSearchParams();
+  const [showForm, setShowForm] = useState(() => searchParams.get("dodaj") === "oferta");
   const { account } = useAuth();
   const { trips } = useTrips(account?.id);
   const { offers, loading: offersLoading, error: offersError, createOffer } = useRideOffers();
