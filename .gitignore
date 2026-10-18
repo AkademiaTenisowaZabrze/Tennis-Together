@@ -30,3 +30,6 @@ supabase/setup/
 
 # Testy: szablon bazy PGlite budowany z migracji (tests/db/globalSetup.mjs)
 tests/.cache/
+
+# Notatka dla prawnika: nie wersjonować (dane organizacyjne)
+Tennis_Together_brief_dla_prawnika.docx
