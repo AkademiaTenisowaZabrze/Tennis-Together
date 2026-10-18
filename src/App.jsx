@@ -15,6 +15,7 @@ import { useTheme, THEME_MODES, THEME_LABELS } from "./lib/theme.js";
 import { usePushNotifications } from "./lib/usePushNotifications.js";
 import atzLogo from "./assets/atz-logo.png";
 import pztLogo from "./assets/pzt-logo.png";
+import appIcon from "./assets/app-icon.svg";
 
 // Szkielet głównego menu z dokumentu założeń (Start / Turnieje / Przejazdy /
 // Noclegi / Moje wyjazdy / Wiadomości / Profil). Każda zakładka na razie to
@@ -181,7 +182,10 @@ export default function App() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <strong style={{ fontFamily: "var(--font-heading)" }}>🎾 Tennis Together</strong>
+          <strong style={{ fontFamily: "var(--font-heading)", display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <img src={appIcon} alt="" width={28} height={28} style={{ borderRadius: 8 }} />
+            Tennis Together
+          </strong>
           <a href="https://www.akademiatenisowazabrze.pl/" target="_blank" rel="noopener noreferrer">
             <img src={atzLogo} alt="Akademia Tenisowa Zabrze" style={{ height: 28, width: "auto" }} />
           </a>

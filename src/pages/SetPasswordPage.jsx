@@ -1,4 +1,5 @@
 import { useState } from "react";
+import appIcon from "../assets/app-icon.svg";
 import { supabase } from "../lib/supabase.js";
 import { useAuth } from "../lib/AuthContext.jsx";
 import ErrorBox from "../components/ErrorBox.jsx";
@@ -46,7 +47,7 @@ export default function SetPasswordPage() {
     >
       <div style={{ width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ textAlign: "center" }}>
-          <p style={{ fontSize: 32, margin: 0 }}>🎾</p>
+          <img src={appIcon} alt="" width={72} height={72} style={{ borderRadius: 20, display: "block", margin: "0 auto" }} />
           <h1 style={{ margin: "4px 0 0" }}>Ustaw nowe hasło</h1>
         </div>
         <div className="glass-card">
