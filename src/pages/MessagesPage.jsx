@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { InlineIcon } from "../components/Icon.jsx";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useConversations } from "../lib/useConversations.js";
 import { useMessages } from "../lib/useMessages.js";
@@ -82,7 +83,7 @@ function ChatView({ conversation, account, onBack }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100dvh - 190px - var(--sat) - var(--sab))", minHeight: 320 }}>
       <button className="btn-ghost" style={{ alignSelf: "flex-start", marginBottom: 12 }} onClick={onBack}>
-        ← Wiadomości
+        <InlineIcon name="arrow-left" />Wiadomości
       </button>
       <h2 style={{ margin: "0 0 4px" }}>{conversation.otherName}</h2>
       <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--muted)" }}>

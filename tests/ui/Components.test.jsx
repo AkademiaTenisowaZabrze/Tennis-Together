@@ -204,7 +204,7 @@ describe("MeetingConfirmation: potwierdzenie spotkania kodem", () => {
 
   it("potwierdzone spotkanie pokazuje tylko odznakę", () => {
     show({ id: "r1", meeting_confirmed_at: "2026-10-02T10:00:00Z" });
-    expect(screen.getByText("🤝 Spotkanie potwierdzone")).toBeInTheDocument();
+    expect(screen.getByText("Spotkanie potwierdzone")).toBeInTheDocument();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 

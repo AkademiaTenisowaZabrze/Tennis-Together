@@ -58,7 +58,7 @@ export default function LodgingPage() {
       </div>
 
       <button className="btn-primary btn-block" onClick={() => setShowForm((v) => !v)}>
-        {showForm ? "Anuluj" : "+ Dodaj ogłoszenie noclegowe"}
+        {showForm ? "Anuluj" : <><InlineIcon name="plus" />Dodaj ogłoszenie noclegowe</>}
       </button>
 
       {showForm && <AddLodgingForm trips={trips} createOffer={createOffer} onDone={() => setShowForm(false)} />}
@@ -83,7 +83,7 @@ export default function LodgingPage() {
       </div>
 
       <button className="btn-secondary btn-block" onClick={() => setShowHostForm((v) => !v)}>
-        {showHostForm ? "Anuluj" : "+ Zaproponuj nocleg u siebie"}
+        {showHostForm ? "Anuluj" : <><InlineIcon name="plus" />Zaproponuj nocleg u siebie</>}
       </button>
 
       {showHostForm && (

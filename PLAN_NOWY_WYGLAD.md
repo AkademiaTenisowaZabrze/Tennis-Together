@@ -45,5 +45,7 @@ Dolny pasek (4 cele, kciuk): **Start · Turnieje · Wyjazdy · Wiadomości**.
 ## Ikony wewnątrz aplikacji (2026-10-18)
 - Zestaw z `PLIKI DO PROJEKTÓW/tennis-together-ikony.md`: koncepcja A „Szew” (pełne bryły) w zakładkach i treści, kafelki C (`TileIcon`) w wierszach Transport/Nocleg na Starcie, koncepcja B „Linia” dostępna jako `variant="B"`.
 - Kod: `src/components/icons.js` (ścieżki, nie edytować ręcznie), `src/components/Icon.jsx` (`Icon`, `InlineIcon`, `TileIcon`, `renderIcon`). Pola `icon` w `Section`/`Collapsible`/`EmptyState` przyjmują klucz ikony lub tekst.
-- Zamienione emoji: 🎾 🚗 🏨 🏠 💬 ✅ 📍 ⭐ 🛡 💰 📅 🧳 🏆 👤 (💚 „bez zwrotu kosztów” → ikona `nofee`, przekreślony portfel). Zostawione zgodnie z plikiem: ⚠️ ⏳ 📷 🔒 🤝 📬 📱 🔢 🧪 🔔 oraz 📖 🐞 📄 w szufladzie „Pomoc” (brak ich w zestawie), 🎾 w tytule wydarzenia kalendarza (.ics).
+- Zamienione emoji i znaki: 🎾 🚗 🏨 🏠 💬 ✅ 📍 ⭐ 🛡 💰 📅 🧳 🏆 👤 oraz (drugi plik `tennis-together-brakujace-ikony-kod.md`, razem 33 ikony) 📖 🐞 📄 🔒 🔔 🤝 📱 🔢 📷 ⏳ ⚠️ 📬 🧪 oraz znaki ＋ ✕ ←. 💚 „bez zwrotu kosztów” ma ikonę `nofee`.
+- Zostaje tylko 🎾 w tytule wydarzenia kalendarza (.ics): to tekst dla aplikacji kalendarza, nie interfejs.
+- Uwaga: ścieżka `handshake` wychodzi o 0,7 px poza siatkę 24 (rękawy przy krawędzi), test dopuszcza 1 px.
 - Testy: `tests/static/icons_set.test.mjs`, `tests/ui/Icons.test.jsx`.

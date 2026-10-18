@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Icon } from "./components/Icon.jsx";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import StartPage from "./pages/StartPage.jsx";
 import TournamentsPage from "./pages/TournamentsPage.jsx";
@@ -66,7 +67,7 @@ export default function App() {
           textAlign: "center",
         }}
       >
-        <div style={{ fontSize: 40 }}>🔒</div>
+        <Icon name="lock" size={44} style={{ color: "var(--accent-ink)" }} />
         <h1 style={{ margin: 0 }}>Konto zawieszone</h1>
         <p style={{ margin: 0, color: "var(--color-text-muted)", maxWidth: 360 }}>
           Dostęp do tego konta został tymczasowo zablokowany — np. z powodu wygasłej płatności.

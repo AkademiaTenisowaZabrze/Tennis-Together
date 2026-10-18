@@ -144,7 +144,7 @@ function ParentProfile() {
               cursor: avatarBusy ? "default" : "pointer",
             }}
           >
-            📷
+            <Icon name="camera" size={13} />
             <input type="file" accept="image/*" capture="user" onChange={handleAvatarChange} disabled={avatarBusy} style={{ display: "none" }} />
           </label>
         </div>
@@ -156,7 +156,7 @@ function ParentProfile() {
           {account?.verified && <span className="badge-verified"><InlineIcon name="shield" size={15} />Parent Verified</span>}
           {account?.coach_requested && account.role !== "coach" && (
             <p className="small-note" style={{ margin: "4px 0 0" }}>
-              ⏳ Prośba o rolę trenera czeka na zatwierdzenie przez administratora.
+              <InlineIcon name="hourglass" size={15} />Prośba o rolę trenera czeka na zatwierdzenie przez administratora.
             </p>
           )}
         </div>
@@ -230,9 +230,9 @@ function ParentProfile() {
         </p>
       </Collapsible>
 
-      <Collapsible id="profil-prywatnosc" icon="🔒" title="Dane i prywatność" summary="regulamin, polityka, usunięcie konta">
-        <a className="dr-link" href={`${SITE_URL}/regulamin.html`} target="_blank" rel="noopener noreferrer">📄 Regulamin</a>
-        <a className="dr-link" href={`${SITE_URL}/polityka-prywatnosci.html`} target="_blank" rel="noopener noreferrer">🔒 Polityka prywatności</a>
+      <Collapsible id="profil-prywatnosc" icon="lock" title="Dane i prywatność" summary="regulamin, polityka, usunięcie konta">
+        <a className="dr-link" href={`${SITE_URL}/regulamin.html`} target="_blank" rel="noopener noreferrer"><InlineIcon name="document" />Regulamin</a>
+        <a className="dr-link" href={`${SITE_URL}/polityka-prywatnosci.html`} target="_blank" rel="noopener noreferrer"><InlineIcon name="lock" />Polityka prywatności</a>
         <DeleteAccountSection />
       </Collapsible>
 
@@ -436,7 +436,7 @@ function PlayerSection() {
             </button>
           ))}
           <button className={`chip ${mode === "add" ? "is-active" : ""}`} onClick={() => setMode("add")}>
-            + Dodaj zawodnika
+            <InlineIcon name="plus" />Dodaj zawodnika
           </button>
         </div>
       )}
@@ -684,12 +684,12 @@ function PlayerForm({ initial, onSubmit, onDone, onCancel, submitLabel, busyLabe
         )}
         {pztCheck.status === "mismatch" && (
           <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--color-secondary)" }}>
-            ⚠️ Portal PZT ma pod tym loginem inne imię i nazwisko: „{pztCheck.pztName}". Sprawdź login.
+            <InlineIcon name="warning" />Portal PZT ma pod tym loginem inne imię i nazwisko: „{pztCheck.pztName}". Sprawdź login.
           </p>
         )}
         {pztCheck.status === "not-found" && (
           <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--color-secondary)" }}>
-            ⚠️ Nie znaleziono takiego loginu w bazie PZT.
+            <InlineIcon name="warning" />Nie znaleziono takiego loginu w bazie PZT.
           </p>
         )}
         {pztCheck.status === "error" && (

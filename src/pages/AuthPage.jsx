@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Icon, InlineIcon } from "../components/Icon.jsx";
 import { supabase } from "../lib/supabase.js";
 import { useAuth } from "../lib/AuthContext.jsx";
 import ErrorBox from "../components/ErrorBox.jsx";
@@ -148,7 +149,7 @@ function LoginForm() {
   if (forgot && resetSent) {
     return (
       <div style={{ textAlign: "center", padding: "8px 0" }}>
-        <p style={{ fontSize: 28, margin: "0 0 8px" }}>📬</p>
+        <p style={{ margin: "0 0 8px" }}><Icon name="mail" size={34} style={{ color: "var(--accent-ink)" }} /></p>
         <p style={{ margin: 0, fontWeight: 700 }}>Sprawdź swoją skrzynkę</p>
         <p style={{ margin: "8px 0 16px", fontSize: 13, color: "var(--color-text-muted)" }}>
           Jeśli konto z adresem {email} istnieje, wysłaliśmy na nie link do ustawienia nowego hasła.
@@ -308,7 +309,7 @@ function RegisterForm({ onDone }) {
   if (confirmNotice) {
     return (
       <div style={{ textAlign: "center", padding: "8px 0" }}>
-        <p style={{ fontSize: 28, margin: "0 0 8px" }}>📬</p>
+        <p style={{ margin: "0 0 8px" }}><Icon name="mail" size={34} style={{ color: "var(--accent-ink)" }} /></p>
         <p style={{ margin: 0, fontWeight: 700 }}>Sprawdź swoją skrzynkę</p>
         <p style={{ margin: "8px 0 16px", fontSize: 13, color: "var(--color-text-muted)" }}>
           Wysłaliśmy link potwierdzający na {email}. Kliknij go, żeby dokończyć zakładanie konta.
@@ -334,7 +335,7 @@ function RegisterForm({ onDone }) {
           padding: "10px 12px",
         }}
       >
-        🧪 Wczesna wersja beta — z powodu technicznego ograniczenia wysyłki maili można zakładać maks.{" "}
+        <InlineIcon name="flask" size={16} />Wczesna wersja beta — z powodu technicznego ograniczenia wysyłki maili można zakładać maks.{" "}
         <strong>{SIGNUP_LIMIT_PER_HOUR} kont na godzinę</strong> (dla całej aplikacji, nie tylko Ciebie).
         {attemptsThisHour != null && (
           <>

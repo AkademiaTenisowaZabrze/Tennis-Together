@@ -140,7 +140,7 @@ export default function StartPage() {
           )}
 
           {todo.length > 0 && (
-            <Section icon="🔔" title="Do zrobienia">
+            <Section icon="bell" title="Do zrobienia">
               {todo.map((t) => (
                 <Link key={t.key} to={t.to} style={{ textDecoration: "none", color: "inherit" }}>
                   <ListItem title={t.title} subtitle={t.sub}>

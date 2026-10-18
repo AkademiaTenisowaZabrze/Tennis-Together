@@ -4,22 +4,22 @@ import { describe, it, expect } from "vitest";
 import { read, filesUnder } from "../helpers/repo.mjs";
 import { ICONS_A, ICONS_B } from "../../src/components/icons.js";
 
-const KEYS = ["home", "trophy", "car", "bed", "route", "chat", "user", "users", "ball", "luggage", "pin", "calendar", "check", "star", "shield", "wallet", "nofee"];
+const KEYS = ["home", "trophy", "car", "bed", "route", "chat", "user", "users", "ball", "luggage", "pin", "calendar", "check", "star", "shield", "wallet", "nofee", "book", "bug", "document", "lock", "bell", "handshake", "phone", "keypad", "camera", "hourglass", "warning", "mail", "flask", "plus", "close", "arrow-left"];
 
 describe("zestaw ikon", () => {
-  it("A i B mają te same 17 kluczy z mapy ikon", () => {
+  it("A i B mają te same 33 klucze z mapy ikon", () => {
     expect(Object.keys(ICONS_A).sort()).toEqual([...KEYS].sort());
     expect(Object.keys(ICONS_B).sort()).toEqual([...KEYS].sort());
   });
 
-  it.each(KEYS)("ikona %s: ścieżki są zamknięte, zaczynają się od M i mieszczą się w siatce 24 x 24", (k) => {
+  it.each(KEYS)("ikona %s: ścieżki są zamknięte, zaczynają się od M i mieszczą się w siatce 24 x 24 (z tolerancją 1 px: rękawy uścisku dłoni wychodzą poza krawędź)", (k) => {
     for (const set of [ICONS_A, ICONS_B]) {
       const d = set[k];
       expect(d).toMatch(/^M[\d. -]+/);
       expect(d.trim().endsWith("Z")).toBe(true);
       const nums = d.match(/-?\d+(\.\d+)?/g).map(Number);
-      expect(Math.min(...nums)).toBeGreaterThanOrEqual(0);
-      expect(Math.max(...nums)).toBeLessThanOrEqual(24);
+      expect(Math.min(...nums)).toBeGreaterThanOrEqual(-1);
+      expect(Math.max(...nums)).toBeLessThanOrEqual(25);
     }
   });
 
@@ -30,12 +30,15 @@ describe("zestaw ikon", () => {
 
 describe("emoji zastąpione ikonami", () => {
   const files = filesUnder("src", /\.(jsx|js)$/).filter((f) => !/src[\\/]demo[\\/]/.test(f) && !/calendarExport/.test(f) && !/icons\.js$/.test(f));
-  const REPLACED = ["🎾", "🚗", "🏨", "🏠", "💬", "✅", "📍", "⭐", "🛡", "💰", "📅", "🧳", "🏆", "👤", "💚"];
+  const REPLACED = ["🎾", "🚗", "🏨", "🏠", "💬", "✅", "📍", "⭐", "🛡", "💰", "📅", "🧳", "🏆", "👤", "💚", "📖", "🐞", "📄", "🔒", "🔔", "🤝", "📱", "🔢", "📷", "⏳", "⚠", "📬", "🧪", "✕", "＋"];
 
   it("w kodzie ekranów nie zostało żadne z zamienionych emoji", () => {
     const left = [];
     for (const f of files) {
-      const t = read(f);
+      const t = read(f)
+        .split("\n")
+        .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+        .join("\n");
       for (const e of REPLACED) if (t.includes(e)) left.push(`${f}: ${e}`);
     }
     expect(left).toEqual([]);

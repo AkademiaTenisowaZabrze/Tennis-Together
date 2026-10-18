@@ -83,7 +83,7 @@ export function PlusButton() {
   return (
     <div className="fab-wrap" ref={wrap}>
       <button type="button" className="fab" aria-label="Dodaj" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-        ＋
+        <Icon name="plus" size={24} />
       </button>
       {open && (
         <div className="popmenu glass" role="menu" aria-label="Dodaj">
@@ -192,7 +192,7 @@ export function Drawer({ open, onClose, account, mode, setMode, signOut }) {
               </small>
             </span>
           </DrawerLink>
-          <button type="button" className="ico" aria-label="Zamknij menu" onClick={onClose}>✕</button>
+          <button type="button" className="ico" aria-label="Zamknij menu" onClick={onClose}><Icon name="close" size={20} /></button>
         </div>
 
         <div className="dr-body">
@@ -221,10 +221,10 @@ export function Drawer({ open, onClose, account, mode, setMode, signOut }) {
 
           <div>
             <h5>Pomoc</h5>
-            <a className="dr-link" href={`${SITE_URL}/dokumentacja.html`} target="_blank" rel="noopener noreferrer"><span className="ic" aria-hidden="true">📖</span>Jak to działa</a>
-            <a className="dr-link" href={`${SITE_URL}/testerzy.html`} target="_blank" rel="noopener noreferrer"><span className="ic" aria-hidden="true">🐞</span>Zgłoś błąd</a>
-            <a className="dr-link" href={`${SITE_URL}/regulamin.html`} target="_blank" rel="noopener noreferrer"><span className="ic" aria-hidden="true">📄</span>Regulamin</a>
-            <a className="dr-link" href={`${SITE_URL}/polityka-prywatnosci.html`} target="_blank" rel="noopener noreferrer"><span className="ic" aria-hidden="true">🔒</span>Polityka prywatności</a>
+            <a className="dr-link" href={`${SITE_URL}/dokumentacja.html`} target="_blank" rel="noopener noreferrer"><span className="ic" aria-hidden="true"><Icon name="book" size={20} /></span>Jak to działa</a>
+            <a className="dr-link" href={`${SITE_URL}/testerzy.html`} target="_blank" rel="noopener noreferrer"><span className="ic" aria-hidden="true"><Icon name="bug" size={20} /></span>Zgłoś błąd</a>
+            <a className="dr-link" href={`${SITE_URL}/regulamin.html`} target="_blank" rel="noopener noreferrer"><span className="ic" aria-hidden="true"><Icon name="document" size={20} /></span>Regulamin</a>
+            <a className="dr-link" href={`${SITE_URL}/polityka-prywatnosci.html`} target="_blank" rel="noopener noreferrer"><span className="ic" aria-hidden="true"><Icon name="lock" size={20} /></span>Polityka prywatności</a>
           </div>
 
           <div>

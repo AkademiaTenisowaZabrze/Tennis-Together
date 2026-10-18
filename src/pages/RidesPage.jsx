@@ -89,8 +89,13 @@ export default function RidesPage() {
         </button>
       </div>
 
-      <button className="btn-primary" style={{ alignSelf: "flex-start" }} onClick={() => setShowForm((v) => !v)}>
-        {showForm ? "Anuluj" : tab === "offers" ? "+ Mam wolne miejsce" : "+ Szukam przejazdu"}
+      <button
+        className="btn-primary"
+        style={{ alignSelf: "flex-start" }}
+        aria-label={showForm ? undefined : tab === "offers" ? "Dodaj: mam wolne miejsce" : "Dodaj: szukam przejazdu"}
+        onClick={() => setShowForm((v) => !v)}
+      >
+        {showForm ? "Anuluj" : <><InlineIcon name="plus" />{tab === "offers" ? "Mam wolne miejsce" : "Szukam przejazdu"}</>}
       </button>
 
       {showForm &&

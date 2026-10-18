@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Icon, InlineIcon } from "./Icon.jsx";
 import QRCode from "qrcode";
 import { inputStyle } from "./formStyles.js";
 
@@ -17,7 +18,7 @@ export default function MeetingConfirmation({ request, joinRequests }) {
   const [error, setError] = useState(null);
 
   if (request.meeting_confirmed_at) {
-    return <span className="badge-verified">🤝 Spotkanie potwierdzone</span>;
+    return <span className="badge-verified"><InlineIcon name="handshake" size={15} />Spotkanie potwierdzone</span>;
   }
 
   const handleShowCode = async () => {
@@ -63,10 +64,10 @@ export default function MeetingConfirmation({ request, joinRequests }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button type="button" className="btn-ghost" onClick={handleShowCode} disabled={busy}>
-            📱 Pokaż mój kod
+            <InlineIcon name="phone" />Pokaż mój kod
           </button>
           <button type="button" className="btn-ghost" onClick={() => setMode("enter")} disabled={busy}>
-            🔢 Wpisz kod drugiej osoby
+            <InlineIcon name="keypad" />Wpisz kod drugiej osoby
           </button>
         </div>
         {/* Błąd generowania kodu musi być widoczny także przed wejściem w tryb "show" */}

@@ -63,7 +63,7 @@ describe("lista ofert", () => {
 describe("dodawanie oferty: zwrot kosztów i zgoda na kalkulator", () => {
   async function openForm() {
     const user = await open();
-    await user.click(screen.getByRole("button", { name: "+ Mam wolne miejsce" }));
+    await user.click(screen.getByRole("button", { name: "Dodaj: mam wolne miejsce" }));
     return user;
   }
 
@@ -149,8 +149,8 @@ describe("dodawanie oferty: zwrot kosztów i zgoda na kalkulator", () => {
     fake.db.trips = [];
     const user = userEvent.setup();
     renderWithApp(<RidesPage />);
-    await screen.findByRole("button", { name: "+ Mam wolne miejsce" });
-    await user.click(screen.getByRole("button", { name: "+ Mam wolne miejsce" }));
+    await screen.findByRole("button", { name: "Dodaj: mam wolne miejsce" });
+    await user.click(screen.getByRole("button", { name: "Dodaj: mam wolne miejsce" }));
     expect(await screen.findByText(/Najpierw zgłoś wyjazd na turniej/)).toBeInTheDocument();
   });
 });
