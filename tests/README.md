@@ -1,14 +1,14 @@
 # Testy Tennis Together
 
-Pakiet około 670 testów w sześciu warstwach. Nie wymaga dostępu do produkcji (poza warstwą `live`,
+Pakiet około 870 testów w siedmiu warstwach. Nie wymaga dostępu do produkcji (poza warstwą `live`,
 która tylko czyta jako anonim) ani Dockera: baza to PGlite (Postgres w WASM) z prawdziwymi migracjami.
 
 | Warstwa | Katalog | Co sprawdza | Uruchomienie |
 |---------|---------|-------------|--------------|
 | Baza | `tests/db` | RLS, triggery, funkcje SECURITY DEFINER, eskalacja uprawnień, kalkulator kosztów, kody spotkań, push | `npm run test:db` |
-| Statyczne | `tests/static` | sekrety, Android, CSP/XSS, workflow CI, funkcje brzegowe, RODO, higiena migracji | `npm run test:static` |
+| Statyczne | `tests/static` | sekrety, Android, CSP/XSS, workflow CI, funkcje brzegowe, RODO, higiena migracji, tokeny i kontrast (`tokens`), ikona aplikacji (`icon`), zestaw ikon (`icons_set`), strona (`site_design`) | `npm run test:static` |
 | Jednostkowe | `tests/unit` | eksport do kalendarza, geo, formaty PZT | `npm run test:unit` |
-| UI | `tests/ui` | strony React na atrapie Supabase (Rides, Auth, Turnieje, Start, Wyjazdy, komponenty) | `npm run test:ui` |
+| UI | `tests/ui` | strony React na atrapie Supabase (Rides, Auth, Turnieje, Start, Wyjazdy, Profil, komponenty), warstwy i przycisk „wstecz”, dostępność (`Accessibility`), ikony (`Icons`) | `npm run test:ui` |
 | Python | `tests/python` | skrypty (cena paliwa, smoke test) z atrapą sieci | `python -m unittest discover -s tests/python` |
 | Live | `tests/live` | czarna skrzynka na produkcji jako anonim (tylko odczyty/odrzucone zapisy) | `python -m unittest discover -s tests/live` |
 | Mutacje | `tests/mutation` | psuje migracje celowo i sprawdza, czy testy bazy to wykryją | `node tests/mutation/run_mutations.mjs [nr ...]` |

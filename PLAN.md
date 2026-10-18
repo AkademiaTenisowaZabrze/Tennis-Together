@@ -56,7 +56,8 @@ Wdrożona jako design tokens w `src/styles/tokens.css` + demo na stronie Start.
 - **Styl:** glassmorphism, Dark Mode Premium domyślnie (oszczędza baterię na
   całodniowych turniejach), Light Mode jako ręczny przełącznik (czytelność w
   słońcu na korcie) — nie podłączony pod ustawienia systemowe telefonu.
-- **Paleta:** Tennis Ball Neon `#D4FF00` (primary), Clay Court Coral `#FF5E3A`
+- **Uwaga (2026-10-18):** poniższa paleta i typografia są historyczne. Aplikacja ma nowy wygląd (mięta `#8EE3C8` i grafit `#1F2933`, czcionka systemowa), patrz [PLAN_NOWY_WYGLAD.md](PLAN_NOWY_WYGLAD.md).
+- **Paleta (historyczna):** Tennis Ball Neon `#D4FF00` (primary), Clay Court Coral `#FF5E3A`
   (secondary), Emerald/Cyan (`#10B981` / `#00F0FF`) na odznakę "Parent
   Verified", Deep Court Graphite `#0D131E` (tło dark), Soft Ice Gray `#F4F6FB`
   (tło light).

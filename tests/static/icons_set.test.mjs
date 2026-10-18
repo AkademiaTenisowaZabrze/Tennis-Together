@@ -4,10 +4,10 @@ import { describe, it, expect } from "vitest";
 import { read, filesUnder } from "../helpers/repo.mjs";
 import { ICONS_A, ICONS_B } from "../../src/components/icons.js";
 
-const KEYS = ["home", "trophy", "car", "bed", "route", "chat", "user", "users", "ball", "luggage", "pin", "calendar", "check", "star", "shield", "wallet"];
+const KEYS = ["home", "trophy", "car", "bed", "route", "chat", "user", "users", "ball", "luggage", "pin", "calendar", "check", "star", "shield", "wallet", "nofee"];
 
 describe("zestaw ikon", () => {
-  it("A i B mają te same 16 kluczy z mapy ikon", () => {
+  it("A i B mają te same 17 kluczy z mapy ikon", () => {
     expect(Object.keys(ICONS_A).sort()).toEqual([...KEYS].sort());
     expect(Object.keys(ICONS_B).sort()).toEqual([...KEYS].sort());
   });
@@ -30,7 +30,7 @@ describe("zestaw ikon", () => {
 
 describe("emoji zastąpione ikonami", () => {
   const files = filesUnder("src", /\.(jsx|js)$/).filter((f) => !/src[\\/]demo[\\/]/.test(f) && !/calendarExport/.test(f) && !/icons\.js$/.test(f));
-  const REPLACED = ["🎾", "🚗", "🏨", "🏠", "💬", "✅", "📍", "⭐", "🛡", "💰", "📅", "🧳", "🏆", "👤"];
+  const REPLACED = ["🎾", "🚗", "🏨", "🏠", "💬", "✅", "📍", "⭐", "🛡", "💰", "📅", "🧳", "🏆", "👤", "💚"];
 
   it("w kodzie ekranów nie zostało żadne z zamienionych emoji", () => {
     const left = [];

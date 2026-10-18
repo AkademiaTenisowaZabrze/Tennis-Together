@@ -128,6 +128,7 @@
   <nav>
     <a href="testerzy.html">Strona testerów</a>
     <a href="#architektura">Architektura</a>
+    <a href="#wyglad">Wygląd</a>
     <a href="#dane">Model danych</a>
     <a href="#prywatnosc">Prywatność</a>
     <a href="#zaufanie">Zaufanie</a>
@@ -218,6 +219,19 @@
         <tr><td>Hosting dokumentacji</td><td>GitHub Pages (ten sam publiczny branch <code>main</code>, folder <code>/docs</code>)</td></tr>
       </table>
     </div>
+  </section>
+
+  <section id="wyglad">
+    <div class="section-head"><h2>Wygląd, ikony i dostępność</h2></div>
+    <p>Wygląd opiera się na standardzie designu v1 (tokeny, pływający pasek zakładek, szuflada menu, szkło tylko na elementach pływających) i na ikonie aplikacji: walizka uszyta z piłki tenisowej, mięta <code>#8EE3C8</code> i grafit <code>#1F2933</code>.</p>
+    <ul>
+      <li><strong>Tokeny.</strong> Wszystkie kolory, promienie i odstępy są zmiennymi CSS w <code>src/styles/tokens.css</code>. Strona (<code>docs/site.css</code>) używa tych samych kolorów. Test pilnuje, żeby oba pliki się zgadzały.</li>
+      <li><strong>Motyw.</strong> Jasny i ciemny według ustawień telefonu, ręczny wybór w menu, wysoki kontrast i ograniczenie animacji obsługiwane z poziomu CSS. Czcionka systemowa, bez zewnętrznych czcionek.</li>
+      <li><strong>Nawigacja.</strong> Cztery zakładki (Start, Turnieje, Wyjazdy, Wiadomości), reszta w szufladzie menu. Przycisk „wstecz” zamyka kolejno warstwy nakładek (<code>src/lib/layers.js</code>).</li>
+      <li><strong>Ikony.</strong> Zestaw z koncepcji „Szew” (<code>src/components/icons.js</code>, komponenty w <code>Icon.jsx</code>). Zamiast emoji, które wyglądają inaczej na każdym telefonie.</li>
+      <li><strong>Dostępność.</strong> Cele dotyku co najmniej 44 px, etykiety powiązane z polami, kontrast tekstu co najmniej 4,5:1 w obu motywach, obsługa bezpiecznych obszarów (pasek statusu, gestów i boki w poziomie), pasek zakładek chowany przy klawiaturze ekranowej.</li>
+      <li><strong>Tryb demo.</strong> <code>npm run dev:demo</code> uruchamia aplikację z atrapą bazy i wymyślonym użytkownikiem, bez połączenia z produkcją. Służy do oglądania wyglądu i do testów na emulatorze.</li>
+    </ul>
   </section>
 
   <section id="dane">

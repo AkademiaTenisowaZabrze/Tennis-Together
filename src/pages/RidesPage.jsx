@@ -388,7 +388,7 @@ function OfferCard({ offer: r, account, trips, joinRequests }) {
         {r.cost_refund && r.cost_per_person_pln != null ? (
           <span className="status-pill muted"><InlineIcon name="wallet" size={14} />zwrot kosztów: {costLabel(r.cost_per_person_pln)}</span>
         ) : (
-          <span className="status-pill muted"><InlineIcon name="check" size={14} />bez zwrotu kosztów</span>
+          <span className="status-pill muted"><InlineIcon name="nofee" size={14} />bez zwrotu kosztów</span>
         )}
         {r.cost_split_suggestion && <span className="status-pill muted">{r.cost_split_suggestion}</span>}
       </div>

@@ -1,4 +1,4 @@
-# 🎾 Tennis Together
+# Tennis Together
 
 Aplikacja do organizacji wspólnych wyjazdów na turnieje tenisowe — przejazdy,
 noclegi i grupy wyjazdowe dla zawodników i rodziców.
@@ -11,6 +11,10 @@ Założenia funkcjonalne: [docs/ATZ_Aplikacja_Zawodnicy_Rodzice_Zalozenia.docx](
 - **Frontend:** React + Vite + Capacitor (Android + PWA)
 - **Backend:** Supabase (Postgres + PostGIS + Auth + Realtime)
 
+## Wygląd
+
+Nowy wygląd (mięta i grafit, zestaw ikon, jasny i ciemny motyw) opisuje [PLAN_NOWY_WYGLAD.md](PLAN_NOWY_WYGLAD.md). Tokeny są w `src/styles/tokens.css`, ikony w `src/components/icons.js`.
+
 ## Uruchomienie lokalne
 
 ```bash
@@ -20,6 +24,10 @@ npm run dev
 ```
 
 Aplikacja wystartuje na http://localhost:3100.
+
+Bez konta i bez połączenia z bazą (atrapa z wymyślonym użytkownikiem): `npm run dev:demo`.
+
+Testy: `npm test` (opis w [tests/README.md](tests/README.md)).
 
 ## Baza danych
 

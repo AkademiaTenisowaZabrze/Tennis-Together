@@ -23,7 +23,7 @@ Dolny pasek (4 cele, kciuk): **Start · Turnieje · Wyjazdy · Wiadomości**.
 | 5 ✅ | Ekrany | Start, Turnieje, Wyjazdy (3 chipy), Wiadomości, Profil (sekcje), Logowanie/Rejestracja (+captcha), Klub, Ustawienie hasła. **Znak aplikacji (walizka z piłki) zamiast emoji 🎾** na logowaniu (zrobione w etapie 2), w nagłówku, w szufladzie, na ekranie ustawienia hasła i w stanach pustych | testy UI istniejące + nowe; zrzuty każdego ekranu |
 | 6 ✅ | Strona | nowa strona główna, wspólne tokeny dla `docs/*.html` (regulamin, polityka, dokumentacja, testerzy, admin), widok aplikacji na komputerze (pasek zakładek u góry po lewej) | testy statyczne stron, zrzuty szerokości 360/768/1280 |
 | 7 ✅ | Dostępność i szlify | kontrast 4,5:1 w obu motywach, cele dotyku 44 px, `aria-*`, `:focus-visible`, `inert` szuflady, wysoki kontrast, poziomy układ, mały telefon 360 px, klawiatura ekranowa | lista kontrolna ze standardu (część 9), zrzuty |
-| 8 | Wydanie | wersja, build APK na CI, aktualizacja `tests/README`, dokumentacji i pamięci | pełny zestaw testów, smoke, live |
+| 8 ✅ | Wydanie | wersja, build APK na CI, aktualizacja `tests/README`, dokumentacji i pamięci | pełny zestaw testów, smoke, live |
 
 ## Dopisane w trakcie
 - 2026-10-18 (Paweł): przycisk „＋” w wariancie A: okienko z dwiema akcjami (Dodaj wyjazd na turniej, Dodaj ofertę przejazdu), tylko na Starcie i w Wyjazdach.
@@ -45,5 +45,5 @@ Dolny pasek (4 cele, kciuk): **Start · Turnieje · Wyjazdy · Wiadomości**.
 ## Ikony wewnątrz aplikacji (2026-10-18)
 - Zestaw z `PLIKI DO PROJEKTÓW/tennis-together-ikony.md`: koncepcja A „Szew” (pełne bryły) w zakładkach i treści, kafelki C (`TileIcon`) w wierszach Transport/Nocleg na Starcie, koncepcja B „Linia” dostępna jako `variant="B"`.
 - Kod: `src/components/icons.js` (ścieżki, nie edytować ręcznie), `src/components/Icon.jsx` (`Icon`, `InlineIcon`, `TileIcon`, `renderIcon`). Pola `icon` w `Section`/`Collapsible`/`EmptyState` przyjmują klucz ikony lub tekst.
-- Zamienione emoji: 🎾 🚗 🏨 🏠 💬 ✅ 📍 ⭐ 🛡 💰 📅 🧳 🏆 👤 (💚 „bez zwrotu kosztów” → check). Zostawione zgodnie z plikiem: ⚠️ ⏳ 📷 🔒 🤝 📬 📱 🔢 🧪 🔔 oraz 📖 🐞 📄 w szufladzie „Pomoc” (brak ich w zestawie), 🎾 w tytule wydarzenia kalendarza (.ics).
+- Zamienione emoji: 🎾 🚗 🏨 🏠 💬 ✅ 📍 ⭐ 🛡 💰 📅 🧳 🏆 👤 (💚 „bez zwrotu kosztów” → ikona `nofee`, przekreślony portfel). Zostawione zgodnie z plikiem: ⚠️ ⏳ 📷 🔒 🤝 📬 📱 🔢 🧪 🔔 oraz 📖 🐞 📄 w szufladzie „Pomoc” (brak ich w zestawie), 🎾 w tytule wydarzenia kalendarza (.ics).
 - Testy: `tests/static/icons_set.test.mjs`, `tests/ui/Icons.test.jsx`.
