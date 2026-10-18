@@ -11,6 +11,7 @@ import ClubPage from "./pages/ClubPage.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
 import SetPasswordPage from "./pages/SetPasswordPage.jsx";
 import { useAuth } from "./lib/AuthContext.jsx";
+import { useTheme, THEME_MODES, THEME_LABELS } from "./lib/theme.js";
 import { usePushNotifications } from "./lib/usePushNotifications.js";
 import atzLogo from "./assets/atz-logo.png";
 import pztLogo from "./assets/pzt-logo.png";
@@ -51,24 +52,6 @@ function TabIcon({ name }) {
 // Zakładka "Klub" dochodzi tylko dla roli `coach` (PLAN.md, panel
 // trenera/klubu) — reszcie użytkowników niepotrzebnie zaśmiecałaby menu.
 const COACH_TAB = { to: "/klub", label: "Klub", icon: "users" };
-
-const THEME_STORAGE_KEY = "tennis-together-theme";
-
-// Dark Mode Premium jest domyślny z dokumentu UX (docs/UX_Branding_Tennis_Together.docx) —
-// Light Mode jest świadomym wyborem użytkownika (np. pełne słońce na korcie),
-// nie wynika z ustawień systemowych telefonu.
-function useTheme() {
-  const [theme, setTheme] = useState(
-    () => localStorage.getItem(THEME_STORAGE_KEY) || "dark"
-  );
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
-  }, [theme]);
-
-  return [theme, setTheme];
-}
 
 export function BottomNav({ account }) {
   return (
@@ -121,7 +104,7 @@ export function BottomNav({ account }) {
 }
 
 export default function App() {
-  const [theme, setTheme] = useTheme();
+  const { mode, setMode } = useTheme();
   const { session, loading, account, signOut, recovery } = useAuth();
   // Rejestracja do powiadomień push — hook sam pilnuje, że nie robi nic
   // bez zalogowanego konta i poza natywną apką (przeglądarka/PWA).
@@ -207,7 +190,7 @@ export default function App() {
           </a>
         </div>
         <button
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          onClick={() => setMode(THEME_MODES[(THEME_MODES.indexOf(mode) + 1) % THEME_MODES.length])}
           aria-label="Przełącz tryb jasny/ciemny"
           style={{
             background: "transparent",
@@ -219,7 +202,7 @@ export default function App() {
             fontSize: 13,
           }}
         >
-          {theme === "dark" ? "☀️ Jasny" : "🌙 Ciemny"}
+          {mode === "auto" ? "🌓" : mode === "dark" ? "🌙" : "☀️"} {THEME_LABELS[mode]}
         </button>
       </header>
 

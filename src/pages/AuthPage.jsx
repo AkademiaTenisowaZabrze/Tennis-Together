@@ -8,6 +8,7 @@ import Captcha, { captchaEnabled } from "../components/Captcha.jsx";
 import PasswordInput from "../components/PasswordInput.jsx";
 import atzLogo from "../assets/atz-logo.png";
 import pztLogo from "../assets/pzt-logo.png";
+import appIcon from "../assets/app-icon.svg";
 
 // Podniesione z 2 na 30 po wlaczeniu wlasnego SMTP (Gmail akademii) w
 // Supabase - domyslny, wbudowany mailer Supabase mial twardy limit 2/h,
@@ -53,7 +54,7 @@ export default function AuthPage() {
     >
       <div style={{ width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ textAlign: "center" }}>
-          <p style={{ fontSize: 32, margin: 0 }}>🎾</p>
+          <img src={appIcon} alt="" width={84} height={84} style={{ borderRadius: 22, display: "block", margin: "0 auto" }} />
           <h1 style={{ margin: "4px 0 0" }}>Tennis Together</h1>
           <p style={{ margin: "4px 0 0", color: "var(--color-text-muted)", fontSize: 13 }}>
             Wspólne wyjazdy na turnieje tenisowe

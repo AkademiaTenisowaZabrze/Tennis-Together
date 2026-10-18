@@ -1,60 +1,124 @@
 /*
- * Design tokens — "Neon Court & Cyber Clay" (docs/UX_Branding_Tennis_Together.docx)
+ * Tokeny designu wg STANDARDU DESIGNU v1 (część 2), z akcentem z ikony aplikacji:
+ * mięta #8EE3C8 i grafit #1F2933 (PLAN_NOWY_WYGLAD.md).
  *
- * Domyślny jest Dark Mode Premium (zgodnie z dokumentem: ciemne tło oszczędza
- * baterię w trakcie całodniowych turniejów). Light Mode jest przełącznikiem
- * ręcznym (przydatny w pełnym słońcu na korcie), nie zależy od ustawień
- * systemowych telefonu — patrz przełącznik w nagłówku (App.jsx).
+ * Motyw: domyślnie według telefonu (prefers-color-scheme). Ręczny wybór ustawia
+ * <html data-theme="light|dark"> (patrz src/lib/theme.js). Wysoki kontrast
+ * (prefers-contrast: more) wzmacnia obrysy i zamienia szkło na tło jednolite.
  *
- * Uwaga przy wdrażaniu realnych ekranów: kontrast tekstu na #D4FF00 i na
- * #FF5E3A trzeba sprawdzić narzędziem WCAG dla każdego konkretnego użycia
- * (rozmiar czcionki, tło) — tu ustawione są bezpieczne domyślne pary
- * (ciemny tekst na jaskrawych akcentach), ale to nie zwalnia z testu przy
- * pierwszych realnych ekranach z danymi.
+ * Mięta służy do WYPEŁNIEŃ (przycisk główny, pigułka aktywnej zakładki) z grafitowym
+ * tekstem (--on-accent, kontrast ok. 10:1). Jako KOLOR TEKSTU/IKONY na jasnym tle używamy
+ * --accent-ink (ciemniejsza mięta, kontrast >= 4,5:1).
  */
 
 :root {
-  /* Dark Mode Premium — domyślny */
-  --color-bg: #0d131e; /* Deep Court Graphite */
-  --color-bg-elevated: #121a28;
-  --color-card: rgba(22, 32, 50, 0.7); /* "Mrożone Szkło" */
-  --color-card-border: rgba(255, 255, 255, 0.08);
-  --color-text: #f4f6fb;
-  --color-text-muted: #9aa5b8;
+  --bg: #f3f4f7;
+  --panel: #ffffff;
+  --text: #1f2933;
+  --muted: #5e6a7b;
+  --line: #dfe3e8;
 
-  --color-primary: #d4ff00; /* Tennis Ball Neon */
-  --color-primary-text: #0d131e; /* tekst NA przycisku primary */
-  --color-secondary: #ff5e3a; /* Clay Court Coral */
-  --color-secondary-text: #0d131e;
-  --color-verified: #10b981; /* Emerald — odznaka "Parent Verified" */
-  --color-verified-glow: #00f0ff; /* Cyber Cyan — akcent/glow, nie tekst (słaby kontrast) */
+  --accent: #8ee3c8;
+  --on-accent: #1f2933;
+  --accent-ink: #0f6b57;
+  --ok: #23764a;
+  --warn: #8a5d00;
+  --err: #c0392b;
 
-  --radius-card: 16px;
-  --blur-glass: 16px;
+  --sat: var(--safe-area-inset-top, env(safe-area-inset-top, 0px)); /* pasek statusu */
+  --sab: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)); /* pasek gestów */
+  --r-lg: 28px;
+  --r-card: 20px;
+  --r-md: 16px;
+  --r-sm: 12px;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --touch: 46px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 
-  --font-heading: "Plus Jakarta Sans", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
+  --surface: var(--panel);
+  --surface-2: color-mix(in srgb, var(--accent) 7%, var(--panel)); /* tło kart */
+  --tonal: color-mix(in srgb, var(--accent) 30%, var(--panel)); /* przyciski, chipy, ikony tonalne */
+  --glass: color-mix(in srgb, var(--panel) 82%, transparent);
+  --glass-line: color-mix(in srgb, var(--text) 10%, transparent);
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.08), 0 3px 10px rgba(0, 0, 0, 0.06);
 
+  --font: system-ui, Roboto, "Segoe UI", sans-serif;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161c;
+    --panel: #1b212a;
+    --text: #e8ecf1;
+    --muted: #97a3b3;
+    --line: #2c3541;
+    --accent-ink: #8ee3c8;
+    --ok: #6fd39b;
+    --warn: #f1c04a;
+    --err: #ff8a7d;
+    --tonal: color-mix(in srgb, var(--accent) 20%, var(--panel));
+    --surface-2: color-mix(in srgb, var(--accent) 6%, var(--panel));
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #12161c;
+  --panel: #1b212a;
+  --text: #e8ecf1;
+  --muted: #97a3b3;
+  --line: #2c3541;
+  --accent-ink: #8ee3c8;
+  --ok: #6fd39b;
+  --warn: #f1c04a;
+  --err: #ff8a7d;
+  --tonal: color-mix(in srgb, var(--accent) 20%, var(--panel));
+  --surface-2: color-mix(in srgb, var(--accent) 6%, var(--panel));
   color-scheme: dark;
 }
 
-:root[data-theme="light"] {
-  /* Light Mode — czytelność w pełnym słońcu na kortach otwartych */
-  --color-bg: #f4f6fb; /* Soft Ice Gray */
-  --color-bg-elevated: #ffffff;
-  --color-card: rgba(255, 255, 255, 0.75);
-  --color-card-border: rgba(13, 19, 30, 0.08);
-  --color-text: #0d131e;
-  --color-text-muted: #586174;
+/* Wysoki kontrast: mocniejsze obrysy, tekst pomocniczy w kolorze tekstu, bez szkła. */
+@media (prefers-contrast: more) {
+  :root {
+    --line: color-mix(in srgb, var(--text) 60%, transparent);
+    --glass-line: color-mix(in srgb, var(--text) 70%, transparent);
+    --muted: var(--text);
+  }
+}
 
-  --color-primary: #7a9400; /* Tennis Ball Neon przyciemniony — AA na jasnym tle */
-  --color-primary-text: #0d131e;
-  --color-secondary: #c2431f; /* Clay Court Coral przyciemniony — kontrast tekstu */
-  --color-secondary-text: #ffffff;
-  --color-verified: #0d7a5f;
-  --color-verified-glow: #0086a8;
+/* ── Aliasy starych nazw (przejściowo, do końca przebudowy ekranów) ── */
+:root {
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--panel);
+  --color-card: var(--surface-2);
+  --color-card-border: var(--glass-line);
+  --color-text: var(--text);
+  --color-text-muted: var(--muted);
+  --color-primary: var(--accent);
+  --color-primary-text: var(--on-accent);
+  --color-secondary: var(--warn);
+  --color-secondary-text: var(--on-accent);
+  --color-verified: var(--ok);
+  --radius-card: var(--r-card);
+  --font-heading: var(--font);
+  --font-body: var(--font);
+}
 
-  color-scheme: light;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 * {
@@ -63,91 +127,170 @@
 
 body {
   margin: 0;
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-body);
-  transition: background 0.2s ease, color 0.2s ease;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.4 var(--font);
+  -webkit-text-size-adjust: 100%;
 }
 
 a {
   color: inherit;
 }
 
-h1, h2, h3, h4 {
-  font-family: var(--font-heading);
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font);
 }
 
+h1 {
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 16px;
+  font-weight: 650;
+}
+
+/* Pola formularzy ZAWSZE 16 px (inaczej iOS powiększa stronę przy fokusie). */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+:focus-visible {
+  outline: 2.5px solid color-mix(in srgb, var(--accent-ink) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* ── Szkło: tylko elementy pływające nad treścią (menu, pasek zakładek, okna) ── */
+.glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+  border: 1px solid var(--glass-line);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.22);
+}
+
+@media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: var(--panel) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+/* ── Karty w treści są jednolite (bez szkła), tonalne ── */
 .glass-card {
-  background: var(--color-card);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-card);
-  backdrop-filter: blur(var(--blur-glass));
-  -webkit-backdrop-filter: blur(var(--blur-glass));
-  padding: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--glass-line);
+  border-radius: var(--r-card);
+  padding: 14px;
+}
+
+/* ── Przyciski ── */
+.btn-primary,
+.btn-secondary,
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--touch);
+  border-radius: 14px;
+  padding: 10px 18px;
+  font: 600 15px var(--font);
+  cursor: pointer;
+  text-decoration: none;
 }
 
 .btn-primary {
-  background: var(--color-primary);
-  color: var(--color-primary-text);
-  border: none;
-  border-radius: 999px;
-  padding: 10px 20px;
-  font-weight: 700;
-  font-family: var(--font-heading);
-  cursor: pointer;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 1px solid var(--accent);
+  box-shadow: var(--elev-1);
 }
 
 .btn-secondary {
-  background: var(--color-secondary);
-  color: var(--color-secondary-text);
-  border: none;
-  border-radius: 999px;
-  padding: 10px 20px;
-  font-weight: 700;
-  font-family: var(--font-heading);
+  background: var(--tonal);
+  color: var(--text);
+  border: 0;
+}
+
+.btn-ghost {
+  background: var(--tonal);
+  color: var(--text);
+  border: 0;
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--touch);
+  border: 0;
+  border-radius: 14px;
+  padding: 10px 18px;
+  font: 600 15px var(--font);
+  background: color-mix(in srgb, var(--err) 11%, var(--surface));
+  color: var(--err);
   cursor: pointer;
+}
+
+.btn-primary:active,
+.btn-secondary:active,
+.btn-ghost:active,
+.btn-danger:active {
+  transform: scale(0.985);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-ghost:disabled,
+.btn-danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .badge-verified {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: var(--color-verified);
+  color: var(--ok);
   font-size: 12px;
   font-weight: 600;
 }
 
-/* ── Komponenty wspólne dla list/filtrów (Turnieje, Przejazdy, Noclegi) ── */
-
-.btn-ghost {
-  background: transparent;
-  color: var(--color-text);
-  border: 1px solid var(--color-card-border);
-  border-radius: 999px;
-  padding: 10px 20px;
-  font-weight: 700;
-  font-family: var(--font-heading);
-  cursor: pointer;
-}
-
+/* ── Chipy, przełączniki, pigułki stanu ── */
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  border: 1px solid var(--color-card-border);
-  background: var(--color-bg-elevated);
-  color: var(--color-text-muted);
+  gap: 6px;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
   border-radius: 999px;
-  padding: 6px 14px;
-  font-size: 13px;
+  padding: 6px 13px;
+  font: 500 13px var(--font);
   cursor: pointer;
   white-space: nowrap;
 }
 
 .chip.is-active {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  background: var(--tonal);
+  border-color: var(--accent-ink);
   font-weight: 600;
+}
+
+.chip.is-off {
+  opacity: 0.6;
+  text-decoration: line-through;
 }
 
 .chip-row {
@@ -159,8 +302,8 @@ h1, h2, h3, h4 {
 
 .segmented {
   display: flex;
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-card-border);
+  background: var(--panel);
+  border: 1px solid var(--line);
   border-radius: 999px;
   padding: 4px;
   gap: 4px;
@@ -168,20 +311,19 @@ h1, h2, h3, h4 {
 
 .segmented button {
   flex: 1;
+  min-height: 38px;
   border: none;
   background: transparent;
-  color: var(--color-text-muted);
+  color: var(--muted);
   border-radius: 999px;
   padding: 8px 12px;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: var(--font-heading);
+  font: 600 13px var(--font);
   cursor: pointer;
 }
 
 .segmented button.is-active {
-  background: var(--color-primary);
-  color: var(--color-primary-text);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 .status-pill {
@@ -195,18 +337,18 @@ h1, h2, h3, h4 {
 }
 
 .status-pill.ok {
-  background: color-mix(in srgb, var(--color-verified) 18%, transparent);
-  color: var(--color-verified);
+  background: color-mix(in srgb, var(--ok) 16%, var(--panel));
+  color: var(--ok);
 }
 
 .status-pill.pending {
-  background: color-mix(in srgb, var(--color-secondary) 18%, transparent);
-  color: var(--color-secondary);
+  background: color-mix(in srgb, var(--warn) 16%, var(--panel));
+  color: var(--warn);
 }
 
 .status-pill.muted {
-  background: var(--color-bg-elevated);
-  color: var(--color-text-muted);
+  background: var(--panel);
+  color: var(--muted);
 }
 
 .card-disabled {
@@ -221,19 +363,18 @@ h1, h2, h3, h4 {
   right: 12px;
   font-size: 11px;
   font-weight: 700;
-  color: var(--color-text-muted);
-  border: 1px solid var(--color-card-border);
+  color: var(--muted);
+  border: 1px solid var(--line);
   border-radius: 999px;
   padding: 2px 10px;
-  background: var(--color-bg-elevated);
+  background: var(--panel);
 }
 
 .avatar-circle {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-card-border);
+  background: var(--tonal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -251,15 +392,15 @@ h1, h2, h3, h4 {
 }
 
 .chat-bubble.theirs {
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-card-border);
+  background: var(--panel);
+  border: 1px solid var(--glass-line);
   align-self: flex-start;
   border-bottom-left-radius: 4px;
 }
 
 .chat-bubble.mine {
-  background: var(--color-primary);
-  color: var(--color-primary-text);
+  background: var(--accent);
+  color: var(--on-accent);
   align-self: flex-end;
   border-bottom-right-radius: 4px;
 }
@@ -270,9 +411,9 @@ h1, h2, h3, h4 {
   gap: 12px;
   width: 100%;
   padding: 12px;
-  border-radius: 12px;
-  border: 1px solid var(--color-card-border);
-  background: var(--color-bg-elevated);
+  border-radius: 14px;
+  border: 1px solid var(--glass-line);
+  background: var(--surface);
   color: inherit;
   font: inherit;
 }

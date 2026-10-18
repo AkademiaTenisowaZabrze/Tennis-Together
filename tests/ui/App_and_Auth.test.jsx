@@ -70,23 +70,34 @@ describe("szkielet aplikacji po zalogowaniu", () => {
     await go("Profil", "Profil");
   });
 
-  it("domyślny motyw jest ciemny, a przełącznik zmienia go i zapamiętuje", async () => {
+  it("domyślny motyw wynika z telefonu (brak wymuszenia), a przełącznik przechodzi auto, jasny, ciemny i zapamiętuje wybór", async () => {
     const user = userEvent.setup();
     renderWithApp(<App />);
     const toggle = await screen.findByRole("button", { name: /Przełącz tryb jasny\/ciemny/ });
-    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(document.documentElement.dataset.theme).toBeUndefined();
+    expect(toggle).toHaveTextContent("Auto");
     await user.click(toggle);
     expect(document.documentElement.dataset.theme).toBe("light");
-    expect(localStorage.getItem("tennis-together-theme")).toBe("light");
+    expect(localStorage.getItem("tennis-together-theme-v2")).toBe("light");
     await user.click(toggle);
     expect(document.documentElement.dataset.theme).toBe("dark");
+    await user.click(toggle);
+    expect(document.documentElement.dataset.theme).toBeUndefined();
+    expect(localStorage.getItem("tennis-together-theme-v2")).toBe("auto");
   });
 
   it("zapamiętany motyw jasny jest przywracany po ponownym otwarciu", async () => {
-    localStorage.setItem("tennis-together-theme", "light");
+    localStorage.setItem("tennis-together-theme-v2", "light");
     renderWithApp(<App />);
     await screen.findByRole("navigation");
     expect(document.documentElement.dataset.theme).toBe("light");
+  });
+
+  it("stary klucz motywu (zapisywany automatycznie jako ciemny) nie wymusza już motywu", async () => {
+    localStorage.setItem("tennis-together-theme", "dark");
+    renderWithApp(<App />);
+    await screen.findByRole("navigation");
+    expect(document.documentElement.dataset.theme).toBeUndefined();
   });
 
   it("zawieszone konto widzi ekran blokady zamiast aplikacji i może się wylogować", async () => {

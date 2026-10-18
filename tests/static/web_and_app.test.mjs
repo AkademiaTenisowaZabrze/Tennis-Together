@@ -195,10 +195,16 @@ describe("kontrakty aplikacji (regresje z wcześniejszych poprawek)", () => {
     expect(read("src/main.jsx")).toMatch(/restoreSpaPath/);
   });
 
-  it("dostępny jest przełącznik motywu, a domyślnie ciemny", () => {
-    const t = read("src/App.jsx");
-    expect(t).toMatch(/tennis-together-theme/);
-    expect(t).toMatch(/\|\| "dark"/);
+  it("dostępny jest przełącznik motywu, a domyślnie motyw wynika z ustawień telefonu", () => {
+    const t = read("src/lib/theme.js");
+    expect(t).toMatch(/tennis-together-theme-v2/);
+    expect(t).toMatch(/return THEME_MODES\.includes\(v\) \? v : "auto"/);
+    expect(read("src/App.jsx")).toMatch(/useTheme/);
+    const css = read("src/styles/tokens.css");
+    expect(css).toMatch(/@media \(prefers-color-scheme: dark\)/);
+    expect(css).toMatch(/:root\[data-theme="dark"\]/);
+    expect(css).toMatch(/@media \(prefers-contrast: more\)/);
+    expect(css).toMatch(/prefers-reduced-motion: reduce/);
   });
 
   it("pasek nawigacji uwzględnia bezpieczne obszary Androida", () => {
