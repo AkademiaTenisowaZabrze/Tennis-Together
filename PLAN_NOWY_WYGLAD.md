@@ -22,7 +22,7 @@ Dolny pasek (4 cele, kciuk): **Start · Turnieje · Wyjazdy · Wiadomości**.
 | 4 ✅ | Szkielet aplikacji | przycisk menu, pływający pasek 4 zakładek, szuflada (z pamięcią otwarcia sekcji), „＋”, bezpieczne obszary, przycisk „wstecz” (JS + `MainActivity`), nowy hub „Wyjazdy” | testy kolejności zamykania nakładek, nawigacji, aria; Pixel 8 z paskiem 3-przyciskowym |
 | 5 ✅ | Ekrany | Start, Turnieje, Wyjazdy (3 chipy), Wiadomości, Profil (sekcje), Logowanie/Rejestracja (+captcha), Klub, Ustawienie hasła. **Znak aplikacji (walizka z piłki) zamiast emoji 🎾** na logowaniu (zrobione w etapie 2), w nagłówku, w szufladzie, na ekranie ustawienia hasła i w stanach pustych | testy UI istniejące + nowe; zrzuty każdego ekranu |
 | 6 ✅ | Strona | nowa strona główna, wspólne tokeny dla `docs/*.html` (regulamin, polityka, dokumentacja, testerzy, admin), widok aplikacji na komputerze (pasek zakładek u góry po lewej) | testy statyczne stron, zrzuty szerokości 360/768/1280 |
-| 7 | Dostępność i szlify | kontrast 4,5:1 w obu motywach, cele dotyku 44 px, `aria-*`, `:focus-visible`, `inert` szuflady, wysoki kontrast, poziomy układ, mały telefon 360 px, klawiatura ekranowa | lista kontrolna ze standardu (część 9), zrzuty |
+| 7 ✅ | Dostępność i szlify | kontrast 4,5:1 w obu motywach, cele dotyku 44 px, `aria-*`, `:focus-visible`, `inert` szuflady, wysoki kontrast, poziomy układ, mały telefon 360 px, klawiatura ekranowa | lista kontrolna ze standardu (część 9), zrzuty |
 | 8 | Wydanie | wersja, build APK na CI, aktualizacja `tests/README`, dokumentacji i pamięci | pełny zestaw testów, smoke, live |
 
 ## Dopisane w trakcie
@@ -35,3 +35,9 @@ Dolny pasek (4 cele, kciuk): **Start · Turnieje · Wyjazdy · Wiadomości**.
 - Każdy etap kończy się osobnym commitem; po każdym pełny zestaw `npm test` musi być zielony.
 - Zrzuty z Pixel 8 robię z Basha (`adb exec-out screencap -p`), tryb nocny przełączam `adb shell cmd uimode night yes|no`, pasek 3-przyciskowy `cmd overlay enable-exclusive`.
 - Pytania do Pawła zadaję przed etapem, w którym decyzja ma skutek.
+
+## Etap 7 — wyniki (2026-10-18)
+- Pomiar na żywej aplikacji (360 px, jasny i ciemny): zero celów dotyku < 44 px, zero poziomego przewijania, zero przycisków bez nazwy, pola 16 px, kontrast tekstu >= 4,5:1 na wszystkich ekranach.
+- Naprawione: chipy, przełączniki i link „Odśwież teraz” (36/38/32 → 44 px), przycisk oka w haśle, linki partnerów w szufladzie, brak etykiet przy ~30 polach (powiązane `htmlFor`/opakowaniem), listy filtrów turniejów (`aria-label`), grupy chipów (`role="group"`), drobny tekst z `opacity` (kontrast 2,4:1).
+- Pixel 8: paski systemowe nie zlewają się z treścią (jednolite paski o wysokości `--sat`/`--sab`), pasek zakładek chowa się przy klawiaturze ekranowej, poziomo uwzględnione boczne obszary (`--sal`/`--sar`, pasek nawigacji po prawej i po lewej).
+- Testy: `tests/ui/Accessibility.test.jsx` (22) + poprawka `css_vars`.

@@ -12,12 +12,13 @@ function EyeIcon({ off }) {
 }
 
 // Pole hasła z przyciskiem "oko", żeby dało się podejrzeć wpisane znaki.
-export default function PasswordInput({ value, onChange, autoComplete, minLength, required = true }) {
+export default function PasswordInput({ id, value, onChange, autoComplete, minLength, required = true }) {
   const [visible, setVisible] = useState(false);
   return (
     <div style={{ position: "relative" }}>
       <input
-        style={{ ...inputStyle, paddingRight: 46 }}
+        id={id}
+        style={{ ...inputStyle, paddingRight: 52 }}
         type={visible ? "text" : "password"}
         required={required}
         minLength={minLength}
@@ -39,6 +40,10 @@ export default function PasswordInput({ value, onChange, autoComplete, minLength
           color: "var(--color-text-muted)",
           cursor: "pointer",
           padding: 8,
+          minWidth: 44,
+          minHeight: 44,
+          alignItems: "center",
+          justifyContent: "center",
           display: "flex",
         }}
       >

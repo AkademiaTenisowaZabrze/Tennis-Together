@@ -546,18 +546,22 @@ function AddOfferForm({ trips, createOffer, onDone }) {
     <form onSubmit={handleSubmit} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <TripPicker trips={trips} value={tripId} onChange={setTripId} />
       <div>
-        <label style={labelStyle}>Liczba wolnych miejsc</label>
-        <input
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Liczba wolnych miejsc</span>
+          <input
           style={inputStyle}
           type="number"
           min="1"
           value={freeSeats}
           onChange={(e) => setFreeSeats(e.target.value)}
         />
+        </label>
       </div>
       <div>
-        <label style={labelStyle}>Miejsce na bagaż (opcjonalnie)</label>
-        <input style={inputStyle} value={luggageSpace} onChange={(e) => setLuggageSpace(e.target.value)} placeholder="np. 2 torby + rakiety" />
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Miejsce na bagaż (opcjonalnie)</span>
+          <input style={inputStyle} value={luggageSpace} onChange={(e) => setLuggageSpace(e.target.value)} placeholder="np. 2 torby + rakiety" />
+        </label>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <label style={{ ...labelStyle, display: "flex", gap: 8, alignItems: "flex-start" }}>
@@ -600,13 +604,15 @@ function AddOfferForm({ trips, createOffer, onDone }) {
         )}
       </div>
       <div>
-        <label style={labelStyle}>Uwagi o kosztach (opcjonalnie)</label>
-        <input
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Uwagi o kosztach (opcjonalnie)</span>
+          <input
           style={inputStyle}
           value={costSplitSuggestion}
           onChange={(e) => setCostSplitSuggestion(e.target.value)}
           placeholder="np. plus opłata za autostradę"
         />
+        </label>
       </div>
       {error && <ErrorBox>{error}</ErrorBox>}
       <button className="btn-primary" type="submit" disabled={busy}>
@@ -643,18 +649,22 @@ function AddRequestForm({ trips, createRequest, onDone }) {
     <form onSubmit={handleSubmit} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <TripPicker trips={trips} value={tripId} onChange={setTripId} />
       <div>
-        <label style={labelStyle}>Potrzebne miejsca</label>
-        <input
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Potrzebne miejsca</span>
+          <input
           style={inputStyle}
           type="number"
           min="1"
           value={seatsNeeded}
           onChange={(e) => setSeatsNeeded(e.target.value)}
         />
+        </label>
       </div>
       <div>
-        <label style={labelStyle}>Uwagi (opcjonalnie)</label>
-        <input style={inputStyle} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="np. elastyczne godziny wyjazdu" />
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Uwagi (opcjonalnie)</span>
+          <input style={inputStyle} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="np. elastyczne godziny wyjazdu" />
+        </label>
       </div>
       {error && <ErrorBox>{error}</ErrorBox>}
       <button className="btn-primary" type="submit" disabled={busy}>
@@ -667,8 +677,8 @@ function AddRequestForm({ trips, createRequest, onDone }) {
 function TripPicker({ trips, value, onChange }) {
   return (
     <div>
-      <label style={labelStyle}>Który wyjazd?</label>
-      <div className="chip-row">
+      <span style={labelStyle}>Który wyjazd?</span>
+      <div className="chip-row" role="group" aria-label="Który wyjazd?">
         {trips.map((t) => (
           <button
             key={t.id}

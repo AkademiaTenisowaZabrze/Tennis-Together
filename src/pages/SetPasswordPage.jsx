@@ -53,8 +53,8 @@ export default function SetPasswordPage() {
         <div className="glass-card">
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div>
-              <label style={labelStyle}>Nowe hasło (min. 8 znaków)</label>
-              <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" minLength={8} />
+              <label htmlFor="new-password" style={labelStyle}>Nowe hasło (min. 8 znaków)</label>
+              <PasswordInput id="new-password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" minLength={8} />
             </div>
             {error && <ErrorBox>{error}</ErrorBox>}
             <button className="btn-primary" type="submit" disabled={busy}>

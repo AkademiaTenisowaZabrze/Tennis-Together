@@ -51,7 +51,7 @@ export default function ProfilePage() {
 
       {view === "parent" ? <ParentProfile /> : <PlayerSection />}
 
-      <p style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", opacity: 0.6, margin: "8px 0 0" }}>
+      <p style={{ fontSize: 12, color: "var(--muted)", textAlign: "center", margin: "8px 0 0" }}>
         Tennis Together — wersja {APP_VERSION}
       </p>
     </div>
@@ -349,20 +349,28 @@ function EditParentForm({ account, updateAccount, onDone, onCancel }) {
       <p style={{ margin: 0, fontWeight: 700 }}>Edytuj profil</p>
 
       <div>
-        <label style={labelStyle}>Imię i nazwisko</label>
-        <input style={inputStyle} required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Imię i nazwisko</span>
+          <input style={inputStyle} required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+        </label>
       </div>
       <div>
-        <label style={labelStyle}>Telefon (opcjonalnie)</label>
-        <input style={inputStyle} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="np. 600 000 000" />
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Telefon (opcjonalnie)</span>
+          <input style={inputStyle} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="np. 600 000 000" />
+        </label>
       </div>
       <div>
-        <label style={labelStyle}>Miasto (opcjonalnie)</label>
-        <input style={inputStyle} value={city} onChange={(e) => setCity(e.target.value)} />
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Miasto (opcjonalnie)</span>
+          <input style={inputStyle} value={city} onChange={(e) => setCity(e.target.value)} />
+        </label>
       </div>
       <div>
-        <label style={labelStyle}>Klub / akademia (opcjonalnie)</label>
-        <input style={inputStyle} value={clubName} onChange={(e) => setClubName(e.target.value)} />
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Klub / akademia (opcjonalnie)</span>
+          <input style={inputStyle} value={clubName} onChange={(e) => setClubName(e.target.value)} />
+        </label>
       </div>
 
       {error && <ErrorBox>{error}</ErrorBox>}
@@ -572,8 +580,9 @@ function PlayerForm({ initial, onSubmit, onDone, onCancel, submitLabel, busyLabe
 
       <div style={{ display: "flex", gap: 8 }}>
         <div style={{ flex: 1 }}>
-          <label style={labelStyle}>Imię</label>
-          <input
+          <label style={{ display: "block" }}>
+            <span style={labelStyle}>Imię</span>
+            <input
             style={inputStyle}
             required
             value={firstName}
@@ -582,10 +591,12 @@ function PlayerForm({ initial, onSubmit, onDone, onCancel, submitLabel, busyLabe
               invalidatePztCheck();
             }}
           />
+          </label>
         </div>
         <div style={{ flex: 1 }}>
-          <label style={labelStyle}>Nazwisko</label>
-          <input
+          <label style={{ display: "block" }}>
+            <span style={labelStyle}>Nazwisko</span>
+            <input
             style={inputStyle}
             required
             value={lastName}
@@ -594,12 +605,14 @@ function PlayerForm({ initial, onSubmit, onDone, onCancel, submitLabel, busyLabe
               invalidatePztCheck();
             }}
           />
+          </label>
         </div>
       </div>
 
       <div>
-        <label style={labelStyle}>Rok urodzenia</label>
-        <input
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Rok urodzenia</span>
+          <input
           style={inputStyle}
           type="number"
           required
@@ -608,11 +621,12 @@ function PlayerForm({ initial, onSubmit, onDone, onCancel, submitLabel, busyLabe
           value={birthYear}
           onChange={(e) => setBirthYear(e.target.value)}
         />
+        </label>
       </div>
 
       <div>
-        <label style={labelStyle}>Kategoria wiekowa</label>
-        <div className="chip-row">
+        <span style={labelStyle}>Kategoria wiekowa</span>
+        <div className="chip-row" role="group" aria-label="Kategoria wiekowa">
           {CATEGORIES.map((c) => (
             <button
               key={c}
@@ -627,19 +641,24 @@ function PlayerForm({ initial, onSubmit, onDone, onCancel, submitLabel, busyLabe
       </div>
 
       <div>
-        <label style={labelStyle}>Klub / akademia (opcjonalnie)</label>
-        <input style={inputStyle} value={clubName} onChange={(e) => setClubName(e.target.value)} />
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Klub / akademia (opcjonalnie)</span>
+          <input style={inputStyle} value={clubName} onChange={(e) => setClubName(e.target.value)} />
+        </label>
       </div>
 
       <div>
-        <label style={labelStyle}>Miasto (opcjonalnie)</label>
-        <input style={inputStyle} value={city} onChange={(e) => setCity(e.target.value)} />
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Miasto (opcjonalnie)</span>
+          <input style={inputStyle} value={city} onChange={(e) => setCity(e.target.value)} />
+        </label>
       </div>
 
       <div>
-        <label style={labelStyle}>Login PZT (opcjonalnie — potwierdza, że to prawdziwy zawodnik)</label>
+        <label htmlFor="pzt-login" style={labelStyle}>Login PZT (opcjonalnie — potwierdza, że to prawdziwy zawodnik)</label>
         <div style={{ display: "flex", gap: 8 }}>
           <input
+            id="pzt-login"
             style={{ ...inputStyle, flex: 1 }}
             value={pztLogin}
             onChange={(e) => {

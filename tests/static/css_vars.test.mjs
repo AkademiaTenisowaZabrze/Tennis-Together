@@ -5,7 +5,7 @@ import { read, filesUnder } from "../helpers/repo.mjs";
 const tokens = read("src/styles/tokens.css");
 const defined = new Set([...tokens.matchAll(/--([a-z0-9-]+)\s*:/g)].map((m) => m[1]));
 // zmienne ustawiane lokalnie w komponentach (nie w tokens.css)
-const LOCAL = new Set(["safe-area-inset-top", "safe-area-inset-bottom", "sheet-h"]);
+const LOCAL = new Set(["safe-area-inset-top", "safe-area-inset-bottom", "safe-area-inset-left", "safe-area-inset-right", "sheet-h"]);
 
 const sources = [...filesUnder("src", /\.(jsx?|css)$/), "index.html"];
 

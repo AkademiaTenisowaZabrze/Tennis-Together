@@ -27,6 +27,8 @@
 
   --sat: var(--safe-area-inset-top, env(safe-area-inset-top, 0px)); /* pasek statusu */
   --sab: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)); /* pasek gestów */
+  --sal: var(--safe-area-inset-left, env(safe-area-inset-left, 0px)); /* poziomo: lewy pasek / wycięcie */
+  --sar: var(--safe-area-inset-right, env(safe-area-inset-right, 0px)); /* poziomo: prawy pasek nawigacji */
   --r-lg: 28px;
   --r-card: 20px;
   --r-md: 16px;
@@ -271,7 +273,7 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 36px;
+  min-height: 44px;
   border: 1px solid var(--line);
   background: var(--panel);
   color: var(--text);
@@ -311,7 +313,7 @@ textarea {
 
 .segmented button {
   flex: 1;
-  min-height: 38px;
+  min-height: 44px;
   border: none;
   background: transparent;
   color: var(--muted);

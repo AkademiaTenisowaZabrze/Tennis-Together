@@ -75,7 +75,7 @@ export default function AuthPage() {
         <p style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center" }}>
           Konto zakłada tylko dorosły (rodzic/opiekun/trener) — patrz PLAN.md.
         </p>
-        <p style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", opacity: 0.6 }}>
+        <p style={{ fontSize: 12, color: "var(--muted)", textAlign: "center" }}>
           Wersja {APP_VERSION}
         </p>
 
@@ -90,7 +90,7 @@ export default function AuthPage() {
             <img src={pztLogo} alt="Polski Związek Tenisowy" style={{ height: 44, width: "auto", opacity: 0.7 }} />
           </a>
         </div>
-        <p style={{ fontSize: 10.5, color: "var(--color-text-muted)", textAlign: "center", opacity: 0.6, margin: 0 }}>
+        <p style={{ fontSize: 12, color: "var(--muted)", textAlign: "center", margin: 0 }}>
           Akademia Tenisowa Zabrze · dane turniejów: Polski Związek Tenisowy
         </p>
       </div>
@@ -167,8 +167,10 @@ function LoginForm() {
           Podaj e-mail konta, a wyślemy Ci link do ustawienia nowego hasła.
         </p>
         <div>
-          <label style={labelStyle}>E-mail</label>
-          <input style={inputStyle} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <label style={{ display: "block" }}>
+            <span style={labelStyle}>E-mail</span>
+            <input style={inputStyle} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          </label>
         </div>
         <Captcha key="forgot" onToken={setCaptchaToken} resetKey={captchaReset} />
         {error && <ErrorBox>{error}</ErrorBox>}
@@ -185,12 +187,14 @@ function LoginForm() {
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div>
-        <label style={labelStyle}>E-mail</label>
-        <input style={inputStyle} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>E-mail</span>
+          <input style={inputStyle} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        </label>
       </div>
       <div>
-        <label style={labelStyle}>Hasło</label>
-        <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+        <label htmlFor="login-password" style={labelStyle}>Hasło</label>
+        <PasswordInput id="login-password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
       </div>
       <Captcha key="login" onToken={setCaptchaToken} resetKey={captchaReset} />
       {error && <ErrorBox>{error}</ErrorBox>}
@@ -341,8 +345,8 @@ function RegisterForm({ onDone }) {
         Jeśli nie dostaniesz maila potwierdzającego, odczekaj godzinę i spróbuj ponownie.
       </div>
       <div>
-        <label style={labelStyle}>Kim jesteś?</label>
-        <div className="chip-row">
+        <span style={labelStyle}>Kim jesteś?</span>
+        <div className="chip-row" role="group" aria-label="Kim jesteś?">
           {ROLES.map((r) => (
             <button
               key={r.value}
@@ -361,16 +365,20 @@ function RegisterForm({ onDone }) {
         )}
       </div>
       <div>
-        <label style={labelStyle}>Imię i nazwisko</label>
-        <input style={inputStyle} required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Imię i nazwisko</span>
+          <input style={inputStyle} required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+        </label>
       </div>
       <div>
-        <label style={labelStyle}>E-mail</label>
-        <input style={inputStyle} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>E-mail</span>
+          <input style={inputStyle} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        </label>
       </div>
       <div>
-        <label style={labelStyle}>Hasło (min. 8 znaków)</label>
-        <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" minLength={8} />
+        <label htmlFor="signup-password" style={labelStyle}>Hasło (min. 8 znaków)</label>
+        <PasswordInput id="signup-password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" minLength={8} />
       </div>
       <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, color: "var(--color-text-muted)" }}>
         <input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} style={{ marginTop: 3 }} />

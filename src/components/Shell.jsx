@@ -36,9 +36,28 @@ export const TABS = [
   { to: "/wiadomosci", label: "Wiadomości", icon: "chat" },
 ];
 
+// Gdy piszesz w polu, klawiatura ekranowa zajmuje pół ekranu: pasek zakładek chowamy, żeby nie zabierał reszty.
+const TEXT_FIELD = 'input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="button"]):not([type="submit"]), textarea, select';
+
+function useTyping() {
+  const [typing, setTyping] = useState(false);
+  useEffect(() => {
+    const onIn = (e) => e.target?.matches?.(TEXT_FIELD) && setTyping(true);
+    const onOut = () => setTyping(false);
+    document.addEventListener("focusin", onIn);
+    document.addEventListener("focusout", onOut);
+    return () => {
+      document.removeEventListener("focusin", onIn);
+      document.removeEventListener("focusout", onOut);
+    };
+  }, []);
+  return typing;
+}
+
 export function FloatingTabs() {
+  const typing = useTyping();
   return (
-    <nav className="tabs glass" aria-label="Główne zakładki">
+    <nav className={`tabs glass${typing ? " tabs-typing" : ""}`} aria-label="Główne zakładki">
       {TABS.map((t) => (
         <NavLink key={t.to} to={t.to} end={t.end} className={({ isActive }) => (isActive ? "active" : "")}>
           <TabIcon name={t.icon} />

@@ -100,7 +100,7 @@ export default function TournamentsPage() {
       {(categories.length > 0 || countries.length > 0) && (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {categories.length > 0 && (
-            <select style={{ ...inputStyle, width: "auto" }} value={category} onChange={(e) => setCategory(e.target.value)}>
+            <select aria-label="Kategoria turnieju" style={{ ...inputStyle, width: "auto" }} value={category} onChange={(e) => setCategory(e.target.value)}>
               <option value="all">Wszystkie kategorie</option>
               {categories.map((c) => (
                 <option key={c} value={c}>
@@ -110,7 +110,7 @@ export default function TournamentsPage() {
             </select>
           )}
           {countries.length > 0 && (
-            <select style={{ ...inputStyle, width: "auto" }} value={country} onChange={(e) => setCountry(e.target.value)}>
+            <select aria-label="Kraj turnieju" style={{ ...inputStyle, width: "auto" }} value={country} onChange={(e) => setCountry(e.target.value)}>
               <option value="all">Wszystkie kraje</option>
               {countries.map((c) => (
                 <option key={c} value={c}>
@@ -258,8 +258,8 @@ function JoinTripForm({ tournamentId, players, playersLoading, createTrip, onDon
     >
       {players.length > 1 && (
         <div style={{ marginBottom: 10 }}>
-          <label style={labelStyle}>Który zawodnik jedzie?</label>
-          <div className="chip-row">
+          <span style={labelStyle}>Który zawodnik jedzie?</span>
+          <div className="chip-row" role="group" aria-label="Który zawodnik jedzie?">
             {players.map((p) => (
               <button
                 key={p.id}
@@ -274,8 +274,9 @@ function JoinTripForm({ tournamentId, players, playersLoading, createTrip, onDon
         </div>
       )}
 
-      <label style={labelStyle}>Miasto wyjazdu</label>
+      <label htmlFor="departure-city" style={labelStyle}>Miasto wyjazdu</label>
       <input
+        id="departure-city"
         style={inputStyle}
         placeholder="np. Katowice"
         value={departureCity}

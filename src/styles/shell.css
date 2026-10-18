@@ -5,14 +5,37 @@
   max-width: 720px;
   margin: 0 auto;
   min-height: 100vh;
-  padding: calc(72px + var(--sat)) 16px calc(104px + var(--sab));
+  padding: calc(72px + var(--sat)) calc(16px + var(--sar)) calc(104px + var(--sab)) calc(16px + var(--sal));
+}
+
+/* Treść przewijana pod paskiem statusu i paskiem nawigacji nie może się z nimi zlewać (zegar, ikony, przyciski systemowe):
+   jednolite paski w kolorze tła o wysokości bezpiecznych obszarów (w przeglądarce mają 0 px). */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: var(--bg);
+  pointer-events: none;
+}
+
+body::before {
+  top: 0;
+  height: var(--sat);
+}
+
+body::after {
+  bottom: 0;
+  height: var(--sab);
 }
 
 /* ── Przycisk menu (lewy górny róg) i akcja "＋" (prawy górny róg) ── */
 .menuBtn {
   position: fixed;
   z-index: 1100;
-  left: 12px;
+  left: calc(12px + var(--sal));
   top: calc(12px + var(--sat));
   width: 46px;
   height: 46px;
@@ -36,7 +59,7 @@
 .fab-wrap {
   position: fixed;
   z-index: 1100;
-  right: 12px;
+  right: calc(12px + var(--sar));
   top: calc(12px + var(--sat));
 }
 
@@ -96,8 +119,8 @@
 .tabs {
   position: fixed;
   z-index: 1100;
-  left: 10px;
-  right: 10px;
+  left: calc(10px + var(--sal));
+  right: calc(10px + var(--sar));
   bottom: calc(10px + var(--sab));
   max-width: 520px;
   margin: 0 auto;
@@ -105,6 +128,20 @@
   display: flex;
   gap: 2px;
   padding: 6px;
+}
+
+/* Telefon: podczas pisania (klawiatura ekranowa) pasek zakładek znika; focusout z pola przywraca go. */
+@media (max-width: 800px) {
+  .tabs {
+    transition: transform 0.18s var(--ease), opacity 0.18s var(--ease), visibility 0.18s;
+  }
+
+  .tabs.tabs-typing {
+    transform: translateY(140%);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
 
 .tabs a {
@@ -170,6 +207,7 @@
   display: flex;
   flex-direction: column;
   padding-top: var(--sat);
+  padding-left: var(--sal);
   border-radius: 0 var(--r-lg) var(--r-lg) 0;
   transform: translateX(-104%);
   visibility: hidden;
@@ -296,6 +334,14 @@
   margin-left: auto;
 }
 
+.dr-foot .partners a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+}
+
 /* ── Komputer (> 800 px): pasek zakładek pływa u góry po lewej, menu pod nim ── */
 @media (min-width: 801px) {
   .app-main {
@@ -306,7 +352,7 @@
   .tabs {
     top: calc(12px + var(--sat));
     bottom: auto;
-    left: 12px;
+    left: calc(12px + var(--sal));
     right: auto;
     margin: 0;
     max-width: none;
@@ -317,7 +363,7 @@
     flex: none;
     flex-direction: row;
     gap: 8px;
-    min-height: 40px;
+    min-height: 44px;
     padding: 8px 16px;
     font-size: 14px;
   }
@@ -327,7 +373,7 @@
   }
 
   .app-main {
-    padding-left: 72px;
+    padding-left: calc(72px + var(--sal));
   }
 }
 

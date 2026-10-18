@@ -340,8 +340,8 @@ function AddLodgingForm({ trips, createOffer, onDone }) {
   return (
     <form onSubmit={handleSubmit} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <div>
-        <label style={labelStyle}>Rodzaj</label>
-        <div className="chip-row">
+        <span style={labelStyle}>Rodzaj</span>
+        <div className="chip-row" role="group" aria-label="Rodzaj">
           {Object.entries(KIND_LABELS).map(([value, label]) => (
             <button
               key={value}
@@ -356,8 +356,8 @@ function AddLodgingForm({ trips, createOffer, onDone }) {
       </div>
 
       <div>
-        <label style={labelStyle}>Który wyjazd?</label>
-        <div className="chip-row">
+        <span style={labelStyle}>Który wyjazd?</span>
+        <div className="chip-row" role="group" aria-label="Który wyjazd?">
           {trips.map((t) => (
             <button
               key={t.id}
@@ -372,31 +372,39 @@ function AddLodgingForm({ trips, createOffer, onDone }) {
       </div>
 
       <div>
-        <label style={labelStyle}>Miejsce (opcjonalnie)</label>
-        <input
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Miejsce (opcjonalnie)</span>
+          <input
           style={inputStyle}
           value={placeName}
           onChange={(e) => setPlaceName(e.target.value)}
           placeholder="np. Apartament 3-osobowy, 800m od kortów"
         />
+        </label>
       </div>
       <div>
-        <label style={labelStyle}>Wolne miejsca (opcjonalnie)</label>
-        <input style={inputStyle} type="number" min="1" value={freeSpots} onChange={(e) => setFreeSpots(e.target.value)} />
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Wolne miejsca (opcjonalnie)</span>
+          <input style={inputStyle} type="number" min="1" value={freeSpots} onChange={(e) => setFreeSpots(e.target.value)} />
+        </label>
       </div>
       <div>
-        <label style={labelStyle}>Budżet za noc/os. w zł (opcjonalnie)</label>
-        <input
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Budżet za noc/os. w zł (opcjonalnie)</span>
+          <input
           style={inputStyle}
           type="number"
           min="0"
           value={budgetPerNight}
           onChange={(e) => setBudgetPerNight(e.target.value)}
         />
+        </label>
       </div>
       <div>
-        <label style={labelStyle}>Uwagi (opcjonalnie)</label>
-        <input style={inputStyle} value={notes} onChange={(e) => setNotes(e.target.value)} />
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Uwagi (opcjonalnie)</span>
+          <input style={inputStyle} value={notes} onChange={(e) => setNotes(e.target.value)} />
+        </label>
       </div>
 
       {error && <ErrorBox>{error}</ErrorBox>}
@@ -669,8 +677,9 @@ function AddHostOfferForm({ createOffer, onDone }) {
         i chcesz kogoś ugościć.
       </p>
       <div>
-        <label style={labelStyle}>Turniej</label>
-        <select
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Turniej</span>
+          <select
           style={inputStyle}
           value={tournamentId}
           onChange={(e) => setTournamentId(e.target.value)}
@@ -683,18 +692,25 @@ function AddHostOfferForm({ createOffer, onDone }) {
             </option>
           ))}
         </select>
+        </label>
       </div>
       <div>
-        <label style={labelStyle}>Miasto</label>
-        <input style={inputStyle} value={city} onChange={(e) => setCity(e.target.value)} placeholder="np. Kraków" />
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Miasto</span>
+          <input style={inputStyle} value={city} onChange={(e) => setCity(e.target.value)} placeholder="np. Kraków" />
+        </label>
       </div>
       <div>
-        <label style={labelStyle}>Ile osób możesz ugościć</label>
-        <input style={inputStyle} type="number" min="1" value={capacity} onChange={(e) => setCapacity(e.target.value)} />
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Ile osób możesz ugościć</span>
+          <input style={inputStyle} type="number" min="1" value={capacity} onChange={(e) => setCapacity(e.target.value)} />
+        </label>
       </div>
       <div>
-        <label style={labelStyle}>Uwagi (opcjonalnie)</label>
-        <input style={inputStyle} value={notes} onChange={(e) => setNotes(e.target.value)} />
+        <label style={{ display: "block" }}>
+          <span style={labelStyle}>Uwagi (opcjonalnie)</span>
+          <input style={inputStyle} value={notes} onChange={(e) => setNotes(e.target.value)} />
+        </label>
       </div>
 
       {error && <ErrorBox>{error}</ErrorBox>}
