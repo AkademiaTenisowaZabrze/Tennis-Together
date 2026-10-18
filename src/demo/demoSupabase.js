@@ -2,7 +2,7 @@
 // Zamiast klienta Supabase działa atrapa z testów, z wymyślonym użytkownikiem ("Test Rodzic")
 // i przykładowymi danymi, od razu zalogowanym. Służy do oglądania i testowania wyglądu
 // (emulator, przeglądarka) bez zakładania kont na produkcji. Patrz vite.config.js.
-import { supabase as fakeSupabase, fake, reset } from "../../tests/helpers/fakeSupabase.js";
+import { supabase as fakeSupabase, fake, reset, ME, OTHER } from "../../tests/helpers/fakeSupabase.js";
 
 reset();
 
@@ -31,6 +31,32 @@ fake.rpcHandlers.trip_arrangements = () => ({
   data: [{ trip_id: "trip-me-1", ride_status: "arranged", lodging_status: "none" }],
   error: null,
 });
+
+// Przykładowa rozmowa (z gotowymi wiadomościami), żeby można było obejrzeć listę rozmów i okno czatu.
+const hoursAgo = (h) => new Date(Date.now() - h * 3600e3).toISOString();
+fake.db.conversations = [
+  {
+    id: "conv-demo-1",
+    kind: "ride",
+    created_at: hoursAgo(5),
+    ride_offers: { trips: { departure_city: "Gliwice", tournaments: { name: "Turniej U12 Warszawa" } } },
+    conversation_participants: [
+      { account_id: ME, accounts: { full_name: "Test Rodzic" } },
+      { account_id: OTHER, accounts: { full_name: "Anna Kierowca" } },
+    ],
+  },
+];
+fake.db.messages = [
+  { id: "m-1", conversation_id: "conv-demo-1", sender_account_id: OTHER, body: "Dzień dobry, jedziemy w czwartek o 7:00 spod Auchan w Gliwicach.", created_at: hoursAgo(4) },
+  { id: "m-2", conversation_id: "conv-demo-1", sender_account_id: ME, body: "Świetnie, pasuje nam. Zabieramy dwie torby z rakietami.", created_at: hoursAgo(3) },
+  { id: "m-3", conversation_id: "conv-demo-1", sender_account_id: OTHER, body: "Super. W takim razie do zobaczenia w czwartek!", created_at: hoursAgo(2) },
+];
+
+// Widok trenera do oglądania panelu klubu: adres ...?demo=trener albo budowa z VITE_DEMO_COACH=1
+if (import.meta.env.VITE_DEMO_COACH === "1" || (typeof location !== "undefined" && new URLSearchParams(location.search).get("demo") === "trener")) {
+  const me = fake.db.accounts.find((a) => a.id === ME);
+  Object.assign(me, { role: "coach", full_name: "Test Trener", club_name: "ATZ" });
+}
 
 export const supabase = fakeSupabase;
 export const DEMO_MODE = true;

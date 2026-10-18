@@ -178,4 +178,9 @@ describe("telefon: klawiatura ekranowa i paski systemowe", () => {
     expect(shell).toMatch(/\.tabs \{[^}]*left: calc\(10px \+ var\(--sal\)\)[^}]*right: calc\(10px \+ var\(--sar\)\)/);
     expect(shell).toMatch(/\.app-main \{[^}]*calc\(16px \+ var\(--sar\)\)[^}]*calc\(16px \+ var\(--sal\)\)/);
   });
+
+  it("obszar menu (szuflady) może się kurczyć i przewijać: min-height 0, żeby stopka nie wychodziła poza ekran", () => {
+    const shell = fs.readFileSync("src/styles/shell.css", "utf-8");
+    expect(shell).toMatch(/\.dr-body \{[^}]*min-height: 0[^}]*overflow-y: auto/);
+  });
 });
