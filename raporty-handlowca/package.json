@@ -1,0 +1,6 @@
+{
+  "name": "raporty-handlowca",
+  "private": true,
+  "type": "commonjs",
+  "scripts": { "test": "node --test tests/" }
+}

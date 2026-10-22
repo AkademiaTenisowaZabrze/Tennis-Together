@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raporty handlowca</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<button id="menuBtn" class="glass" aria-label="Menu" aria-expanded="false" aria-controls="drawer"><span class="bars"></span></button>
+<nav id="tabs" class="glass" aria-label="Zakładki">
+  <button data-tab="today" class="active"><i>📞</i><span>Dziś</span></button>
+  <button data-tab="portfolio"><i>👥</i><span>Portfel</span></button>
+  <button data-tab="history"><i>🗒️</i><span>Historia</span></button>
+  <button data-tab="report"><i>📊</i><span>Raport</span></button>
+</nav>
+
+<main id="view"></main>
+
+<div id="drawerScrim" hidden></div>
+<aside id="drawer" class="glass" aria-hidden="true" aria-label="Narzędzia" inert>
+  <div class="dr-head"><b>Narzędzia</b><button class="ico" id="drawerClose" aria-label="Zamknij menu">✕</button></div>
+  <div class="dr-body">
+    <section><h5>Portfel</h5>
+      <button class="wide" id="btnImport">📥 Wczytaj portfel z Excela</button>
+      <input type="file" id="fileImport" accept=".xlsx,.xls,.csv" hidden>
+      <button class="wide" id="btnExportReport">📤 Eksportuj raport do Excela</button>
+    </section>
+    <section><h5>Kopia zapasowa</h5>
+      <p class="hint">Dane są tylko w tej przeglądarce na tym komputerze. Zapisuj kopię od czasu do czasu.</p>
+      <button class="wide" id="btnBackup">💾 Zapisz kopię (plik)</button>
+      <button class="wide" id="btnRestore">♻️ Przywróć z kopii</button>
+      <input type="file" id="fileRestore" accept=".json" hidden>
+    </section>
+    <section><h5>Zasady przypomnień</h5>
+      <p class="hint">Dzwonisz: poniedziałek, środa, piątek.<br>Nie odebrał: ponowny telefon za tydzień, maks. 6 prób, potem propozycja rezygnacji.<br>Nie zainteresowany: propozycja rezygnacji.</p>
+    </section>
+  </div>
+</aside>
+
+<dialog id="callDlg" class="glass">
+  <form method="dialog" id="callForm">
+    <div class="sec-h"><i>📞</i><span id="callTitle">Rozmowa</span></div>
+    <p class="hint" id="callSub"></p>
+    <label>Wynik rozmowy</label>
+    <div id="resultChips" class="chips"></div>
+    <div id="nextWrap" hidden><label for="nextDate" id="nextLabel">Następny kontakt</label><input type="date" id="nextDate"></div>
+    <label for="callNote">Notatka z rozmowy</label>
+    <textarea id="callNote" rows="4"></textarea>
+    <button type="submit" class="primary" id="callSave" style="margin-top:14px">Zapisz rozmowę</button>
+    <button type="button" class="wide" id="callCancel">Anuluj</button>
+  </form>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="logic.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
