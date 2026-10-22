@@ -42,3 +42,20 @@ test('import: rozpoznanie kolumn, dodatkowe pola, duplikaty', () => {
   const m2 = L.mergeImport(m1.added, [{ firma: 'X', telefon: '+48 600-100-200' }], () => ++n);
   assert.equal(m1.added.length, 1); assert.equal(m2.skipped, 1);
 });
+
+test('import: układ prawdziwego portfela (nagłówki, daty, statusy)', () => {
+  const head = ['Data pozyskania kontaktu', 'Kategoria obietu ', 'Nazwa klienta ', 'Osoba decyzyjna', 'Miejscowość ', 'Ulica', 'numer',
+    'Telefon kontaktowy do osoby decyzyjnej', 'email', 'PH/APH', 'NAZWISKO I IMIĘ PH/APH', 'uwagi ', 'Data kolejnego kontaktu z klientem ', 'status', 'KATEGORIA KONTAKTU'];
+  const r = L.parseSheet([head,
+    ['2026/09/01', 'MAŁY BIZNES', 'Gabinet', 'Jarosław Kącki', 'Siemianowice', 'Wróbla ', '14d', '601-506-834', '', 'APH', 'Mesznik Paweł', 'Urlop', '', 'W TOKU', 'TEMAT W TOKU'],
+    ['', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+    ['2026/09/02', 'DOM', 'Kowalski', '', 'Zabrze', 'Długa', '2', '666300033', '', 'APH', 'Mesznik Paweł', '', '2026/10/26', 'REZYGNACJA', 'REZYGNACJA']]);
+  assert.equal(r.contacts.length, 2);
+  const c = r.contacts[0];
+  assert.deepEqual([c.firma, c.osoba, c.telefon, c.adres, c.uwagi, c.status], ['Gabinet', 'Jarosław Kącki', '601-506-834', 'Wróbla 14d', 'Urlop', 'w_toku']);
+  assert.equal(c.extra['KATEGORIA KONTAKTU'], 'TEMAT W TOKU');
+  assert.equal(r.contacts[1].nastepny, '2026-10-26');
+  let n = 0; const m = L.mergeImport([], r.contacts, () => ++n, '2026-10-22');
+  assert.equal(m.added[0].nastepny, '2026-10-23'); // w toku bez terminu -> najbliższy dzień telefonu (piątek)
+  assert.equal(m.added[1].status, 'zrezygnowano'); assert.equal(m.added[1].nastepny, null);
+});

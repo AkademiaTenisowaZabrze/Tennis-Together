@@ -28,7 +28,7 @@
     var late = c.nastepny && c.nastepny < L.today();
     var st = c.status === 'do_rezygnacji' ? 'err' : (c.status === 'umowiony' ? 'ok' : '');
     var h = '<div class="item' + (late ? ' late' : '') + '" data-id="' + c.id + '"><div class="name"><b>' + esc(c.firma || c.osoba || '(bez nazwy)') + '</b>' +
-      '<small>' + esc([c.firma ? c.osoba : '', c.miasto].filter(Boolean).join(' · ')) + '</small>' +
+      '<small>' + esc([c.firma ? c.osoba : '', c.miasto, c.adres].filter(Boolean).join(' · ')) + '</small>' +
       '<small>' + (c.telefon ? '<a href="tel:' + esc(c.telefon.replace(/[^\d+]/g, '')) + '">' + esc(c.telefon) + '</a> · ' : '') +
       '<span class="badge ' + st + '">' + L.STATUSES[c.status] + '</span> próby: ' + (c.proby || 0) + '/' + L.CONFIG.maxAttempts +
       (c.nastepny ? ' · następny: ' + pl(c.nastepny) + ' (' + L.dayName(c.nastepny) + ')' : '') + '</small>' +
@@ -161,14 +161,20 @@
   }
 
   // ---------- import / eksport ----------
+  /** Arkusz z najwięcej wierszami (w pliku bywają arkusze pomocnicze, np. listy wartości). */
+  function pickSheet(wb) {
+    var best = wb.SheetNames[0], n = -1;
+    wb.SheetNames.forEach(function (name) { var ref = wb.Sheets[name]['!ref']; if (!ref) return; var rows = XLSX.utils.decode_range(ref).e.r; if (rows > n && XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1 }).some(function (r) { return r.length; })) { n = rows; best = name; } });
+    return best;
+  }
   function importFile(file) {
     var r = new FileReader();
     r.onload = function () {
       try {
-        var wb = XLSX.read(r.result, { type: 'array' }), ws = wb.Sheets[wb.SheetNames[0]];
+        var wb = XLSX.read(r.result, { type: 'array' }), ws = wb.Sheets[pickSheet(wb)];
         var p = L.parseSheet(XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false }));
         if (!p.mapping.telefon) { toast('Nie znalazłem kolumny z telefonem. Nagłówek powinien brzmieć np. „Telefon” lub „Tel.”', true); return; }
-        var m = L.mergeImport(state.contacts, p.contacts, uid);
+        var m = L.mergeImport(state.contacts, p.contacts, uid, L.today());
         state.contacts = state.contacts.concat(m.added); save(); closeDrawer(); setTab('portfolio');
         toast('Dodano ' + m.added.length + ' kontaktów, pominięto duplikatów: ' + m.skipped + '. Rozpoznane kolumny: ' + Object.keys(p.mapping).join(', ') + '.');
       } catch (e) { toast('Nie udało się wczytać pliku: ' + e.message, true); }
@@ -181,7 +187,7 @@
       return { Data: x.data, Godzina: x.godzina, Dzień: L.dayName(x.data), Firma: c.firma || '', Osoba: c.osoba || '', Telefon: c.telefon || '',
         Wynik: L.RESULTS[x.wynik], 'Nr próby': x.proba, Notatka: x.notka }; });
     var port = state.contacts.map(function (c) { return Object.assign({ Firma: c.firma, Osoba: c.osoba, Telefon: c.telefon, Email: c.email, Miasto: c.miasto,
-      Status: L.STATUSES[c.status], Próby: c.proby || 0, 'Ostatni kontakt': c.ostatni || '', 'Następny telefon': c.nastepny || '', Uwagi: c.uwagi }, c.extra || {}); });
+      Adres: c.adres || '', Status: L.STATUSES[c.status], Próby: c.proby || 0, 'Ostatni kontakt': c.ostatni || '', 'Następny telefon': c.nastepny || '', Uwagi: c.uwagi }, c.extra || {}); });
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(calls), 'Rozmowy');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(port), 'Portfel');
     XLSX.writeFile(wb, 'Raport handlowca ' + L.today() + '.xlsx'); toast('Raport zapisany');
